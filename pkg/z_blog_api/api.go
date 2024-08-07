@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"goTool/pkg/util"
 	"io"
 	"net/http"
 	"net/url"
@@ -18,21 +17,6 @@ type ZblogAPI struct {
 	password string
 	// avoid duplicate login
 	lock *sync.Mutex
-}
-
-type BasicResponse struct {
-	Code      int    `json:"code"`
-	Message   string `json:"message"`
-	Env       string `json:"env"`
-	Zbp       string `json:"zbp"`
-	AppCenter string `json:"appcenter"`
-}
-
-type LoginResponse struct {
-	BasicResponse
-	Data struct {
-		Token string `json:"token"`
-	} `json:"data"`
 }
 
 func NewZblogAPI(urlStr string, userName string, password string) *ZblogAPI {
@@ -122,95 +106,6 @@ func (t *ZblogAPI) retry(f func() error) error {
 		if err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-type ListMemberResponse struct {
-	BasicResponse
-}
-
-func (t *ZblogAPI) listMember() (string, error) {
-	t.lock.Lock()
-	defer t.lock.Unlock()
-	values := t.baseURL.Query()
-	values.Add("mod", "member")
-	values.Add("act", "list")
-	t.baseURL.RawQuery = values.Encode()
-	req, err := http.NewRequest(http.MethodGet, t.baseURL.String(), nil)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", t.token))
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return "", fmt.Errorf("status code error: %d", res.StatusCode)
-	}
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return "", fmt.Errorf("read body error: %w", err)
-	}
-	resData := ListMemberResponse{}
-	if err := json.Unmarshal(body, &resData); err != nil {
-		return "", fmt.Errorf("unmarshal error: %w", err)
-	}
-	if resData.Code != 200 {
-		return "", fmt.Errorf("list member error: %s", resData.Message)
-	}
-	return string(body), nil
-}
-
-type PostArticleResponse struct {
-	BasicResponse
-}
-
-type ArticleRequest struct {
-	ID      int    `json:"ID"`
-	Title   string `json:"Title"`
-	Content string `json:"Content"`
-	Type    int    `json:"Type"`
-}
-
-func (t *ZblogAPI) postArticle(art ArticleRequest) error {
-	t.lock.Lock()
-	defer t.lock.Unlock()
-	values := t.baseURL.Query()
-	values.Add("mod", "post")
-	values.Add("act", "post")
-	t.baseURL.RawQuery = values.Encode()
-	bytesData, err := util.EscapeHTMLMarshual(art)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequest(http.MethodPost, t.baseURL.String(), bytes.NewReader(bytesData))
-	if err != nil {
-		return err
-	}
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", t.token))
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return fmt.Errorf("status code error: %d", res.StatusCode)
-	}
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("read body error: %w", err)
-	}
-	resData := PostArticleResponse{}
-	if err := json.Unmarshal(body, &resData); err != nil {
-		return fmt.Errorf("unmarshal error: %w", err)
-	}
-	if resData.Code != 200 {
-		return fmt.Errorf("post article error: %s", resData.Message)
 	}
 	return nil
 }
