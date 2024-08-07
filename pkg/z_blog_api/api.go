@@ -88,7 +88,7 @@ func (t *ZblogAPI) ListMember() (string, error) {
 	return res, err
 }
 
-func (t *ZblogAPI) PostArticle(art ArticleRequest) error {
+func (t *ZblogAPI) PostArticle(art PostArticleRequest) error {
 	var err error
 	task := func() error {
 		err = t.postArticle(art)
@@ -98,14 +98,13 @@ func (t *ZblogAPI) PostArticle(art ArticleRequest) error {
 	return err
 }
 
-func (t *ZblogAPI) retry(f func() error) error {
-	err := f()
-	if err != nil {
-		t.Login()
-		err = f()
-		if err != nil {
-			return err
-		}
+func (t *ZblogAPI) ListArticle(req ListArticleRequest) ([]Article, error) {
+	res := ListArticleResponse{}
+	var err error
+	task := func() error {
+		res, err = t.listArticle(req)
+		return err
 	}
-	return nil
+	err = t.retry(task)
+	return res.Data.List, err
 }

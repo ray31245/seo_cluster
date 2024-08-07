@@ -34,7 +34,7 @@ func main() {
 			log.Println(err)
 			return
 		}
-		art := zblogapi.ArticleRequest{
+		art := zblogapi.PostArticleRequest{
 			Title:   bodyData.Title,
 			Content: bodyData.Content,
 		}
