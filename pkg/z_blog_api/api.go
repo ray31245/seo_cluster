@@ -133,3 +133,13 @@ func (t *ZblogAPI) GetCountOfArticle(req ListArticleRequest) (int, error) {
 	err = t.retry(task)
 	return int(res.Data.Pagebar.AllCount), err
 }
+
+func (t *ZblogAPI) DeleteArticle(id string) error {
+	var err error
+	task := func() error {
+		err = t.deleteArticle(id)
+		return err
+	}
+	err = t.retry(task)
+	return err
+}
