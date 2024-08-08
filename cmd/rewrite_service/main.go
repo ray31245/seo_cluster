@@ -1,7 +1,6 @@
 package main
 
 import (
-	// "goTools/pkg/util"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -13,10 +12,6 @@ import (
 
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"
-
-	"github.com/gomarkdown/markdown"
-	"github.com/gomarkdown/markdown/html"
-	"github.com/gomarkdown/markdown/parser"
 )
 
 type Article struct {
@@ -80,7 +75,7 @@ func main() {
 			log.Println(err)
 			return
 		}
-		art.Content = string(mdToHTML([]byte(art.Content)))
+		art.Content = string(util.MdToHTML([]byte(art.Content)))
 		log.Printf("%s", art.Content)
 		result, err := util.EscapeHTMLMarshual(art)
 		if err != nil {
@@ -100,45 +95,4 @@ func main() {
 	if err != nil {
 		fmt.Println("Error: ", err)
 	}
-}
-
-func mdToHTML(md []byte) []byte {
-	// create markdown parser with extensions
-	extenstions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
-	p := parser.NewWithExtensions(extenstions)
-	doc := p.Parse(md)
-
-	// create HTML renderer with extensions
-	htmlFlags := html.CommonFlags | html.HrefTargetBlank
-	opts := html.RendererOptions{Flags: htmlFlags}
-	renderer := html.NewRenderer(opts)
-	return markdown.Render(doc, renderer)
-}
-
-func debugPrint(r *http.Request) {
-	fmt.Println("--------------------")
-	// print the request method and the request URL
-	fmt.Println("Request Route: ", r.URL.Path)
-	// the request method is the method
-	fmt.Println("Request Method: ", r.Method)
-	// the request parameter is the parameter
-	fmt.Println("Request Parameter: ", r.URL.Query())
-	// the request body is the body
-	fmt.Println("Request Body: ", r.Body)
-	s, err := io.ReadAll(r.Body)
-	if err != nil {
-		fmt.Println("Error: ", err)
-	} else {
-		// fmt.Println("Request Body: ", string(s))
-		body := make(map[string]interface{})
-		err = json.Unmarshal(s, &body)
-		if err != nil {
-			fmt.Println("Request Body: ", string(s))
-		}
-		for key, value := range body {
-			fmt.Println("Key: ", key, " Value: ", value)
-		}
-	}
-	// the request header is the header
-	fmt.Println("Request Header: ", r.Header)
 }
