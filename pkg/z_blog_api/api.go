@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"sync"
@@ -20,10 +21,18 @@ type ZblogAPI struct {
 }
 
 func NewZblogAPI(urlStr string, userName string, password string) *ZblogAPI {
+	log.Println("following url is used to login")
+	log.Println(urlStr)
+	log.Println("following username is used to login")
+	log.Println(userName)
+	log.Println("following password is used to login")
+	log.Println(password)
 	baseURL, err := url.Parse(urlStr)
 	if err != nil {
 		panic(err)
 	}
+	// add default path of zblog api
+	baseURL = baseURL.JoinPath("zb_system/api.php")
 	return &ZblogAPI{
 		baseURL:  *baseURL,
 		lock:     &sync.Mutex{},
@@ -36,10 +45,11 @@ func NewZblogAPI(urlStr string, userName string, password string) *ZblogAPI {
 func (t *ZblogAPI) Login() error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
-	values := t.baseURL.Query()
+	requestUrl := t.baseURL
+	values := requestUrl.Query()
 	values.Add("mod", "member")
 	values.Add("act", "login")
-	t.baseURL.RawQuery = values.Encode()
+	requestUrl.RawQuery = values.Encode()
 	data := map[string]interface{}{}
 	data["username"] = t.userName
 	data["password"] = t.password
@@ -47,7 +57,7 @@ func (t *ZblogAPI) Login() error {
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(http.MethodPost, t.baseURL.String(), bytes.NewReader(bytesData))
+	req, err := http.NewRequest(http.MethodPost, requestUrl.String(), bytes.NewReader(bytesData))
 	if err != nil {
 		return err
 	}
@@ -74,6 +84,7 @@ func (t *ZblogAPI) Login() error {
 		return fmt.Errorf("login error: %s", loginRes.Message)
 	}
 	t.token = loginRes.Data.Token
+	log.Println("login success")
 	return nil
 }
 
@@ -92,7 +103,10 @@ func (t *ZblogAPI) PostArticle(art PostArticleRequest) error {
 	var err error
 	task := func() error {
 		err = t.postArticle(art)
-		return err
+		if err != nil {
+			return fmt.Errorf("PostArticle: %w", err)
+		}
+		return nil
 	}
 	err = t.retry(task)
 	return err
@@ -107,4 +121,15 @@ func (t *ZblogAPI) ListArticle(req ListArticleRequest) ([]Article, error) {
 	}
 	err = t.retry(task)
 	return res.Data.List, err
+}
+
+func (t *ZblogAPI) GetCountOfArticle(req ListArticleRequest) (int, error) {
+	res := ListArticleResponse{}
+	var err error
+	task := func() error {
+		res, err = t.listArticle(req)
+		return err
+	}
+	err = t.retry(task)
+	return int(res.Data.Pagebar.AllCount), err
 }

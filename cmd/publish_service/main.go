@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 )
 
 type PostArticleRequest struct {
@@ -14,8 +15,22 @@ type PostArticleRequest struct {
 	Content string `json:"Content"`
 }
 
+var Url string
+var UserName string
+var Password string
+
 func main() {
-	api := zblogapi.NewZblogAPI("http://www.test2.com/zb_system/api.php", "bevis", "3cc31cd246149aec68079241e71e98f6")
+	if v, ok := os.LookupEnv("URL"); ok {
+		Url = v
+	}
+	if v, ok := os.LookupEnv("LOGIN_USERNAME"); ok {
+		UserName = v
+	}
+	if v, ok := os.LookupEnv("LOGIN_PASSWORD"); ok {
+		Password = v
+	}
+
+	api := zblogapi.NewZblogAPI(Url, UserName, Password)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("request route: ", r.URL.Path)

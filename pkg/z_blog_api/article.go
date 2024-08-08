@@ -12,23 +12,24 @@ import (
 func (t *ZblogAPI) postArticle(art PostArticleRequest) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
-	values := t.baseURL.Query()
+	requestUrl := t.baseURL
+	values := requestUrl.Query()
 	values.Add("mod", "post")
 	values.Add("act", "post")
-	t.baseURL.RawQuery = values.Encode()
+	requestUrl.RawQuery = values.Encode()
 	bytesData, err := util.EscapeHTMLMarshual(art)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(http.MethodPost, t.baseURL.String(), bytes.NewReader(bytesData))
+	req, err := http.NewRequest(http.MethodPost, requestUrl.String(), bytes.NewReader(bytesData))
 	if err != nil {
-		return err
+		return fmt.Errorf("postArticle: new request error: %w", err)
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", t.token))
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("post article error: %w", err)
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
@@ -51,11 +52,12 @@ func (t *ZblogAPI) postArticle(art PostArticleRequest) error {
 func (t *ZblogAPI) listArticle(ListArticleRequest) (ListArticleResponse, error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
-	values := t.baseURL.Query()
+	requestUrl := t.baseURL
+	values := requestUrl.Query()
 	values.Add("mod", "post")
 	values.Add("act", "list")
-	t.baseURL.RawQuery = values.Encode()
-	req, err := http.NewRequest(http.MethodGet, t.baseURL.String(), nil)
+	requestUrl.RawQuery = values.Encode()
+	req, err := http.NewRequest(http.MethodGet, requestUrl.String(), nil)
 	if err != nil {
 		return ListArticleResponse{}, err
 	}
@@ -63,7 +65,7 @@ func (t *ZblogAPI) listArticle(ListArticleRequest) (ListArticleResponse, error) 
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		return ListArticleResponse{}, err
+		return ListArticleResponse{}, fmt.Errorf("list article error: %w", err)
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {

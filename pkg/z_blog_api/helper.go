@@ -1,12 +1,17 @@
 package zblogapi
 
+import "fmt"
+
 func (t *ZblogAPI) retry(f func() error) error {
 	err := f()
 	if err != nil {
-		t.Login()
+		err = t.Login()
+		if err != nil {
+			return fmt.Errorf("login error: %w", err)
+		}
 		err = f()
 		if err != nil {
-			return err
+			return fmt.Errorf("retry error: %w", err)
 		}
 	}
 	return nil

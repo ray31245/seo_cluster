@@ -10,11 +10,12 @@ import (
 func (t *ZblogAPI) listMember() (string, error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
-	values := t.baseURL.Query()
+	requestUrl := t.baseURL
+	values := requestUrl.Query()
 	values.Add("mod", "member")
 	values.Add("act", "list")
-	t.baseURL.RawQuery = values.Encode()
-	req, err := http.NewRequest(http.MethodGet, t.baseURL.String(), nil)
+	requestUrl.RawQuery = values.Encode()
+	req, err := http.NewRequest(http.MethodGet, requestUrl.String(), nil)
 	if err != nil {
 		return "", err
 	}
