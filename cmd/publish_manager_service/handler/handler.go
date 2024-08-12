@@ -54,7 +54,13 @@ func (p *Handler) AveragePublishHandler(c *gin.Context) {
 	// get zblog api
 	api, ok := p.ZApiPool[cate.SiteID]
 	if !ok {
-		api = zblogapi.NewZblogAPI(cate.Site.URL, cate.Site.UserName, cate.Site.Password)
+		api, err = zblogapi.NewZblogAPI(cate.Site.URL, cate.Site.UserName, cate.Site.Password)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": fmt.Sprintf("error: %v", err),
+			})
+			return
+		}
 		p.ZApiPool[cate.SiteID] = api
 	}
 
@@ -101,8 +107,7 @@ func (p *Handler) AddSiteHandler(c *gin.Context) {
 	}
 
 	// check site is valid
-	api := zblogapi.NewZblogAPI(req.URL, req.UserName, req.Password)
-	err := api.Login()
+	api, err := zblogapi.NewZblogAPI(req.URL, req.UserName, req.Password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", err),

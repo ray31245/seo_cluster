@@ -20,7 +20,7 @@ type ZblogAPI struct {
 	lock *sync.Mutex
 }
 
-func NewZblogAPI(urlStr string, userName string, password string) *ZblogAPI {
+func NewZblogAPI(urlStr string, userName string, password string) (*ZblogAPI, error) {
 	log.Println("following url is used to login")
 	log.Println(urlStr)
 	log.Println("following username is used to login")
@@ -33,13 +33,18 @@ func NewZblogAPI(urlStr string, userName string, password string) *ZblogAPI {
 	}
 	// add default path of zblog api
 	baseURL = baseURL.JoinPath("zb_system/api.php")
-	return &ZblogAPI{
+	res := &ZblogAPI{
 		baseURL:  *baseURL,
 		lock:     &sync.Mutex{},
 		userName: userName,
 		password: password,
 		token:    "YmV2aXN8fHw3ZWYxMmJkNTQ1ZmU5MTRhNTMwYTFlYjMyODUxYTA5YTg4YjE0OGRmYjExN2Y2ODRkZmZmNzM1ZjM2YTcwMmI4MTcyMjQxODY0OA==",
 	}
+	err = res.Login()
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (t *ZblogAPI) Login() error {

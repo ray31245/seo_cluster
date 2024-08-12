@@ -30,7 +30,10 @@ func main() {
 		Password = v
 	}
 
-	api := zblogapi.NewZblogAPI(Url, UserName, Password)
+	api, err := zblogapi.NewZblogAPI(Url, UserName, Password)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("request route: ", r.URL.Path)
@@ -67,7 +70,7 @@ func main() {
 	port := 7259
 	fmt.Printf("Server is running on port %d\n", port)
 	// listen on port specified port
-	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	if err != nil {
 		fmt.Println("Error: ", err)
 	}
