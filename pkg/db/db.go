@@ -109,6 +109,6 @@ func (d *DAO) MarkPublished(categoryID string) error {
 	if err != nil {
 		return err
 	}
-	err = d.db.Debug().Model(&model.Site{}).Where("id = ?", cate.SiteID).Update("lack_count", gorm.Expr("lack_count - 1")).Error
+	err = d.db.Model(&model.Site{}).Where("id = ?", cate.SiteID).Update("lack_count", gorm.Expr("lack_count - 1")).Error
 	return err
 }

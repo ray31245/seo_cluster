@@ -3,13 +3,19 @@ package main
 import (
 	"goTool/cmd/publish_manager_service/handler"
 	"goTool/pkg/db"
+	zblogapi "goTool/pkg/z_blog_api"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	db, err := db.NewDB("publish_manager.db")
+	dsn := "publish_manager.db"
+	if s, ok := os.LookupEnv("DSN"); ok {
+		dsn = s
+	}
+	db, err := db.NewDB(dsn)
 	if err != nil {
 		panic(err)
 	}
@@ -19,8 +25,9 @@ func main() {
 	}
 
 	dao := db.NewDAO()
+	zApi := zblogapi.NewZblogAPI()
 
-	handler := handler.NewHandler(dao)
+	handler := handler.NewHandler(dao, zApi)
 
 	r := gin.Default()
 	r.GET("/ping", func(c *gin.Context) {

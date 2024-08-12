@@ -30,7 +30,7 @@ func NewZblogAPIClient(urlStr string, userName string, password string) (*ZblogA
 	log.Println(password)
 	baseURL, err := url.Parse(urlStr)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	// add default path of zblog api
 	baseURL = baseURL.JoinPath("zb_system/api.php")

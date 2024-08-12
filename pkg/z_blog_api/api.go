@@ -1,55 +1,36 @@
 package zblogapi
 
 import (
-	"goTool/pkg/z_blog_api/model"
+	zInterface "goTool/pkg/z_blog_api/zblog_Interface"
 
 	"github.com/google/uuid"
 )
 
-var (
+type ZblogAPI struct {
 	// TODO: clientPool should be sync.Map
 	// key is site id
-	clientPool map[uuid.UUID]*ZblogAPIClient = make(map[uuid.UUID]*ZblogAPIClient)
-)
-
-type ZblogAPI struct {
-	client *ZblogAPIClient
+	clientPool map[uuid.UUID]*ZblogAPIClient
 }
 
-func NewZblogAPI(siteID uuid.UUID, urlStr string, userName string, password string) (*ZblogAPI, error) {
-	client, ok := clientPool[siteID]
+func NewZblogAPI() *ZblogAPI {
+	return &ZblogAPI{
+		clientPool: make(map[uuid.UUID]*ZblogAPIClient),
+	}
+}
+
+func (t *ZblogAPI) GetClient(siteID uuid.UUID, urlStr string, userName string, password string) (zInterface.ZBlogApiClient, error) {
+	client, ok := t.clientPool[siteID]
+	var err error
 	if !ok {
-		client, err := NewZblogAPIClient(urlStr, userName, password)
+		client, err = NewZblogAPIClient(urlStr, userName, password)
 		if err != nil {
 			return nil, err
 		}
-		clientPool[siteID] = client
+		t.clientPool[siteID] = client
 	}
-	return &ZblogAPI{
-		client: client,
-	}, nil
+	return client, nil
 }
 
-func (t *ZblogAPI) PostArticle(article model.PostArticleRequest) error {
-	return t.client.PostArticle(article)
-}
-
-func (t *ZblogAPI) ListArticle(req model.ListArticleRequest) ([]model.Article, error) {
-	return t.client.ListArticle(req)
-}
-
-func (t *ZblogAPI) GetCountOfArticle(req model.ListArticleRequest) (int, error) {
-	return t.client.GetCountOfArticle(req)
-}
-
-func (t *ZblogAPI) DeleteArticle(id string) error {
-	return t.client.DeleteArticle(id)
-}
-
-func (t *ZblogAPI) ListCategory() ([]model.Category, error) {
-	return t.client.ListCategory()
-}
-
-func (t *ZblogAPI) ListMember() (string, error) {
-	return t.client.ListMember()
+func (t *ZblogAPI) NewClient(urlStr string, userName string, password string) (zInterface.ZBlogApiClient, error) {
+	return NewZblogAPIClient(urlStr, userName, password)
 }
