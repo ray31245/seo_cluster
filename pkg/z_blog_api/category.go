@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (t *ZblogAPI) listCategory() (ListCategoryResponse, error) {
+func (t *ZblogAPIClient) listCategory() (ListCategoryResponse, error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL

@@ -30,7 +30,7 @@ func main() {
 		Password = v
 	}
 
-	api, err := zblogapi.NewZblogAPI(Url, UserName, Password)
+	api, err := zblogapi.NewZblogAPIClient(Url, UserName, Password)
 	if err != nil {
 		log.Fatalln(err)
 	}

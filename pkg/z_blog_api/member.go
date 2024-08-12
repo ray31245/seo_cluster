@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (t *ZblogAPI) listMember() (string, error) {
+func (t *ZblogAPIClient) listMember() (string, error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL

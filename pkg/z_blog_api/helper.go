@@ -2,7 +2,7 @@ package zblogapi
 
 import "fmt"
 
-func (t *ZblogAPI) retry(f func() error) error {
+func (t *ZblogAPIClient) retry(f func() error) error {
 	err := f()
 	if err != nil {
 		err = t.Login()

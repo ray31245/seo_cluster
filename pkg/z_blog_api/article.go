@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func (t *ZblogAPI) postArticle(art PostArticleRequest) error {
+func (t *ZblogAPIClient) postArticle(art PostArticleRequest) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL
@@ -49,7 +49,7 @@ func (t *ZblogAPI) postArticle(art PostArticleRequest) error {
 	return nil
 }
 
-func (t *ZblogAPI) listArticle(ListArticleRequest) (ListArticleResponse, error) {
+func (t *ZblogAPIClient) listArticle(ListArticleRequest) (ListArticleResponse, error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL
@@ -85,7 +85,7 @@ func (t *ZblogAPI) listArticle(ListArticleRequest) (ListArticleResponse, error) 
 	return resData, nil
 }
 
-func (t *ZblogAPI) deleteArticle(id string) error {
+func (t *ZblogAPIClient) deleteArticle(id string) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL
