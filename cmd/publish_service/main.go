@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	zblogapi "goTool/pkg/z_blog_api"
+	zModel "goTool/pkg/z_blog_api/model"
 	"io"
 	"log"
 	"net/http"
@@ -52,7 +53,7 @@ func main() {
 			log.Println(err)
 			return
 		}
-		art := zblogapi.PostArticleRequest{
+		art := zModel.PostArticleRequest{
 			Title:   bodyData.Title,
 			Content: bodyData.Content,
 		}

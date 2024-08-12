@@ -1,6 +1,8 @@
 package zblogapi
 
 import (
+	"goTool/pkg/z_blog_api/model"
+
 	"github.com/google/uuid"
 )
 
@@ -28,15 +30,15 @@ func NewZblogAPI(siteID uuid.UUID, urlStr string, userName string, password stri
 	}, nil
 }
 
-func (t *ZblogAPI) PostArticle(article PostArticleRequest) error {
+func (t *ZblogAPI) PostArticle(article model.PostArticleRequest) error {
 	return t.client.PostArticle(article)
 }
 
-func (t *ZblogAPI) ListArticle(req ListArticleRequest) ([]Article, error) {
+func (t *ZblogAPI) ListArticle(req model.ListArticleRequest) ([]model.Article, error) {
 	return t.client.ListArticle(req)
 }
 
-func (t *ZblogAPI) GetCountOfArticle(req ListArticleRequest) (int, error) {
+func (t *ZblogAPI) GetCountOfArticle(req model.ListArticleRequest) (int, error) {
 	return t.client.GetCountOfArticle(req)
 }
 
@@ -44,7 +46,7 @@ func (t *ZblogAPI) DeleteArticle(id string) error {
 	return t.client.DeleteArticle(id)
 }
 
-func (t *ZblogAPI) ListCategory() ([]Category, error) {
+func (t *ZblogAPI) ListCategory() ([]model.Category, error) {
 	return t.client.ListCategory()
 }
 

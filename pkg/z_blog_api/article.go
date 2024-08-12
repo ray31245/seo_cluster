@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"goTool/pkg/util"
+	"goTool/pkg/z_blog_api/model"
 	"io"
 	"net/http"
 )
 
-func (t *ZblogAPIClient) postArticle(art PostArticleRequest) error {
+func (t *ZblogAPIClient) postArticle(art model.PostArticleRequest) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL
@@ -39,7 +40,7 @@ func (t *ZblogAPIClient) postArticle(art PostArticleRequest) error {
 	if err != nil {
 		return fmt.Errorf("read body error: %w", err)
 	}
-	resData := PostArticleResponse{}
+	resData := model.PostArticleResponse{}
 	if err := json.Unmarshal(body, &resData); err != nil {
 		return fmt.Errorf("unmarshal error: %w", err)
 	}
@@ -49,7 +50,7 @@ func (t *ZblogAPIClient) postArticle(art PostArticleRequest) error {
 	return nil
 }
 
-func (t *ZblogAPIClient) listArticle(ListArticleRequest) (ListArticleResponse, error) {
+func (t *ZblogAPIClient) listArticle(model.ListArticleRequest) (model.ListArticleResponse, error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL
@@ -59,28 +60,28 @@ func (t *ZblogAPIClient) listArticle(ListArticleRequest) (ListArticleResponse, e
 	requestUrl.RawQuery = values.Encode()
 	req, err := http.NewRequest(http.MethodGet, requestUrl.String(), nil)
 	if err != nil {
-		return ListArticleResponse{}, err
+		return model.ListArticleResponse{}, err
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", t.token))
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		return ListArticleResponse{}, fmt.Errorf("list article error: %w", err)
+		return model.ListArticleResponse{}, fmt.Errorf("list article error: %w", err)
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		return ListArticleResponse{}, fmt.Errorf("status code error: %d", res.StatusCode)
+		return model.ListArticleResponse{}, fmt.Errorf("status code error: %d", res.StatusCode)
 	}
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return ListArticleResponse{}, fmt.Errorf("read body error: %w", err)
+		return model.ListArticleResponse{}, fmt.Errorf("read body error: %w", err)
 	}
-	resData := ListArticleResponse{}
+	resData := model.ListArticleResponse{}
 	if err := json.Unmarshal(body, &resData); err != nil {
-		return ListArticleResponse{}, fmt.Errorf("unmarshal error: %w", err)
+		return model.ListArticleResponse{}, fmt.Errorf("unmarshal error: %w", err)
 	}
 	if resData.Code != 200 {
-		return ListArticleResponse{}, fmt.Errorf("list article error: %s", resData.Message)
+		return model.ListArticleResponse{}, fmt.Errorf("list article error: %s", resData.Message)
 	}
 	return resData, nil
 }
@@ -112,7 +113,7 @@ func (t *ZblogAPIClient) deleteArticle(id string) error {
 	if err != nil {
 		return fmt.Errorf("read body error: %w", err)
 	}
-	resData := DeleteArticleResponse{}
+	resData := model.DeleteArticleResponse{}
 	if err := json.Unmarshal(body, &resData); err != nil {
 		return fmt.Errorf("unmarshal error: %w", err)
 	}

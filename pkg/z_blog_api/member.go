@@ -3,6 +3,7 @@ package zblogapi
 import (
 	"encoding/json"
 	"fmt"
+	"goTool/pkg/z_blog_api/model"
 	"io"
 	"net/http"
 )
@@ -33,7 +34,7 @@ func (t *ZblogAPIClient) listMember() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("read body error: %w", err)
 	}
-	resData := ListMemberResponse{}
+	resData := model.ListMemberResponse{}
 	if err := json.Unmarshal(body, &resData); err != nil {
 		return "", fmt.Errorf("unmarshal error: %w", err)
 	}

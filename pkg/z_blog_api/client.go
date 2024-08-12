@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"goTool/pkg/z_blog_api/model"
 	"io"
 	"log"
 	"net/http"
@@ -80,7 +81,7 @@ func (t *ZblogAPIClient) Login() error {
 	if err != nil {
 		return fmt.Errorf("read body error: %w", err)
 	}
-	var loginRes LoginResponse
+	var loginRes model.LoginResponse
 	if err := json.Unmarshal(body, &loginRes); err != nil {
 		return fmt.Errorf("unmarshal error: %w", err)
 	}
@@ -103,7 +104,7 @@ func (t *ZblogAPIClient) ListMember() (string, error) {
 	return res, err
 }
 
-func (t *ZblogAPIClient) PostArticle(art PostArticleRequest) error {
+func (t *ZblogAPIClient) PostArticle(art model.PostArticleRequest) error {
 	var err error
 	task := func() error {
 		err = t.postArticle(art)
@@ -116,8 +117,8 @@ func (t *ZblogAPIClient) PostArticle(art PostArticleRequest) error {
 	return err
 }
 
-func (t *ZblogAPIClient) ListArticle(req ListArticleRequest) ([]Article, error) {
-	res := ListArticleResponse{}
+func (t *ZblogAPIClient) ListArticle(req model.ListArticleRequest) ([]model.Article, error) {
+	res := model.ListArticleResponse{}
 	var err error
 	task := func() error {
 		res, err = t.listArticle(req)
@@ -127,8 +128,8 @@ func (t *ZblogAPIClient) ListArticle(req ListArticleRequest) ([]Article, error) 
 	return res.Data.List, err
 }
 
-func (t *ZblogAPIClient) GetCountOfArticle(req ListArticleRequest) (int, error) {
-	res := ListArticleResponse{}
+func (t *ZblogAPIClient) GetCountOfArticle(req model.ListArticleRequest) (int, error) {
+	res := model.ListArticleResponse{}
 	var err error
 	task := func() error {
 		res, err = t.listArticle(req)
@@ -148,8 +149,8 @@ func (t *ZblogAPIClient) DeleteArticle(id string) error {
 	return err
 }
 
-func (t *ZblogAPIClient) ListCategory() ([]Category, error) {
-	res := ListCategoryResponse{}
+func (t *ZblogAPIClient) ListCategory() ([]model.Category, error) {
+	res := model.ListCategoryResponse{}
 	var err error
 	task := func() error {
 		res, err = t.listCategory()

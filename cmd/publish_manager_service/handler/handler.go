@@ -5,6 +5,7 @@ import (
 	"goTool/pkg/db"
 	"goTool/pkg/db/model"
 	zblogapi "goTool/pkg/z_blog_api"
+	zModel "goTool/pkg/z_blog_api/model"
 	"net/http"
 	"strconv"
 
@@ -37,7 +38,7 @@ func (p *Handler) AveragePublishHandler(c *gin.Context) {
 	}
 
 	// get data body from request
-	article := zblogapi.PostArticleRequest{}
+	article := zModel.PostArticleRequest{}
 	c.ShouldBind(&article)
 
 	// check data

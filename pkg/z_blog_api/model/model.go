@@ -1,4 +1,4 @@
-package zblogapi
+package model
 
 // ----response----
 type BasicResponse struct {

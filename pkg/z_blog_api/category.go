@@ -3,10 +3,11 @@ package zblogapi
 import (
 	"encoding/json"
 	"fmt"
+	"goTool/pkg/z_blog_api/model"
 	"net/http"
 )
 
-func (t *ZblogAPIClient) listCategory() (ListCategoryResponse, error) {
+func (t *ZblogAPIClient) listCategory() (model.ListCategoryResponse, error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL
@@ -16,25 +17,25 @@ func (t *ZblogAPIClient) listCategory() (ListCategoryResponse, error) {
 	requestUrl.RawQuery = values.Encode()
 	req, err := http.NewRequest(http.MethodGet, requestUrl.String(), nil)
 	if err != nil {
-		return ListCategoryResponse{}, err
+		return model.ListCategoryResponse{}, err
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", t.token))
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		return ListCategoryResponse{}, fmt.Errorf("list category error: %w", err)
+		return model.ListCategoryResponse{}, fmt.Errorf("list category error: %w", err)
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		return ListCategoryResponse{}, fmt.Errorf("status code error: %d", res.StatusCode)
+		return model.ListCategoryResponse{}, fmt.Errorf("status code error: %d", res.StatusCode)
 	}
-	var resData ListCategoryResponse
+	var resData model.ListCategoryResponse
 	if err := json.NewDecoder(res.Body).Decode(&resData); err != nil {
-		return ListCategoryResponse{}, fmt.Errorf("unmarshal error: %w", err)
+		return model.ListCategoryResponse{}, fmt.Errorf("unmarshal error: %w", err)
 	}
 
 	if resData.Code != 200 {
-		return ListCategoryResponse{}, fmt.Errorf("list category error: %s", resData.Message)
+		return model.ListCategoryResponse{}, fmt.Errorf("list category error: %s", resData.Message)
 	}
 	return resData, nil
 }
