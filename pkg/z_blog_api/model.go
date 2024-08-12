@@ -41,18 +41,38 @@ type ListArticleResponse struct {
 	BasicResponse
 	Data struct {
 		List    []Article `json:"list"`
-		Pagebar struct {
-			AllCount     uint32 `json:"AllCount"`
-			CurrentCount uint32 `json:"CurrentCount"`
-			PerPageCount uint32 `json:"PerPageCount"`
-			PageAll      uint32 `json:"PageAll"`
-			PageNow      uint32 `json:"PageNow"`
-			PageCurrent  uint32 `json:"PageCurrent"`
-			PageFirst    uint32 `json:"PageFirst"`
-			PageLast     uint32 `json:"PageLast"`
-			PageNext     uint32 `json:"PageNext"`
-			PagePrevious uint32 `json:"PagePrevious"`
-		} `json:"pagebar"`
+		Pagebar Pagebar   `json:"pagebar"`
+	} `json:"data"`
+}
+
+type Pagebar struct {
+	AllCount     uint32 `json:"AllCount"`
+	CurrentCount uint32 `json:"CurrentCount"`
+	PerPageCount uint32 `json:"PerPageCount"`
+	PageAll      uint32 `json:"PageAll"`
+	PageNow      uint32 `json:"PageNow"`
+	PageCurrent  uint32 `json:"PageCurrent"`
+	PageFirst    uint32 `json:"PageFirst"`
+	PageLast     uint32 `json:"PageLast"`
+	PageNext     uint32 `json:"PageNext"`
+	PagePrevious uint32 `json:"PagePrevious"`
+}
+
+type DeleteArticleResponse struct {
+	BasicResponse
+}
+
+type Category struct {
+	ID    string `json:"ID"`
+	Name  string `json:"Name"`
+	Count string `json:"Count"`
+}
+
+type ListCategoryResponse struct {
+	BasicResponse
+	Data struct {
+		List    []Category `json:"list"`
+		Pagebar Pagebar    `json:"pagebar"`
 	} `json:"data"`
 }
 
@@ -62,6 +82,8 @@ type PostArticleRequest struct {
 	ID      uint32 `json:"ID"`
 	Title   string `json:"Title"`
 	Content string `json:"Content"`
+	Intro   string `json:"Intro"`
+	CateID  uint32 `json:"CateID"`
 	Type    uint32 `json:"Type"`
 }
 

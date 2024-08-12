@@ -143,3 +143,14 @@ func (t *ZblogAPI) DeleteArticle(id string) error {
 	err = t.retry(task)
 	return err
 }
+
+func (t *ZblogAPI) ListCategory() ([]Category, error) {
+	res := ListCategoryResponse{}
+	var err error
+	task := func() error {
+		res, err = t.listCategory()
+		return err
+	}
+	err = t.retry(task)
+	return res.Data.List, err
+}
