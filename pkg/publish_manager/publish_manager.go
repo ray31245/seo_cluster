@@ -4,10 +4,15 @@ import (
 	"errors"
 	"fmt"
 	dbInterface "goTool/pkg/db/db_interface"
+	dbErr "goTool/pkg/db/error"
 	dbModel "goTool/pkg/db/model"
 	zModel "goTool/pkg/z_blog_api/model"
 	zInterface "goTool/pkg/z_blog_api/zblog_Interface"
 	"strconv"
+)
+
+var (
+	ErrNoCategoryNeedToBePublished = dbErr.ErrNoCategoryNeedToBePublished
 )
 
 type PublishManager struct {
@@ -63,11 +68,14 @@ func (p PublishManager) AddSite(urlStr string, userName string, password string)
 	return nil
 }
 
-// AveragePublish average publish article to all site
+// AveragePublish average publish article to all site and category
 func (p PublishManager) AveragePublish(article zModel.PostArticleRequest) error {
 	// find first publiched category
 	cate, err := p.dao.FirstPublishedCategory()
 	if err != nil {
+		if errors.Is(err, dbErr.ErrNoCategoryNeedToBePublished) {
+			err = ErrNoCategoryNeedToBePublished
+		}
 		return fmt.Errorf("AveragePublish: %w", err)
 	}
 
@@ -92,5 +100,17 @@ func (p PublishManager) AveragePublish(article zModel.PostArticleRequest) error 
 		return fmt.Errorf("AveragePublish: %w", err)
 	}
 
+	return nil
+}
+
+func (p PublishManager) PrePublish(article zModel.PostArticleRequest) error {
+	cache := dbModel.ArticleCache{
+		Title:   article.Title,
+		Content: article.Content,
+	}
+	err := p.dao.AddArticleToCache(cache)
+	if err != nil {
+		return fmt.Errorf("PrePublish: %w", err)
+	}
 	return nil
 }

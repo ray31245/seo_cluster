@@ -11,4 +11,5 @@ type DAOInterface interface {
 	CreateSite(site *model.Site) (model.Site, error)
 	FirstPublishedCategory() (*model.Category, error)
 	MarkPublished(categoryID string) error
+	AddArticleToCache(article model.ArticleCache) error
 }

@@ -38,6 +38,8 @@ func main() {
 
 	r.POST("/publish", handler.AveragePublishHandler)
 	r.POST("/site", handler.AddSiteHandler)
+	r.POST("/prepublish", handler.PrePublishHandler)
+	r.POST("/flexiblePublish", handler.FlexiblePublishHandler)
 
 	err = r.Run(":7259")
 	if err != nil {

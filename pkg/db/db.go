@@ -1,11 +1,12 @@
 package db
 
 import (
+	"errors"
 	"fmt"
+	dbErr "goTool/pkg/db/error"
 	"goTool/pkg/db/model"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -33,7 +34,11 @@ func (d *DB) Close() error {
 }
 
 func (d *DB) Migrate() error {
-	return d.db.AutoMigrate(&model.Site{}, &model.Category{})
+	return d.db.AutoMigrate(
+		&model.Site{},
+		&model.Category{},
+		&model.ArticleCache{},
+	)
 }
 
 type DAO struct {
@@ -45,7 +50,6 @@ func (d *DB) NewDAO() *DAO {
 }
 
 func (d *DAO) CreateSite(site *model.Site) (model.Site, error) {
-	site.ID = uuid.New()
 	err := d.db.Create(site).Error
 	if err != nil {
 		return model.Site{}, err
@@ -59,7 +63,6 @@ func (d *DAO) CreateSite(site *model.Site) (model.Site, error) {
 }
 
 func (d *DAO) CreateCategory(category *model.Category) error {
-	category.ID = uuid.New()
 	return d.db.Create(category).Error
 }
 
@@ -96,7 +99,13 @@ func (d *DAO) FirstPublishedCategory() (*model.Category, error) {
 	err := d.db.
 		Where("exists (select 1 from sites where sites.id = categories.site_id and sites.lack_count != 0)"). // nolint:lll
 		Preload("Site").Order("last_published").First(&category).Error
-	return &category, err
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = dbErr.ErrNoCategoryNeedToBePublished
+		}
+		return nil, fmt.Errorf("FirstPublishedCategory: %w", err)
+	}
+	return &category, nil
 }
 
 func (d *DAO) MarkPublished(categoryID string) error {
@@ -111,4 +120,8 @@ func (d *DAO) MarkPublished(categoryID string) error {
 	}
 	err = d.db.Model(&model.Site{}).Where("id = ?", cate.SiteID).Update("lack_count", gorm.Expr("lack_count - 1")).Error
 	return err
+}
+
+func (d *DAO) AddArticleToCache(article model.ArticleCache) error {
+	return d.db.Create(&article).Error
 }
