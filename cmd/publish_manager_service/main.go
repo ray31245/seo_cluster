@@ -3,8 +3,8 @@ package main
 import (
 	"goTool/cmd/publish_manager_service/handler"
 	"goTool/pkg/db"
-	publishmanager "goTool/pkg/publish_manager"
 	zblogapi "goTool/pkg/z_blog_api"
+	publishmanager "goTool/service/publish_manager"
 	"net/http"
 	"os"
 
