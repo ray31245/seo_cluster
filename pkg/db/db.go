@@ -62,6 +62,12 @@ func (d *DAO) CreateSite(site *model.Site) (model.Site, error) {
 	return res, nil
 }
 
+func (d *DAO) ListSites() ([]model.Site, error) {
+	var sites []model.Site
+	err := d.db.Find(&sites).Error
+	return sites, err
+}
+
 func (d *DAO) CreateCategory(category *model.Category) error {
 	return d.db.Create(category).Error
 }
@@ -108,6 +114,15 @@ func (d *DAO) FirstPublishedCategory() (*model.Category, error) {
 	return &category, nil
 }
 
+func (d *DAO) LastPublishedCategory() (*model.Category, error) {
+	var category model.Category
+	err := d.db.Preload("Site").Order("last_published desc").First(&category).Error
+	if err != nil {
+		return nil, fmt.Errorf("LastPublishedCategory: %w", err)
+	}
+	return &category, nil
+}
+
 func (d *DAO) MarkPublished(categoryID string) error {
 	cate := &model.Category{}
 	err := d.db.Model(cate).Where("id = ?", categoryID).Update("last_published", time.Now()).Error
@@ -122,6 +137,20 @@ func (d *DAO) MarkPublished(categoryID string) error {
 	return err
 }
 
+func (d *DAO) IncreaseLackCount(siteID string, count int) error {
+	return d.db.Model(&model.Site{}).Where("id = ?", siteID).Update("lack_count", gorm.Expr("lack_count + ?", count)).Error
+}
+
 func (d *DAO) AddArticleToCache(article model.ArticleCache) error {
 	return d.db.Create(&article).Error
+}
+
+func (d *DAO) ListArticleCacheByLimit(limit int) ([]model.ArticleCache, error) {
+	var articles []model.ArticleCache
+	err := d.db.Limit(limit).Order("created_at").Find(&articles).Error
+	return articles, err
+}
+
+func (d *DAO) DeleteArticleCache(id string) error {
+	return d.db.Delete(&model.ArticleCache{}, fmt.Sprintf("id = '%s'", id)).Error
 }

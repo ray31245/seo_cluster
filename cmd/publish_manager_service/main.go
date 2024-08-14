@@ -3,6 +3,7 @@ package main
 import (
 	"goTool/cmd/publish_manager_service/handler"
 	"goTool/pkg/db"
+	publishmanager "goTool/pkg/publish_manager"
 	zblogapi "goTool/pkg/z_blog_api"
 	"net/http"
 	"os"
@@ -26,8 +27,14 @@ func main() {
 
 	dao := db.NewDAO()
 	zApi := zblogapi.NewZblogAPI()
+	publisher := publishmanager.NewPublishManager(zApi, dao)
 
-	handler := handler.NewHandler(dao, zApi)
+	err = publisher.StartRandomCyclePublish()
+	if err != nil {
+		panic(err)
+	}
+
+	handler := handler.NewHandler(dao, zApi, publisher)
 
 	r := gin.Default()
 	r.GET("/ping", func(c *gin.Context) {

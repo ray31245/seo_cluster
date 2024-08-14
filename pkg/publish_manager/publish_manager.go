@@ -8,7 +8,9 @@ import (
 	dbModel "goTool/pkg/db/model"
 	zModel "goTool/pkg/z_blog_api/model"
 	zInterface "goTool/pkg/z_blog_api/zblog_Interface"
+	"log"
 	"strconv"
+	"time"
 )
 
 var (
@@ -111,6 +113,66 @@ func (p PublishManager) PrePublish(article zModel.PostArticleRequest) error {
 	err := p.dao.AddArticleToCache(cache)
 	if err != nil {
 		return fmt.Errorf("PrePublish: %w", err)
+	}
+	return nil
+}
+
+func (p PublishManager) StartRandomCyclePublish() error {
+	lastCategory, err := p.dao.LastPublishedCategory()
+	if err != nil {
+		return fmt.Errorf("StartRandomCyclePublish: %w", err)
+	}
+	if time.Since(lastCategory.LastPublished).Minutes() > maxCycleTime {
+		err = p.cyclePublish()
+		if err != nil {
+			return fmt.Errorf("StartRandomCyclePublish: %w", err)
+		}
+	}
+	go func() {
+		for {
+			time.Sleep(randomTime())
+			err = p.cyclePublish()
+			if err != nil {
+				log.Println(err)
+			}
+		}
+
+	}()
+	return nil
+}
+
+func (p PublishManager) cyclePublish() error {
+	sites, err := p.dao.ListSites()
+	if err != nil {
+		return fmt.Errorf("cyclePublish: %w", err)
+	}
+	totalLackCount := 0
+	for _, site := range sites {
+		if site.LackCount != 0 {
+			continue
+		}
+		lackCount := randomNum()
+		if lackCount > 0 {
+			err := p.dao.IncreaseLackCount(site.ID.String(), int(lackCount))
+			if err != nil {
+				return fmt.Errorf("cyclePublish: %w", err)
+			}
+			totalLackCount += int(lackCount)
+		}
+	}
+	articles, err := p.dao.ListArticleCacheByLimit(totalLackCount)
+	if err != nil {
+		return fmt.Errorf("cyclePublish: %w", err)
+	}
+	for _, article := range articles {
+		err := p.AveragePublish(zModel.PostArticleRequest{Title: article.Title, Content: article.Content})
+		if err != nil {
+			return fmt.Errorf("cyclePublish: %w", err)
+		}
+		err = p.dao.DeleteArticleCache(article.ID.String())
+		if err != nil {
+			return fmt.Errorf("cyclePublish: %w", err)
+		}
 	}
 	return nil
 }

@@ -14,4 +14,5 @@ type ZBlogApi interface {
 type ZBlogApiClient interface {
 	ListCategory() ([]model.Category, error)
 	PostArticle(art model.PostArticleRequest) error
+	GetCountOfArticle(req model.ListArticleRequest) (int, error)
 }

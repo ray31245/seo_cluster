@@ -1,7 +1,6 @@
 package model
 
 import (
-	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,7 +14,6 @@ type Base struct {
 }
 
 func (b *Base) BeforeCreate(tx *gorm.DB) (err error) {
-	log.Println("before create")
 	b.ID = uuid.New()
 	// b.CreatedAt = time.Now()
 	// b.UpdatedAt = time.Now()

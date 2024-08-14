@@ -13,14 +13,16 @@ import (
 )
 
 type Handler struct {
-	DAO  *db.DAO
-	ZApi *zblogapi.ZblogAPI
+	DAO       *db.DAO
+	ZApi      *zblogapi.ZblogAPI
+	publisher *publishmanager.PublishManager
 }
 
-func NewHandler(dao *db.DAO, zApi *zblogapi.ZblogAPI) *Handler {
+func NewHandler(dao *db.DAO, zApi *zblogapi.ZblogAPI, publisher *publishmanager.PublishManager) *Handler {
 	return &Handler{
-		DAO:  dao,
-		ZApi: zApi,
+		DAO:       dao,
+		ZApi:      zApi,
+		publisher: publisher,
 	}
 }
 
@@ -37,8 +39,7 @@ func (p *Handler) AveragePublishHandler(c *gin.Context) {
 		return
 	}
 
-	publishmanager := publishmanager.NewPublishManager(p.ZApi, p.DAO)
-	err := publishmanager.AveragePublish(article)
+	err := p.publisher.AveragePublish(article)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
@@ -64,8 +65,7 @@ func (p *Handler) PrePublishHandler(c *gin.Context) {
 		return
 	}
 
-	publishmanager := publishmanager.NewPublishManager(p.ZApi, p.DAO)
-	err := publishmanager.PrePublish(article)
+	err := p.publisher.PrePublish(article)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
@@ -91,10 +91,9 @@ func (p *Handler) FlexiblePublishHandler(c *gin.Context) {
 		return
 	}
 
-	publisher := publishmanager.NewPublishManager(p.ZApi, p.DAO)
-	err := publisher.AveragePublish(article)
+	err := p.publisher.AveragePublish(article)
 	if errors.Is(err, publishmanager.ErrNoCategoryNeedToBePublished) {
-		err = publisher.PrePublish(article)
+		err = p.publisher.PrePublish(article)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": fmt.Sprintf("error: %v", err),
@@ -133,8 +132,7 @@ func (p *Handler) AddSiteHandler(c *gin.Context) {
 		return
 	}
 
-	pub := publishmanager.NewPublishManager(p.ZApi, p.DAO)
-	err := pub.AddSite(req.URL, req.UserName, req.Password)
+	err := p.publisher.AddSite(req.URL, req.UserName, req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
