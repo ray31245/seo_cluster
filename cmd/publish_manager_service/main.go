@@ -20,21 +20,26 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = db.Migrate()
+
+	siteDAO, err := db.NewSiteDAO()
 	if err != nil {
 		panic(err)
 	}
 
-	dao := db.NewDAO()
+	articleCacheDAO, err := db.NewArticleCacheDAO()
+	if err != nil {
+		panic(err)
+	}
+
 	zApi := zblogapi.NewZblogAPI()
-	publisher := publishmanager.NewPublishManager(zApi, dao)
+	publisher := publishmanager.NewPublishManager(zApi, publishmanager.DAO{ArticleCacheDAOInterface: articleCacheDAO, SiteDAOInterface: siteDAO})
 
 	err = publisher.StartRandomCyclePublish()
 	if err != nil {
 		panic(err)
 	}
 
-	handler := handler.NewHandler(dao, zApi, publisher)
+	handler := handler.NewHandler(publisher)
 
 	r := gin.Default()
 	r.GET("/ping", func(c *gin.Context) {

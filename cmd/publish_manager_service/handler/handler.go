@@ -3,8 +3,6 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"goTool/pkg/db"
-	zblogapi "goTool/pkg/z_blog_api"
 	zModel "goTool/pkg/z_blog_api/model"
 	publishmanager "goTool/service/publish_manager"
 	"net/http"
@@ -13,15 +11,11 @@ import (
 )
 
 type Handler struct {
-	DAO       *db.DAO
-	ZApi      *zblogapi.ZblogAPI
 	publisher *publishmanager.PublishManager
 }
 
-func NewHandler(dao *db.DAO, zApi *zblogapi.ZblogAPI, publisher *publishmanager.PublishManager) *Handler {
+func NewHandler(publisher *publishmanager.PublishManager) *Handler {
 	return &Handler{
-		DAO:       dao,
-		ZApi:      zApi,
 		publisher: publisher,
 	}
 }

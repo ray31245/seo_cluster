@@ -17,12 +17,17 @@ var (
 	ErrNoCategoryNeedToBePublished = dbErr.ErrNoCategoryNeedToBePublished
 )
 
-type PublishManager struct {
-	zApi zInterface.ZBlogApi
-	dao  dbInterface.DAOInterface
+type DAO struct {
+	dbInterface.ArticleCacheDAOInterface
+	dbInterface.SiteDAOInterface
 }
 
-func NewPublishManager(zApi zInterface.ZBlogApi, dao dbInterface.DAOInterface) *PublishManager {
+type PublishManager struct {
+	zApi zInterface.ZBlogApi
+	dao  DAO
+}
+
+func NewPublishManager(zApi zInterface.ZBlogApi, dao DAO) *PublishManager {
 	return &PublishManager{
 		zApi: zApi,
 		dao:  dao,
