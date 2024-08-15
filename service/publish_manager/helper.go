@@ -1,4 +1,4 @@
-package publishmanager
+package publishManager
 
 import (
 	"math/rand"

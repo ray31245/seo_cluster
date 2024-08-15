@@ -4,17 +4,17 @@ import (
 	"errors"
 	"fmt"
 	zModel "goTool/pkg/z_blog_api/model"
-	publishmanager "goTool/service/publish_manager"
+	publishManager "goTool/service/publish_manager"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
-	publisher *publishmanager.PublishManager
+	publisher *publishManager.PublishManager
 }
 
-func NewHandler(publisher *publishmanager.PublishManager) *Handler {
+func NewHandler(publisher *publishManager.PublishManager) *Handler {
 	return &Handler{
 		publisher: publisher,
 	}
@@ -86,7 +86,7 @@ func (p *Handler) FlexiblePublishHandler(c *gin.Context) {
 	}
 
 	err := p.publisher.AveragePublish(article)
-	if errors.Is(err, publishmanager.ErrNoCategoryNeedToBePublished) {
+	if errors.Is(err, publishManager.ErrNoCategoryNeedToBePublished) {
 		err = p.publisher.PrePublish(article)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
