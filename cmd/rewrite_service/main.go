@@ -77,7 +77,7 @@ func main() {
 		}
 		art.Content = string(util.MdToHTML([]byte(art.Content)))
 		log.Printf("%s", art.Content)
-		result, err := util.EscapeHTMLMarshual(art)
+		result, err := util.EscapeHTMLMarshal(art)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)

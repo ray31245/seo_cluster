@@ -41,11 +41,11 @@ type ListArticleResponse struct {
 	BasicResponse
 	Data struct {
 		List    []Article `json:"list"`
-		Pagebar Pagebar   `json:"pagebar"`
+		PageBar PageBar   `json:"pagebar"`
 	} `json:"data"`
 }
 
-type Pagebar struct {
+type PageBar struct {
 	AllCount     uint32 `json:"AllCount"`
 	CurrentCount uint32 `json:"CurrentCount"`
 	PerPageCount uint32 `json:"PerPageCount"`
@@ -72,7 +72,7 @@ type ListCategoryResponse struct {
 	BasicResponse
 	Data struct {
 		List    []Category `json:"list"`
-		Pagebar Pagebar    `json:"pagebar"`
+		PageBar PageBar    `json:"pagebar"`
 	} `json:"data"`
 }
 

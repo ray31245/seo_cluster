@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	zblogapi "goTool/pkg/z_blog_api"
+	zBlogApi "goTool/pkg/z_blog_api"
 	zModel "goTool/pkg/z_blog_api/model"
 	"io"
 	"log"
@@ -31,7 +31,7 @@ func main() {
 		Password = v
 	}
 
-	api, err := zblogapi.NewZblogAPIClient(Url, UserName, Password)
+	api, err := zBlogApi.NewZBlogAPIClient(Url, UserName, Password)
 	if err != nil {
 		log.Fatalln(err)
 	}

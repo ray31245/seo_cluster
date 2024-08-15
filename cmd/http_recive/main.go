@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	// recive the request, any route, any method
+	// receive the request, any route, any method
 	// then print the request method and the request URL
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("--------------------")

@@ -3,7 +3,7 @@ package main
 import (
 	"goTool/cmd/publish_manager_service/handler"
 	"goTool/pkg/db"
-	zblogapi "goTool/pkg/z_blog_api"
+	zBlogApi "goTool/pkg/z_blog_api"
 	publishManager "goTool/service/publish_manager"
 	"net/http"
 	"os"
@@ -31,7 +31,7 @@ func main() {
 		panic(err)
 	}
 
-	zApi := zblogapi.NewZblogAPI()
+	zApi := zBlogApi.NewZBlogAPI()
 	publisher := publishManager.NewPublishManager(zApi, publishManager.DAO{ArticleCacheDAOInterface: articleCacheDAO, SiteDAOInterface: siteDAO})
 
 	err = publisher.StartRandomCyclePublish()

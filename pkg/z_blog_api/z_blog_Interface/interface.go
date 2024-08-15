@@ -1,4 +1,4 @@
-package zinterface
+package zInterface
 
 import (
 	"goTool/pkg/z_blog_api/model"

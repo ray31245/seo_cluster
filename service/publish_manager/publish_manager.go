@@ -7,7 +7,7 @@ import (
 	dbErr "goTool/pkg/db/error"
 	dbModel "goTool/pkg/db/model"
 	zModel "goTool/pkg/z_blog_api/model"
-	zInterface "goTool/pkg/z_blog_api/zblog_Interface"
+	zInterface "goTool/pkg/z_blog_api/z_blog_Interface"
 	"log"
 	"strconv"
 	"time"
@@ -62,7 +62,7 @@ func (p PublishManager) AddSite(urlStr string, userName string, password string)
 			multiErr = errors.Join(multiErr, err)
 			continue
 		}
-		err = p.dao.CreateCategory(&dbModel.Category{SiteID: site.ID, ZblogID: uint32(cateID)})
+		err = p.dao.CreateCategory(&dbModel.Category{SiteID: site.ID, ZBlogID: uint32(cateID)})
 		if err != nil {
 			multiErr = errors.Join(multiErr, err)
 		}
@@ -77,7 +77,7 @@ func (p PublishManager) AddSite(urlStr string, userName string, password string)
 
 // AveragePublish average publish article to all site and category
 func (p PublishManager) AveragePublish(article zModel.PostArticleRequest) error {
-	// find first publiched category
+	// find first published category
 	cate, err := p.dao.FirstPublishedCategory()
 	if err != nil {
 		if errors.Is(err, dbErr.ErrNoCategoryNeedToBePublished) {
@@ -87,7 +87,7 @@ func (p PublishManager) AveragePublish(article zModel.PostArticleRequest) error 
 	}
 
 	// set category id
-	article.CateID = cate.ZblogID
+	article.CateID = cate.ZBlogID
 
 	// get zblog api client
 	client, err := p.zApi.GetClient(cate.SiteID, cate.Site.URL, cate.Site.UserName, cate.Site.Password)

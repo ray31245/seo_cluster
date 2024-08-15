@@ -1,4 +1,4 @@
-package zblogapi
+package zBlogApi
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (t *ZblogAPIClient) listCategory() (model.ListCategoryResponse, error) {
+func (t *ZBlogAPIClient) listCategory() (model.ListCategoryResponse, error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL

@@ -28,7 +28,7 @@ func Test_randomTime(t *testing.T) {
 				total += res
 			}
 			avg := total / time.Duration(count)
-			// vaild avg time is around 864 minutes
+			// valid avg time is around 864 minutes
 			assert.True(avg > 834*time.Minute && avg < 894*time.Minute)
 		})
 	}
@@ -55,7 +55,7 @@ func Test_randomNum(t *testing.T) {
 				total += uint64(res)
 			}
 			var avg float64 = float64(total) * 10 / float64(count)
-			// vaild avg time is around 5
+			// valid avg time is around 5
 			assert.True(avg > 4.5 && avg < 5.5)
 		})
 	}

@@ -1,4 +1,4 @@
-package zblogapi
+package zBlogApi
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-func (t *ZblogAPIClient) postArticle(art model.PostArticleRequest) error {
+func (t *ZBlogAPIClient) postArticle(art model.PostArticleRequest) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL
@@ -18,7 +18,7 @@ func (t *ZblogAPIClient) postArticle(art model.PostArticleRequest) error {
 	values.Add("mod", "post")
 	values.Add("act", "post")
 	requestUrl.RawQuery = values.Encode()
-	bytesData, err := util.EscapeHTMLMarshual(art)
+	bytesData, err := util.EscapeHTMLMarshal(art)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (t *ZblogAPIClient) postArticle(art model.PostArticleRequest) error {
 	return nil
 }
 
-func (t *ZblogAPIClient) listArticle(model.ListArticleRequest) (model.ListArticleResponse, error) {
+func (t *ZBlogAPIClient) listArticle(model.ListArticleRequest) (model.ListArticleResponse, error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL
@@ -86,7 +86,7 @@ func (t *ZblogAPIClient) listArticle(model.ListArticleRequest) (model.ListArticl
 	return resData, nil
 }
 
-func (t *ZblogAPIClient) deleteArticle(id string) error {
+func (t *ZBlogAPIClient) deleteArticle(id string) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL

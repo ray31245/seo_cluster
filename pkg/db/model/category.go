@@ -8,7 +8,7 @@ import (
 
 type Category struct {
 	Base
-	ZblogID       uint32    `json:"zblog_id"`
+	ZBlogID       uint32    `json:"z_blog_id"`
 	SiteID        uuid.UUID `json:"site_id"`
 	Site          Site      `json:"site"`
 	LastPublished time.Time `json:"last_published"`

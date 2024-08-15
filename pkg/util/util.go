@@ -9,7 +9,7 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 )
 
-func EscapeHTMLMarshual(art interface{}) ([]byte, error) {
+func EscapeHTMLMarshal(art interface{}) ([]byte, error) {
 	bf := bytes.NewBuffer([]byte{})
 	jsonEncoder := json.NewEncoder(bf)
 	jsonEncoder.SetEscapeHTML(false)
@@ -22,8 +22,8 @@ func EscapeHTMLMarshual(art interface{}) ([]byte, error) {
 
 func MdToHTML(md []byte) []byte {
 	// create markdown parser with extensions
-	extenstions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
-	p := parser.NewWithExtensions(extenstions)
+	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
+	p := parser.NewWithExtensions(extensions)
 	doc := p.Parse(md)
 
 	// create HTML renderer with extensions

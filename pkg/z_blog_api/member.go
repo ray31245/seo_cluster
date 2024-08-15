@@ -1,4 +1,4 @@
-package zblogapi
+package zBlogApi
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func (t *ZblogAPIClient) listMember() (string, error) {
+func (t *ZBlogAPIClient) listMember() (string, error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL

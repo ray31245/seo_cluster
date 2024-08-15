@@ -1,8 +1,8 @@
-package zblogapi
+package zBlogApi
 
 import "fmt"
 
-func (t *ZblogAPIClient) retry(f func() error) error {
+func (t *ZBlogAPIClient) retry(f func() error) error {
 	err := f()
 	if err != nil {
 		err = t.Login()

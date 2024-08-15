@@ -1,4 +1,4 @@
-package zblogapi
+package zBlogApi
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-type ZblogAPIClient struct {
+type ZBlogAPIClient struct {
 	baseURL  url.URL
 	token    string
 	userName string
@@ -21,7 +21,7 @@ type ZblogAPIClient struct {
 	lock *sync.Mutex
 }
 
-func NewZblogAPIClient(urlStr string, userName string, password string) (*ZblogAPIClient, error) {
+func NewZBlogAPIClient(urlStr string, userName string, password string) (*ZBlogAPIClient, error) {
 	log.Println("following url is used to login")
 	log.Println(urlStr)
 	log.Println("following username is used to login")
@@ -32,9 +32,9 @@ func NewZblogAPIClient(urlStr string, userName string, password string) (*ZblogA
 	if err != nil {
 		return nil, err
 	}
-	// add default path of zblog api
+	// add default path of z-blog api
 	baseURL = baseURL.JoinPath("zb_system/api.php")
-	res := &ZblogAPIClient{
+	res := &ZBlogAPIClient{
 		baseURL:  *baseURL,
 		lock:     &sync.Mutex{},
 		userName: userName,
@@ -47,7 +47,7 @@ func NewZblogAPIClient(urlStr string, userName string, password string) (*ZblogA
 	}
 	return res, nil
 }
-func (t *ZblogAPIClient) Login() error {
+func (t *ZBlogAPIClient) Login() error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	requestUrl := t.baseURL
@@ -93,7 +93,7 @@ func (t *ZblogAPIClient) Login() error {
 	return nil
 }
 
-func (t *ZblogAPIClient) ListMember() (string, error) {
+func (t *ZBlogAPIClient) ListMember() (string, error) {
 	res := ""
 	var err error
 	task := func() error {
@@ -104,7 +104,7 @@ func (t *ZblogAPIClient) ListMember() (string, error) {
 	return res, err
 }
 
-func (t *ZblogAPIClient) PostArticle(art model.PostArticleRequest) error {
+func (t *ZBlogAPIClient) PostArticle(art model.PostArticleRequest) error {
 	var err error
 	task := func() error {
 		err = t.postArticle(art)
@@ -117,7 +117,7 @@ func (t *ZblogAPIClient) PostArticle(art model.PostArticleRequest) error {
 	return err
 }
 
-func (t *ZblogAPIClient) ListArticle(req model.ListArticleRequest) ([]model.Article, error) {
+func (t *ZBlogAPIClient) ListArticle(req model.ListArticleRequest) ([]model.Article, error) {
 	res := model.ListArticleResponse{}
 	var err error
 	task := func() error {
@@ -128,7 +128,7 @@ func (t *ZblogAPIClient) ListArticle(req model.ListArticleRequest) ([]model.Arti
 	return res.Data.List, err
 }
 
-func (t *ZblogAPIClient) GetCountOfArticle(req model.ListArticleRequest) (int, error) {
+func (t *ZBlogAPIClient) GetCountOfArticle(req model.ListArticleRequest) (int, error) {
 	res := model.ListArticleResponse{}
 	var err error
 	task := func() error {
@@ -136,10 +136,10 @@ func (t *ZblogAPIClient) GetCountOfArticle(req model.ListArticleRequest) (int, e
 		return err
 	}
 	err = t.retry(task)
-	return int(res.Data.Pagebar.AllCount), err
+	return int(res.Data.PageBar.AllCount), err
 }
 
-func (t *ZblogAPIClient) DeleteArticle(id string) error {
+func (t *ZBlogAPIClient) DeleteArticle(id string) error {
 	var err error
 	task := func() error {
 		err = t.deleteArticle(id)
@@ -149,7 +149,7 @@ func (t *ZblogAPIClient) DeleteArticle(id string) error {
 	return err
 }
 
-func (t *ZblogAPIClient) ListCategory() ([]model.Category, error) {
+func (t *ZBlogAPIClient) ListCategory() ([]model.Category, error) {
 	res := model.ListCategoryResponse{}
 	var err error
 	task := func() error {

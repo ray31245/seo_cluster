@@ -63,7 +63,7 @@ func (d *SiteDAO) DeleteCategory(categoryID string) error {
 
 func (d *SiteDAO) GetSite(siteID string) (*model.Site, error) {
 	var site model.Site
-	err := d.db.Preload("Categorys").First(&site, siteID).Error
+	err := d.db.Preload("Categories").First(&site, siteID).Error
 	return &site, err
 }
 
@@ -76,7 +76,7 @@ func (d *SiteDAO) GetCategory(categoryID string) (*model.Category, error) {
 func (d *SiteDAO) FirstPublishedCategory() (*model.Category, error) {
 	var category model.Category
 	err := d.db.
-		Where("exists (select 1 from sites where sites.id = categories.site_id and sites.lack_count != 0)"). // nolint:lll
+		Where("exists (select 1 from sites where sites.id = categories.site_id and sites.lack_count != 0)").
 		Preload("Site").Order("last_published").First(&category).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
