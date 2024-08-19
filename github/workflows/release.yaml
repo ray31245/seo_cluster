@@ -19,7 +19,7 @@ jobs:
       id: go
 
     - name: Build
-      run: go build -o publish-manager
+      run: go build -o publish_manager_service cmd/publish_manager_service/main.go
 
     - name: Create Release
       id: create_release
@@ -27,7 +27,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       with:
-        files: myapp.exe
+        files: publish_manager_service
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
         body: |
