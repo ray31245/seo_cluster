@@ -3,9 +3,10 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"net/http"
+
 	zModel "goTool/pkg/z_blog_api/model"
 	publishManager "goTool/service/publish_manager"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,21 +24,31 @@ func NewHandler(publisher *publishManager.PublishManager) *Handler {
 func (p *Handler) AveragePublishHandler(c *gin.Context) {
 	// get data body from request
 	article := zModel.PostArticleRequest{}
-	c.ShouldBind(&article)
+
+	err := c.ShouldBind(&article)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
 
 	// check data
 	if article.Title == "" || article.Content == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
 		})
+
 		return
 	}
 
-	err := p.publisher.AveragePublish(article)
+	err = p.publisher.AveragePublish(c, article)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
+
 		return
 	}
 
@@ -49,21 +60,31 @@ func (p *Handler) AveragePublishHandler(c *gin.Context) {
 func (p *Handler) PrePublishHandler(c *gin.Context) {
 	// get data body from request
 	article := zModel.PostArticleRequest{}
-	c.ShouldBind(&article)
+
+	err := c.ShouldBind(&article)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
 
 	// check data
 	if article.Title == "" || article.Content == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
 		})
+
 		return
 	}
 
-	err := p.publisher.PrePublish(article)
+	err = p.publisher.PrePublish(article)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
+
 		return
 	}
 
@@ -75,31 +96,41 @@ func (p *Handler) PrePublishHandler(c *gin.Context) {
 func (p *Handler) FlexiblePublishHandler(c *gin.Context) {
 	// get data body from request
 	article := zModel.PostArticleRequest{}
-	c.ShouldBind(&article)
+
+	err := c.ShouldBind(&article)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
 
 	// check data
 	if article.Title == "" || article.Content == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
 		})
+
 		return
 	}
 
-	err := p.publisher.AveragePublish(article)
+	err = p.publisher.AveragePublish(c, article)
 	if errors.Is(err, publishManager.ErrNoCategoryNeedToBePublished) {
 		err = p.publisher.PrePublish(article)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": fmt.Sprintf("error: %v", err),
 			})
+
 			return
 		}
 	} else if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
-		return
 
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -116,21 +147,31 @@ type AddSiteRequest struct {
 func (p *Handler) AddSiteHandler(c *gin.Context) {
 	// get data body from request
 	req := AddSiteRequest{}
-	c.ShouldBind(&req)
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
 
 	// check data
 	if req.URL == "" || req.UserName == "" || req.Password == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
 		})
+
 		return
 	}
 
-	err := p.publisher.AddSite(req.URL, req.UserName, req.Password)
+	err = p.publisher.AddSite(c, req.URL, req.UserName, req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
+
 		return
 	}
 

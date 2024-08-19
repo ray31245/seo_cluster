@@ -1,4 +1,4 @@
-package dbInterface
+package dbinterface
 
 import (
 	"goTool/pkg/db/model"

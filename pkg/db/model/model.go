@@ -13,9 +13,9 @@ type Base struct {
 	UpdatedAt time.Time
 }
 
-func (b *Base) BeforeCreate(tx *gorm.DB) (err error) {
+func (b *Base) BeforeCreate(tx *gorm.DB) error { //nolint: revive
 	b.ID = uuid.New()
 	// b.CreatedAt = time.Now()
 	// b.UpdatedAt = time.Now()
-	return
+	return nil
 }

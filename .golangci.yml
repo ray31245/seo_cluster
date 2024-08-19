@@ -1,0 +1,22 @@
+linters:
+  enable-all: true
+  disable:
+    - gci
+    - tagliatelle
+    - tagalign
+    - gofumpt
+    - depguard
+    - exhaustruct
+    - godox
+    - godot
+    - varnamelen
+    - execinquery
+    - gomnd
+    - ireturn
+
+linters-settings:
+  funlen:
+    ignore-comments: true
+    lines: 100
+  lll:
+    line-length: 200

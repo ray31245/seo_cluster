@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+
 	"goTool/pkg/db/model"
 
 	"gorm.io/gorm"
@@ -14,8 +15,9 @@ type ArticleCacheDAO struct {
 func (d *DB) NewArticleCacheDAO() (*ArticleCacheDAO, error) {
 	err := d.db.AutoMigrate(&model.ArticleCache{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("NewArticleCacheDAO: %w", err)
 	}
+
 	return &ArticleCacheDAO{db: d.db}, nil
 }
 
@@ -26,6 +28,7 @@ func (d *ArticleCacheDAO) AddArticleToCache(article model.ArticleCache) error {
 func (d *ArticleCacheDAO) ListArticleCacheByLimit(limit int) ([]model.ArticleCache, error) {
 	var articles []model.ArticleCache
 	err := d.db.Limit(limit).Order("created_at").Find(&articles).Error
+
 	return articles, err
 }
 

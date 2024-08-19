@@ -1,14 +1,17 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	zBlogApi "goTool/pkg/z_blog_api"
-	zModel "goTool/pkg/z_blog_api/model"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"time"
+
+	zBlogApi "goTool/pkg/z_blog_api"
+	zModel "goTool/pkg/z_blog_api/model"
 )
 
 type PostArticleRequest struct {
@@ -16,68 +19,89 @@ type PostArticleRequest struct {
 	Content string `json:"Content"`
 }
 
-var Url string
-var UserName string
-var Password string
+//nolint:gochecknoglobals
+var (
+	URL      string
+	UserName string
+	Password string
+)
+
+const (
+	requestTimeout = 5 * time.Second
+)
 
 func main() {
 	if v, ok := os.LookupEnv("URL"); ok {
-		Url = v
+		URL = v
 	}
+
 	if v, ok := os.LookupEnv("LOGIN_USERNAME"); ok {
 		UserName = v
 	}
+
 	if v, ok := os.LookupEnv("LOGIN_PASSWORD"); ok {
 		Password = v
 	}
 
-	api, err := zBlogApi.NewZBlogAPIClient(Url, UserName, Password)
+	mainCtx := context.TODO()
+
+	api, err := zBlogApi.NewClient(mainCtx, URL, UserName, Password)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	port := 7259
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", port),
+		ReadHeaderTimeout: requestTimeout,
+	}
+
+	server.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("request route: ", r.URL.Path)
+
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("error"))
 			log.Println(err)
+			http.Error(w, "error", http.StatusInternalServerError)
+
 			return
 		}
+
 		bodyData := PostArticleRequest{}
+
 		err = json.Unmarshal(body, &bodyData)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("error"))
 			log.Println(err)
+			http.Error(w, "error", http.StatusBadRequest)
+
 			return
 		}
+
 		art := zModel.PostArticleRequest{
 			Title:   bodyData.Title,
 			Content: bodyData.Content,
 		}
-		err = api.PostArticle(art)
+
+		err = api.PostArticle(mainCtx, art)
 		if err != nil {
 			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("error"))
+			http.Error(w, "error", http.StatusInternalServerError)
+
 			return
 		}
+
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
+
+		_, err = w.Write([]byte("ok"))
+		if err != nil {
+			log.Println(err)
+		}
 	})
 
-	port := 7259
-	fmt.Printf("Server is running on port %d\n", port)
+	log.Printf("Server is running on port %d\n", port)
 	// listen on port specified port
-	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	err = server.ListenAndServe()
 	if err != nil {
-		fmt.Println("Error: ", err)
+		log.Println("Error: ", err)
 	}
-	// members, err := api.ListMember()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// fmt.Println(members)
 }

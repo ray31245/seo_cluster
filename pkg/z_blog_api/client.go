@@ -1,18 +1,18 @@
-package zBlogApi
+package zblogapi
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"goTool/pkg/z_blog_api/model"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"sync"
+
+	"goTool/pkg/z_blog_api/model"
 )
 
-type ZBlogAPIClient struct {
+type Client struct {
 	baseURL  url.URL
 	token    string
 	userName string
@@ -21,141 +21,148 @@ type ZBlogAPIClient struct {
 	lock *sync.Mutex
 }
 
-func NewZBlogAPIClient(urlStr string, userName string, password string) (*ZBlogAPIClient, error) {
+func NewClient(ctx context.Context, urlStr string, userName string, password string) (*Client, error) {
 	log.Println("following url is used to login")
 	log.Println(urlStr)
 	log.Println("following username is used to login")
 	log.Println(userName)
 	log.Println("following password is used to login")
 	log.Println(password)
+
 	baseURL, err := url.Parse(urlStr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse url error: %w", err)
 	}
 	// add default path of z-blog api
 	baseURL = baseURL.JoinPath("zb_system/api.php")
-	res := &ZBlogAPIClient{
+	res := &Client{
 		baseURL:  *baseURL,
 		lock:     &sync.Mutex{},
 		userName: userName,
 		password: password,
 		token:    "YmV2aXN8fHw3ZWYxMmJkNTQ1ZmU5MTRhNTMwYTFlYjMyODUxYTA5YTg4YjE0OGRmYjExN2Y2ODRkZmZmNzM1ZjM2YTcwMmI4MTcyMjQxODY0OA==",
 	}
-	err = res.Login()
+
+	err = res.Login(ctx)
 	if err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }
-func (t *ZBlogAPIClient) Login() error {
-	t.lock.Lock()
-	defer t.lock.Unlock()
-	requestUrl := t.baseURL
-	values := requestUrl.Query()
-	values.Add("mod", "member")
-	values.Add("act", "login")
-	requestUrl.RawQuery = values.Encode()
+
+func (t *Client) Login(ctx context.Context) error {
 	data := map[string]interface{}{}
 	data["username"] = t.userName
 	data["password"] = t.password
+
 	bytesData, err := json.Marshal(data)
 	if err != nil {
-		return err
-	}
-	req, err := http.NewRequest(http.MethodPost, requestUrl.String(), bytes.NewReader(bytesData))
-	if err != nil {
-		return err
-	}
-	// req.Header.Add("Authorization", "Bearer "+t.token)
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return fmt.Errorf("status code error: %d", res.StatusCode)
+		return fmt.Errorf("marshal error: %w", err)
 	}
 
-	body, err := io.ReadAll(res.Body)
+	resBody, err := t.requestWithBlock(ctx, http.MethodPost, map[string]interface{}{"mod": "member", "act": "login"}, bytesData)
 	if err != nil {
-		return fmt.Errorf("read body error: %w", err)
+		return fmt.Errorf("login error: %w", err)
 	}
+
 	var loginRes model.LoginResponse
-	if err := json.Unmarshal(body, &loginRes); err != nil {
+	if err := json.Unmarshal(resBody, &loginRes); err != nil {
 		return fmt.Errorf("unmarshal error: %w", err)
 	}
-	if loginRes.Code != 200 {
-		return fmt.Errorf("login error: %s", loginRes.Message)
-	}
+
 	t.token = loginRes.Data.Token
+
 	log.Println("login success")
+
 	return nil
 }
 
-func (t *ZBlogAPIClient) ListMember() (string, error) {
-	res := ""
+func (t *Client) ListMember(ctx context.Context) (model.ListMemberResponse, error) {
+	res := model.ListMemberResponse{}
+
 	var err error
+
 	task := func() error {
-		res, err = t.listMember()
+		res, err = t.listMember(ctx)
+
 		return err
 	}
-	err = t.retry(task)
+	err = t.retry(ctx, task)
+
 	return res, err
 }
 
-func (t *ZBlogAPIClient) PostArticle(art model.PostArticleRequest) error {
+func (t *Client) PostArticle(ctx context.Context, art model.PostArticleRequest) error {
 	var err error
+
 	task := func() error {
-		err = t.postArticle(art)
+		err = t.postArticle(ctx, art)
 		if err != nil {
 			return fmt.Errorf("PostArticle: %w", err)
 		}
+
 		return nil
 	}
-	err = t.retry(task)
+	err = t.retry(ctx, task)
+
 	return err
 }
 
-func (t *ZBlogAPIClient) ListArticle(req model.ListArticleRequest) ([]model.Article, error) {
+func (t *Client) ListArticle(ctx context.Context, req model.ListArticleRequest) ([]model.Article, error) {
 	res := model.ListArticleResponse{}
+
 	var err error
+
 	task := func() error {
-		res, err = t.listArticle(req)
+		res, err = t.listArticle(ctx, req)
+
 		return err
 	}
-	err = t.retry(task)
+	err = t.retry(ctx, task)
+
 	return res.Data.List, err
 }
 
-func (t *ZBlogAPIClient) GetCountOfArticle(req model.ListArticleRequest) (int, error) {
+func (t *Client) GetCountOfArticle(ctx context.Context, req model.ListArticleRequest) (int, error) {
 	res := model.ListArticleResponse{}
+
 	var err error
+
 	task := func() error {
-		res, err = t.listArticle(req)
+		res, err = t.listArticle(ctx, req)
+
 		return err
 	}
-	err = t.retry(task)
+	err = t.retry(ctx, task)
+
 	return int(res.Data.PageBar.AllCount), err
 }
 
-func (t *ZBlogAPIClient) DeleteArticle(id string) error {
+func (t *Client) DeleteArticle(ctx context.Context, id string) error {
 	var err error
+
 	task := func() error {
-		err = t.deleteArticle(id)
+		err = t.deleteArticle(ctx, id)
+
 		return err
 	}
-	err = t.retry(task)
+	err = t.retry(ctx, task)
+
 	return err
 }
 
-func (t *ZBlogAPIClient) ListCategory() ([]model.Category, error) {
+func (t *Client) ListCategory(ctx context.Context) ([]model.Category, error) {
 	res := model.ListCategoryResponse{}
+
 	var err error
+
 	task := func() error {
-		res, err = t.listCategory()
+		res, err = t.listCategory(ctx)
+
 		return err
 	}
-	err = t.retry(task)
+	err = t.retry(ctx, task)
+
 	return res.Data.List, err
 }

@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -13,15 +15,22 @@ type DB struct {
 func NewDB(dsn string) (*DB, error) {
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("NewDB: %w", err)
 	}
+
 	return &DB{db: db}, nil
 }
 
 func (d *DB) Close() error {
 	db, err := d.db.DB()
 	if err != nil {
-		return err
+		return fmt.Errorf("Close: %w", err)
 	}
-	return db.Close()
+
+	err = db.Close()
+	if err != nil {
+		return fmt.Errorf("Close: %w", err)
+	}
+
+	return nil
 }

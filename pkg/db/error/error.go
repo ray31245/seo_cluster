@@ -1,9 +1,7 @@
-package error
+package dberror
 
 import (
-	"fmt"
+	"errors"
 )
 
-var (
-	ErrNoCategoryNeedToBePublished = fmt.Errorf("no category need to be published")
-)
+var ErrNoCategoryNeedToBePublished = errors.New("no category need to be published")

@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
+	"net/http"
+	"os"
+
 	"goTool/cmd/publish_manager_service/handler"
 	"goTool/pkg/db"
 	zBlogApi "goTool/pkg/z_blog_api"
 	publishManager "goTool/service/publish_manager"
-	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,6 +18,7 @@ func main() {
 	if s, ok := os.LookupEnv("DSN"); ok {
 		dsn = s
 	}
+
 	db, err := db.NewDB(dsn)
 	if err != nil {
 		panic(err)
@@ -31,10 +34,12 @@ func main() {
 		panic(err)
 	}
 
-	zApi := zBlogApi.NewZBlogAPI()
-	publisher := publishManager.NewPublishManager(zApi, publishManager.DAO{ArticleCacheDAOInterface: articleCacheDAO, SiteDAOInterface: siteDAO})
+	zAPI := zBlogApi.NewZBlogAPI()
+	publisher := publishManager.NewPublishManager(zAPI, publishManager.DAO{ArticleCacheDAOInterface: articleCacheDAO, SiteDAOInterface: siteDAO})
 
-	err = publisher.StartRandomCyclePublish()
+	mainCtx := context.TODO()
+
+	err = publisher.StartRandomCyclePublish(mainCtx)
 	if err != nil {
 		panic(err)
 	}

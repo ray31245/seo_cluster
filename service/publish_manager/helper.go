@@ -1,7 +1,8 @@
-package publishManager
+package publishmanager
 
 import (
-	"math/rand"
+	"crypto/rand"
+	"math/big"
 	"time"
 )
 
@@ -14,7 +15,12 @@ const (
 // in minutes.
 // expected average output: 864 minutes
 func randomTime() time.Duration {
-	minutes := rand.Int31n(maxCycleTime-minCycleTime) + minCycleTime
+	nBig, err := rand.Int(rand.Reader, big.NewInt(maxCycleTime-minCycleTime))
+	if err != nil {
+		panic(err)
+	}
+
+	minutes := nBig.Int64() + minCycleTime
 
 	return time.Duration(minutes) * time.Minute
 }
@@ -22,11 +28,21 @@ func randomTime() time.Duration {
 // randomNum returns a random number between 0 and 1.
 // expected average output: 0.5
 func randomNum() int32 {
-	var min int32 = 0
-	var max int32 = 10
-	r := rand.Int31n(max-min) + min
-	if r < 5 {
+	var min int64
+
+	var max int64 = 10
+
+	nBig, err := rand.Int(rand.Reader, big.NewInt(max-min))
+	if err != nil {
+		panic(err)
+	}
+
+	var chance int64 = 5
+
+	r := nBig.Int64()
+	if r < chance {
 		return 1
 	}
+
 	return 0
 }

@@ -3,6 +3,7 @@ package util
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
@@ -13,8 +14,9 @@ func EscapeHTMLMarshal(art interface{}) ([]byte, error) {
 	bf := bytes.NewBuffer([]byte{})
 	jsonEncoder := json.NewEncoder(bf)
 	jsonEncoder.SetEscapeHTML(false)
+
 	if err := jsonEncoder.Encode(art); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("EscapeHTMLMarshal: json encode error: %w", err)
 	}
 
 	return bytes.TrimSuffix(bf.Bytes(), []byte{'\n'}), nil
@@ -30,5 +32,6 @@ func MdToHTML(md []byte) []byte {
 	htmlFlags := html.CommonFlags | html.HrefTargetBlank
 	opts := html.RendererOptions{Flags: htmlFlags}
 	renderer := html.NewRenderer(opts)
+
 	return markdown.Render(doc, renderer)
 }
