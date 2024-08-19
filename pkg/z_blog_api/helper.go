@@ -8,8 +8,8 @@ import (
 	"io"
 	"net/http"
 
-	zBlogErr "goTool/pkg/z_blog_api/error"
-	"goTool/pkg/z_blog_api/model"
+	zBlogErr "github.com/ray31245/seo_cluster/pkg/z_blog_api/error"
+	"github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
 )
 
 func (t *Client) retry(ctx context.Context, f func() error) error {

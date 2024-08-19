@@ -3,7 +3,7 @@ package db
 import (
 	"fmt"
 
-	"goTool/pkg/db/model"
+	"github.com/ray31245/seo_cluster/pkg/db/model"
 
 	"gorm.io/gorm"
 )

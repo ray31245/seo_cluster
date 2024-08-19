@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	dbErr "goTool/pkg/db/error"
-	"goTool/pkg/db/model"
+	dbErr "github.com/ray31245/seo_cluster/pkg/db/error"
+	"github.com/ray31245/seo_cluster/pkg/db/model"
 
 	"gorm.io/gorm"
 )

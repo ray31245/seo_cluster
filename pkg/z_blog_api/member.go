@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"goTool/pkg/z_blog_api/model"
+	"github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
 )
 
 func (t *Client) listMember(ctx context.Context) (model.ListMemberResponse, error) {

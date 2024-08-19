@@ -1,4 +1,4 @@
-module goTool
+module github.com/ray31245/seo_cluster
 
 go 1.22.5
 

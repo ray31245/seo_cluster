@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"goTool/pkg/util"
+	"github.com/ray31245/seo_cluster/pkg/util"
 
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"

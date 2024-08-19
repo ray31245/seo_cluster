@@ -3,7 +3,7 @@ package zinterface
 import (
 	"context"
 
-	"goTool/pkg/z_blog_api/model"
+	"github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
 
 	"github.com/google/uuid"
 )

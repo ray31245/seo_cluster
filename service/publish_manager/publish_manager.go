@@ -8,11 +8,11 @@ import (
 	"strconv"
 	"time"
 
-	dbInterface "goTool/pkg/db/db_interface"
-	dbErr "goTool/pkg/db/error"
-	dbModel "goTool/pkg/db/model"
-	zModel "goTool/pkg/z_blog_api/model"
-	zInterface "goTool/pkg/z_blog_api/z_blog_Interface"
+	dbInterface "github.com/ray31245/seo_cluster/pkg/db/db_interface"
+	dbErr "github.com/ray31245/seo_cluster/pkg/db/error"
+	dbModel "github.com/ray31245/seo_cluster/pkg/db/model"
+	zModel "github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
+	zInterface "github.com/ray31245/seo_cluster/pkg/z_blog_api/z_blog_Interface"
 )
 
 var ErrNoCategoryNeedToBePublished = dbErr.ErrNoCategoryNeedToBePublished

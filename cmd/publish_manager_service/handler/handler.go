@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	zModel "goTool/pkg/z_blog_api/model"
-	publishManager "goTool/service/publish_manager"
+	zModel "github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
+	publishManager "github.com/ray31245/seo_cluster/service/publish_manager"
 
 	"github.com/gin-gonic/gin"
 )

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"goTool/pkg/util"
-	"goTool/pkg/z_blog_api/model"
+	"github.com/ray31245/seo_cluster/pkg/util"
+	"github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
 )
 
 func (t *Client) postArticle(ctx context.Context, art model.PostArticleRequest) error {

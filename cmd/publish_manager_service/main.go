@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"os"
 
-	"goTool/cmd/publish_manager_service/handler"
-	"goTool/pkg/db"
-	zBlogApi "goTool/pkg/z_blog_api"
-	publishManager "goTool/service/publish_manager"
+	"github.com/ray31245/seo_cluster/cmd/publish_manager_service/handler"
+	"github.com/ray31245/seo_cluster/pkg/db"
+	zBlogApi "github.com/ray31245/seo_cluster/pkg/z_blog_api"
+	publishManager "github.com/ray31245/seo_cluster/service/publish_manager"
 
 	"github.com/gin-gonic/gin"
 )

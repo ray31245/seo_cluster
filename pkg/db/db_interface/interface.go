@@ -1,7 +1,7 @@
 package dbinterface
 
 import (
-	"goTool/pkg/db/model"
+	"github.com/ray31245/seo_cluster/pkg/db/model"
 )
 
 type DBInterface interface{}

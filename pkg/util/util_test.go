@@ -1,9 +1,10 @@
 package util_test
 
 import (
+	"reflect"
 	"testing"
 
-	"goTool/pkg/util"
+	"github.com/ray31245/seo_cluster/pkg/util"
 )
 
 func TestEscapeHTMLMarshal(t *testing.T) {
@@ -42,6 +43,38 @@ func TestEscapeHTMLMarshal(t *testing.T) {
 
 			if string(got) != tt.want {
 				t.Errorf("EscapeHTMLMarshal() = %v, want %v", string(got), tt.want)
+			}
+		})
+	}
+}
+
+func TestMdToHTML(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		md []byte
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want []byte
+	}{
+		{
+			name: "test1",
+			args: args{
+				md: []byte("# title"),
+			},
+			want: []byte("<h1 id=\"title\">title</h1>\n"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := util.MdToHTML(tt.args.md); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MdToHTML() = %v, want %v", got, tt.want)
 			}
 		})
 	}

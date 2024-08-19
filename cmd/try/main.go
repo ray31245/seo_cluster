@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	zBlogApi "goTool/pkg/z_blog_api"
-	zModel "goTool/pkg/z_blog_api/model"
+	zBlogApi "github.com/ray31245/seo_cluster/pkg/z_blog_api"
+	zModel "github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
 
 	"github.com/google/uuid"
 )
