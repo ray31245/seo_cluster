@@ -1,4 +1,4 @@
-package zblogapi
+package origin
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
 )
 
-func (t *Client) listCategory(ctx context.Context) (model.ListCategoryResponse, error) {
-	resBody, err := t.requestWithBlock(ctx, http.MethodGet, map[string]interface{}{"mod": "category", "act": "list"}, nil)
+func ListCategory(ctx context.Context, baseURL string, token string) (model.ListCategoryResponse, error) {
+	resBody, err := doRequest(ctx, baseURL, http.MethodGet, token, map[string]interface{}{"mod": "category", "act": "list"}, nil)
 	if err != nil {
 		return model.ListCategoryResponse{}, fmt.Errorf("list category error: %w", err)
 	}
