@@ -15,7 +15,7 @@ import (
 	zInterface "github.com/ray31245/seo_cluster/pkg/z_blog_api/z_blog_Interface"
 )
 
-var ErrNoCategoryNeedToBePublished = dbErr.ErrNoCategoryNeedToBePublished
+var ErrNoCategoryNeedToBePublished = errors.New("no category need to be published")
 
 type DAO struct {
 	dbInterface.ArticleCacheDAOInterface
@@ -83,8 +83,8 @@ func (p PublishManager) AveragePublish(ctx context.Context, article zModel.PostA
 	// find first published category
 	cate, err := p.dao.FirstPublishedCategory()
 	if err != nil {
-		if errors.Is(err, dbErr.ErrNoCategoryNeedToBePublished) {
-			err = ErrNoCategoryNeedToBePublished
+		if dbErr.IsNotfoundErr(err) {
+			err = errors.Join(ErrNoCategoryNeedToBePublished, err)
 		}
 
 		return fmt.Errorf("AveragePublish: %w", err)
@@ -130,15 +130,15 @@ func (p PublishManager) PrePublish(article zModel.PostArticleRequest) error {
 
 func (p PublishManager) StartRandomCyclePublish(ctx context.Context) error {
 	lastCategory, err := p.dao.LastPublishedCategory()
-	if err != nil {
-		return fmt.Errorf("StartRandomCyclePublish: %w", err)
-	}
-
-	if time.Since(lastCategory.LastPublished).Minutes() > maxCycleTime {
-		err = p.cyclePublish(ctx)
-		if err != nil {
-			return fmt.Errorf("StartRandomCyclePublish: %w", err)
+	if err == nil {
+		if time.Since(lastCategory.LastPublished).Minutes() > maxCycleTime {
+			err = p.cyclePublish(ctx)
+			if err != nil {
+				return fmt.Errorf("StartRandomCyclePublish: %w", err)
+			}
 		}
+	} else if !dbErr.IsNotfoundErr(err) {
+		return fmt.Errorf("StartRandomCyclePublish: %w", err)
 	}
 
 	go func() {

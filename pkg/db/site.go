@@ -1,11 +1,9 @@
 package db
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
-	dbErr "github.com/ray31245/seo_cluster/pkg/db/error"
 	"github.com/ray31245/seo_cluster/pkg/db/model"
 
 	"gorm.io/gorm"
@@ -88,10 +86,6 @@ func (d *SiteDAO) FirstPublishedCategory() (*model.Category, error) {
 		Where("exists (select 1 from sites where sites.id = categories.site_id and sites.lack_count != 0)").
 		Preload("Site").Order("last_published").First(&category).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			err = dbErr.ErrNoCategoryNeedToBePublished
-		}
-
 		return nil, fmt.Errorf("FirstPublishedCategory: %w", err)
 	}
 

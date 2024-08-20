@@ -2,6 +2,8 @@ package dberror
 
 import (
 	"errors"
+
+	"gorm.io/gorm"
 )
 
-var ErrNoCategoryNeedToBePublished = errors.New("no category need to be published")
+func IsNotfoundErr(err error) bool { return errors.Is(err, gorm.ErrRecordNotFound) }
