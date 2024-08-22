@@ -2,7 +2,10 @@ package zblogapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	zBlogErr "github.com/ray31245/seo_cluster/pkg/z_blog_api/error"
 )
 
 func (t *Client) retry(ctx context.Context, f func() error) error {
@@ -10,7 +13,7 @@ func (t *Client) retry(ctx context.Context, f func() error) error {
 	defer t.lock.Unlock()
 
 	err := f()
-	if err != nil {
+	if errors.Is(err, zBlogErr.ErrHTTPUnauthorized) {
 		err = t.Login(ctx)
 		if err != nil {
 			return fmt.Errorf("login error: %w", err)
@@ -20,6 +23,8 @@ func (t *Client) retry(ctx context.Context, f func() error) error {
 		if err != nil {
 			return fmt.Errorf("retry error: %w", err)
 		}
+	} else if err != nil {
+		return fmt.Errorf("retry error: %w", err)
 	}
 
 	return nil
