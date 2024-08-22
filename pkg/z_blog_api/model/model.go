@@ -18,6 +18,15 @@ type LoginResponse struct {
 
 type ListMemberResponse struct {
 	BasicResponse
+	Data Data[Member] `json:"data"`
+}
+
+type Member struct {
+	ID     string `json:"ID"`
+	Level  string `json:"Level"`
+	Status string `json:"Status"`
+	Name   string `json:"Name"`
+	Email  string `json:"Email"`
 }
 
 type Article struct {
@@ -39,10 +48,7 @@ type PostArticleResponse struct {
 
 type ListArticleResponse struct {
 	BasicResponse
-	Data struct {
-		List    []Article `json:"list"`
-		PageBar PageBar   `json:"pagebar"`
-	} `json:"data"`
+	Data Data[Article] `json:"data"`
 }
 
 type PageBar struct {
@@ -70,10 +76,12 @@ type Category struct {
 
 type ListCategoryResponse struct {
 	BasicResponse
-	Data struct {
-		List    []Category `json:"list"`
-		PageBar PageBar    `json:"pagebar"`
-	} `json:"data"`
+	Data Data[Category] `json:"data"`
+}
+
+type Data[E any] struct {
+	List    []E     `json:"list"`
+	PageBar PageBar `json:"pagebar"`
 }
 
 // ----request----

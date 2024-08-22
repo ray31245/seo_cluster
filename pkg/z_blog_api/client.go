@@ -56,19 +56,22 @@ func (t *Client) Login(ctx context.Context) error {
 	return nil
 }
 
-func (t *Client) ListMember(ctx context.Context) (model.ListMemberResponse, error) {
+func (t *Client) ListMember(ctx context.Context) ([]model.Member, error) {
 	res := model.ListMemberResponse{}
 
 	var err error
 
 	task := func() error {
 		res, err = origin.ListMember(ctx, t.baseURL, t.token)
+		if err != nil {
+			return fmt.Errorf("ListMember: %w", err)
+		}
 
-		return err
+		return nil
 	}
 	err = t.retry(ctx, task)
 
-	return res, err
+	return res.Data.List, err
 }
 
 func (t *Client) PostArticle(ctx context.Context, art model.PostArticleRequest) error {
@@ -94,8 +97,11 @@ func (t *Client) ListArticle(ctx context.Context, req model.ListArticleRequest) 
 
 	task := func() error {
 		res, err = origin.ListArticle(ctx, t.baseURL, t.token, req)
+		if err != nil {
+			return fmt.Errorf("ListArticle: %w", err)
+		}
 
-		return err
+		return nil
 	}
 	err = t.retry(ctx, task)
 
@@ -109,8 +115,11 @@ func (t *Client) GetCountOfArticle(ctx context.Context, req model.ListArticleReq
 
 	task := func() error {
 		res, err = origin.ListArticle(ctx, t.baseURL, t.token, req)
+		if err != nil {
+			return fmt.Errorf("ListArticle: %w", err)
+		}
 
-		return err
+		return nil
 	}
 	err = t.retry(ctx, task)
 
@@ -122,8 +131,11 @@ func (t *Client) DeleteArticle(ctx context.Context, id string) error {
 
 	task := func() error {
 		err = origin.DeleteArticle(ctx, t.baseURL, t.token, id)
+		if err != nil {
+			return fmt.Errorf("DeleteArticle: %w", err)
+		}
 
-		return err
+		return nil
 	}
 	err = t.retry(ctx, task)
 
@@ -137,8 +149,11 @@ func (t *Client) ListCategory(ctx context.Context) ([]model.Category, error) {
 
 	task := func() error {
 		res, err = origin.ListCategory(ctx, t.baseURL, t.token)
+		if err != nil {
+			return fmt.Errorf("ListCategory: %w", err)
+		}
 
-		return err
+		return nil
 	}
 	err = t.retry(ctx, task)
 

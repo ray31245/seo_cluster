@@ -14,6 +14,12 @@ linters:
     - gomnd
     - ireturn
 
+issues:
+  exclude-rules:
+    - path: '(.+)mock_test\.go'
+      linters:
+        - gochecknoglobals
+
 linters-settings:
   funlen:
     ignore-comments: true
