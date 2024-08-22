@@ -13,6 +13,11 @@ var (
 	ErrHTTPUnauthorized    = fmt.Errorf("%w: unauthorized", ErrHTTPStatusCodeError)
 	ErrHTTPForbidden       = fmt.Errorf("%w: forbidden", ErrHTTPStatusCodeError)
 	ErrHTTPNotFound        = fmt.Errorf("%w: not found", ErrHTTPStatusCodeError)
+	ErrIllegalAccess       = fmt.Errorf("%w: illegal access", ErrHTTPStatusCodeError)
+)
+
+const (
+	StatusIllegalAccess = 419 // this is not a standard http status code, but it is defined by z-blog
 )
 
 func NewHTTPStatusCodeError(statusCode int) error {
@@ -32,6 +37,8 @@ func NewHTTPStatusCodeError(statusCode int) error {
 		return ErrHTTPNotFound
 	case http.StatusInternalServerError:
 		return ErrHTTPInternal
+	case StatusIllegalAccess:
+		return ErrIllegalAccess
 	default:
 		return fmt.Errorf("%w: %d", ErrHTTPStatusCodeError, statusCode)
 	}
