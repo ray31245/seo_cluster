@@ -51,8 +51,8 @@ func fullRouteTable() routeTable {
 		},
 		"post": map[string]http.HandlerFunc{
 			"post":   postArticleHandler,
-			"list":   ListArticleHandler,
-			"delete": DeleteArticleHandler,
+			"list":   listArticleHandler,
+			"delete": deleteArticleHandler,
 		},
 		"category": map[string]http.HandlerFunc{
 			"list": ListCategoryHandler,
@@ -79,37 +79,46 @@ func newMockFaultServer(mod, act string) *httptest.Server {
 	return newMockServer(rt)
 }
 
-var listMemberHandler = func(w http.ResponseWriter, r *http.Request) {
+func validator(w http.ResponseWriter, r *http.Request, method, paramMod, paramAct string) bool {
 	// assert route path is correct
 	if r.URL.Path != "/"+origin.APIPath {
 		http.Error(w, `{"code":404,"message":"not found"}`, http.StatusNotFound)
 
-		return
+		return false
 	}
 
 	if r.Header.Get("Authorization") != "Bearer "+zAPI.TestToken {
 		http.Error(w, `{"code":401,"message":"unauthorized"}`, http.StatusUnauthorized)
 
-		return
+		return false
 	}
 
 	// assert method is correct
-	if r.Method != http.MethodGet {
+	if r.Method != method {
 		http.Error(w, `{"code":405,"message":"method not allowed"}`, http.StatusMethodNotAllowed)
 
-		return
+		return false
 	}
 
 	// assert parameter is correct
-	if r.URL.Query().Get("act") != "list" {
+	if r.URL.Query().Get("act") != paramAct {
 		http.Error(w, `{"code":419,"message":"illegal access"}`, zBlogErr.StatusIllegalAccess)
 
-		return
+		return false
 	}
 
-	if r.URL.Query().Get("mod") != "member" {
+	if r.URL.Query().Get("mod") != paramMod {
 		http.Error(w, `{"code":419,"message":"illegal access"}`, zBlogErr.StatusIllegalAccess)
 
+		return false
+	}
+
+	return true
+}
+
+var listMemberHandler = func(w http.ResponseWriter, r *http.Request) {
+	ok := validator(w, r, http.MethodGet, origin.ModMember, origin.ActList)
+	if !ok {
 		return
 	}
 
@@ -138,36 +147,8 @@ var listMemberHandler = func(w http.ResponseWriter, r *http.Request) {
 }
 
 var postArticleHandler = func(w http.ResponseWriter, r *http.Request) {
-	// assert route path is correct
-	if r.URL.Path != "/"+origin.APIPath {
-		http.Error(w, `{"code":404,"message":"not found"}`, http.StatusNotFound)
-
-		return
-	}
-
-	if r.Header.Get("Authorization") != "Bearer "+zAPI.TestToken {
-		http.Error(w, `{"code":401,"message":"unauthorized"}`, http.StatusUnauthorized)
-
-		return
-	}
-
-	// assert method is correct
-	if r.Method != http.MethodPost {
-		http.Error(w, `{"code":405,"message":"method not allowed"}`, http.StatusMethodNotAllowed)
-
-		return
-	}
-
-	// assert parameter is correct
-	if r.URL.Query().Get("act") != "post" {
-		http.Error(w, `{"code":419,"message":"illegal access"}`, zBlogErr.StatusIllegalAccess)
-
-		return
-	}
-
-	if r.URL.Query().Get("mod") != "post" {
-		http.Error(w, `{"code":419,"message":"illegal access"}`, zBlogErr.StatusIllegalAccess)
-
+	ok := validator(w, r, http.MethodPost, origin.ModPost, origin.ActPost)
+	if !ok {
 		return
 	}
 
@@ -186,39 +167,12 @@ var postArticleHandler = func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-var ListArticleHandler = func(w http.ResponseWriter, r *http.Request) {
-	// assert route path is correct
-	if r.URL.Path != "/"+origin.APIPath {
-		http.Error(w, `{"code":404,"message":"not found"}`, http.StatusNotFound)
-
+var listArticleHandler = func(w http.ResponseWriter, r *http.Request) {
+	ok := validator(w, r, http.MethodGet, origin.ModPost, origin.ActList)
+	if !ok {
 		return
 	}
 
-	if r.Header.Get("Authorization") != "Bearer "+zAPI.TestToken {
-		http.Error(w, `{"code":401,"message":"unauthorized"}`, http.StatusUnauthorized)
-
-		return
-	}
-
-	// assert method is correct
-	if r.Method != http.MethodGet {
-		http.Error(w, `{"code":405,"message":"method not allowed"}`, http.StatusMethodNotAllowed)
-
-		return
-	}
-
-	// assert parameter is correct
-	if r.URL.Query().Get("act") != "list" {
-		http.Error(w, `{"code":419,"message":"illegal access"}`, zBlogErr.StatusIllegalAccess)
-
-		return
-	}
-
-	if r.URL.Query().Get("mod") != "post" {
-		http.Error(w, `{"code":419,"message":"illegal access"}`, zBlogErr.StatusIllegalAccess)
-
-		return
-	}
 	cateID := r.URL.Query().Get("cate_id")
 	intCateID, err := strconv.Atoi(cateID)
 	if err != nil {
@@ -266,37 +220,9 @@ var ListArticleHandler = func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-var DeleteArticleHandler = func(w http.ResponseWriter, r *http.Request) {
-	// assert route path is correct
-	if r.URL.Path != "/"+origin.APIPath {
-		http.Error(w, `{"code":404,"message":"not found"}`, http.StatusNotFound)
-
-		return
-	}
-
-	if r.Header.Get("Authorization") != "Bearer "+zAPI.TestToken {
-		http.Error(w, `{"code":401,"message":"unauthorized"}`, http.StatusUnauthorized)
-
-		return
-	}
-
-	// assert method is correct
-	if r.Method != http.MethodGet {
-		http.Error(w, `{"code":405,"message":"method not allowed"}`, http.StatusMethodNotAllowed)
-
-		return
-	}
-
-	// assert parameter is correct
-	if r.URL.Query().Get("act") != "delete" {
-		http.Error(w, `{"code":419,"message":"illegal access"}`, zBlogErr.StatusIllegalAccess)
-
-		return
-	}
-
-	if r.URL.Query().Get("mod") != "post" {
-		http.Error(w, `{"code":419,"message":"illegal access"}`, zBlogErr.StatusIllegalAccess)
-
+var deleteArticleHandler = func(w http.ResponseWriter, r *http.Request) {
+	ok := validator(w, r, http.MethodGet, origin.ModPost, origin.ActDelete)
+	if !ok {
 		return
 	}
 
@@ -316,36 +242,8 @@ var DeleteArticleHandler = func(w http.ResponseWriter, r *http.Request) {
 }
 
 var ListCategoryHandler = func(w http.ResponseWriter, r *http.Request) {
-	// assert route path is correct
-	if r.URL.Path != "/"+origin.APIPath {
-		http.Error(w, `{"code":404,"message":"not found"}`, http.StatusNotFound)
-
-		return
-	}
-
-	if r.Header.Get("Authorization") != "Bearer "+zAPI.TestToken {
-		http.Error(w, `{"code":401,"message":"unauthorized"}`, http.StatusUnauthorized)
-
-		return
-	}
-
-	// assert method is correct
-	if r.Method != http.MethodGet {
-		http.Error(w, `{"code":405,"message":"method not allowed"}`, http.StatusMethodNotAllowed)
-
-		return
-	}
-
-	// assert parameter is correct
-	if r.URL.Query().Get("act") != "list" {
-		http.Error(w, `{"code":419,"message":"illegal access"}`, zBlogErr.StatusIllegalAccess)
-
-		return
-	}
-
-	if r.URL.Query().Get("mod") != "category" {
-		http.Error(w, `{"code":419,"message":"illegal access"}`, zBlogErr.StatusIllegalAccess)
-
+	ok := validator(w, r, http.MethodGet, origin.ModCategory, origin.ActList)
+	if !ok {
 		return
 	}
 

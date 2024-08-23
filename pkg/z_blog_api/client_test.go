@@ -9,6 +9,7 @@ import (
 	zAPI "github.com/ray31245/seo_cluster/pkg/z_blog_api"
 	zBlogErr "github.com/ray31245/seo_cluster/pkg/z_blog_api/error"
 	"github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
+	"github.com/ray31245/seo_cluster/pkg/z_blog_api/origin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +18,7 @@ func TestClient_ListMember(t *testing.T) {
 	t.Parallel()
 
 	srv := newFullMockServer()
-	faultSrv := newMockFaultServer("member", "list")
+	faultSrv := newMockFaultServer(origin.ModMember, origin.ActList)
 
 	t.Cleanup(func() {
 		srv.Close()
@@ -94,7 +95,7 @@ func TestClient_PostArticle(t *testing.T) {
 	t.Parallel()
 
 	srv := newFullMockServer()
-	faultSrv := newMockFaultServer("post", "post")
+	faultSrv := newMockFaultServer(origin.ModPost, origin.ActPost)
 
 	t.Cleanup(func() {
 		srv.Close()
@@ -165,7 +166,7 @@ func TestClient_ListArticle(t *testing.T) {
 	t.Parallel()
 
 	srv := newFullMockServer()
-	faultSrv := newMockFaultServer("post", "list")
+	faultSrv := newMockFaultServer(origin.ModPost, origin.ActList)
 
 	t.Cleanup(func() {
 		srv.Close()
@@ -259,7 +260,7 @@ func TestClient_GetCountOfArticle(t *testing.T) {
 	t.Parallel()
 
 	srv := newFullMockServer()
-	faultSrv := newMockFaultServer("post", "list")
+	faultSrv := newMockFaultServer(origin.ModPost, origin.ActList)
 
 	t.Cleanup(func() {
 		srv.Close()
@@ -339,7 +340,7 @@ func TestClient_DeleteArticle(t *testing.T) {
 	t.Parallel()
 
 	srv := newFullMockServer()
-	faultSrv := newMockFaultServer("post", "delete")
+	faultSrv := newMockFaultServer(origin.ModPost, origin.ActDelete)
 
 	t.Cleanup(func() {
 		srv.Close()
@@ -411,7 +412,7 @@ func TestClient_ListCategory(t *testing.T) {
 	t.Parallel()
 
 	srv := newFullMockServer()
-	faultSrv := newMockFaultServer("category", "list")
+	faultSrv := newMockFaultServer(origin.ModCategory, origin.ActList)
 
 	t.Cleanup(func() {
 		srv.Close()

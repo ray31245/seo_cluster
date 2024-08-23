@@ -10,7 +10,7 @@ import (
 )
 
 func ListCategory(ctx context.Context, baseURL string, token string) (model.ListCategoryResponse, error) {
-	resBody, err := doRequest(ctx, baseURL, http.MethodGet, token, map[string]interface{}{"mod": "category", "act": "list"}, nil)
+	resBody, err := doRequest(ctx, baseURL, http.MethodGet, token, map[string]interface{}{ParamMod: ModCategory, ParamAct: ActList}, nil)
 	if err != nil {
 		return model.ListCategoryResponse{}, fmt.Errorf("list category error: %w", err)
 	}

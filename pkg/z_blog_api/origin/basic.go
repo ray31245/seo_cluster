@@ -13,13 +13,29 @@ import (
 	"github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
 )
 
+const (
+	APIPath = "zb_system/api.php"
+
+	ModMember   = "member"
+	ModPost     = "post"
+	ModCategory = "category"
+
+	ActList   = "list"
+	ActLogin  = "login"
+	ActPost   = "post"
+	ActDelete = "delete"
+
+	ParamMod = "mod"
+	ParamAct = "act"
+)
+
 func doRequest(ctx context.Context, baseURL string, method string, token string, parameter map[string]interface{}, body []byte) ([]byte, error) {
 	reqURL, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("parse url error: %w", err)
 	}
 
-	reqURL = reqURL.JoinPath("zb_system/api.php")
+	reqURL = reqURL.JoinPath(APIPath)
 
 	values := reqURL.Query()
 	for k, v := range parameter {

@@ -16,7 +16,7 @@ func PostArticle(ctx context.Context, baseURL string, token string, art model.Po
 		return fmt.Errorf("marshal error: %w", err)
 	}
 
-	resBody, err := doRequest(ctx, baseURL, http.MethodPost, token, map[string]interface{}{"mod": "post", "act": "post"}, bytesData)
+	resBody, err := doRequest(ctx, baseURL, http.MethodPost, token, map[string]interface{}{ParamMod: ModPost, ParamAct: ActPost}, bytesData)
 	if err != nil {
 		return fmt.Errorf("post article error: %w", err)
 	}
@@ -42,8 +42,8 @@ func ListArticle(ctx context.Context, baseURL string, token string, req model.Li
 		return model.ListArticleResponse{}, fmt.Errorf("unmarshal error: %w", err)
 	}
 
-	paramsMap["mod"] = "post"
-	paramsMap["act"] = "list"
+	paramsMap[ParamMod] = ModPost
+	paramsMap[ParamAct] = ActList
 
 	resBody, err := doRequest(ctx, baseURL, http.MethodGet, token, paramsMap, nil)
 	if err != nil {

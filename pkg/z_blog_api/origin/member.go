@@ -19,7 +19,7 @@ func Login(ctx context.Context, baseURL string, token string, userName string, p
 		return model.LoginResponse{}, fmt.Errorf("marshal error: %w", err)
 	}
 
-	resBody, err := doRequest(ctx, baseURL, http.MethodPost, token, map[string]interface{}{"mod": "member", "act": "login"}, bytesData)
+	resBody, err := doRequest(ctx, baseURL, http.MethodPost, token, map[string]interface{}{ParamMod: ModMember, ParamAct: ActLogin}, bytesData)
 	if err != nil {
 		return model.LoginResponse{}, fmt.Errorf("login error: %w", err)
 	}
@@ -33,7 +33,7 @@ func Login(ctx context.Context, baseURL string, token string, userName string, p
 }
 
 func ListMember(ctx context.Context, baseURL string, token string) (model.ListMemberResponse, error) {
-	resBody, err := doRequest(ctx, baseURL, http.MethodGet, token, map[string]interface{}{"mod": "member", "act": "list"}, nil)
+	resBody, err := doRequest(ctx, baseURL, http.MethodGet, token, map[string]interface{}{ParamMod: ModMember, ParamAct: ActList}, nil)
 	if err != nil {
 		return model.ListMemberResponse{}, fmt.Errorf("list member error: %w", err)
 	}
