@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
@@ -34,4 +35,20 @@ func MdToHTML(md []byte) []byte {
 	renderer := html.NewRenderer(opts)
 
 	return markdown.Render(doc, renderer)
+}
+
+type UnixTime struct {
+	time.Time
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (t *UnixTime) UnmarshalJSON(data []byte) error {
+	var timestamp int64
+	if err := json.Unmarshal(data, &timestamp); err != nil {
+		return fmt.Errorf("UnixTime.UnmarshalJSON: json unmarshal error: %w", err)
+	}
+
+	t.Time = time.Unix(timestamp, 0)
+
+	return nil
 }

@@ -1,5 +1,9 @@
 package model
 
+import (
+	"github.com/ray31245/seo_cluster/pkg/util"
+)
+
 // ----response----
 type BasicResponse struct {
 	Code      int    `json:"code"`
@@ -12,7 +16,8 @@ type BasicResponse struct {
 type LoginResponse struct {
 	BasicResponse
 	Data struct {
-		Token string `json:"token"`
+		Token      string        `json:"token"`
+		ExpireTime util.UnixTime `json:"expire_time"`
 	} `json:"data"`
 }
 

@@ -10,9 +10,10 @@ import (
 )
 
 func Login(ctx context.Context, baseURL string, token string, userName string, password string) (model.LoginResponse, error) {
-	data := map[string]string{}
+	data := map[string]interface{}{}
 	data["username"] = userName
 	data["password"] = password
+	data["savedate"] = 30
 
 	bytesData, err := json.Marshal(data)
 	if err != nil {
