@@ -173,3 +173,22 @@ func (p *Handler) AddSiteHandler(c *gin.Context) {
 		"message": "ok",
 	})
 }
+
+func (p *Handler) ListSitesHandler(c *gin.Context) {
+	sites, err := p.publisher.ListSites()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	data := model.ListSitesResponse{}
+	data.FromDBSites(sites)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+		"data":    data.Sites,
+	})
+}

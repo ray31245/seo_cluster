@@ -55,6 +55,7 @@ func main() {
 
 	r.POST("/publish", handler.AveragePublishHandler)
 	r.POST("/site", handler.AddSiteHandler)
+	r.GET("/site", handler.ListSitesHandler)
 	r.POST("/prepublish", handler.PrePublishHandler)
 	r.POST("/flexiblePublish", handler.FlexiblePublishHandler)
 

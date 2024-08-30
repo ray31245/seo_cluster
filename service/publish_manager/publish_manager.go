@@ -78,6 +78,16 @@ func (p PublishManager) AddSite(ctx context.Context, urlStr string, userName str
 	return nil
 }
 
+// List sites of publish manager
+func (p PublishManager) ListSites() ([]dbModel.Site, error) {
+	res, err := p.dao.ListSites()
+	if err != nil {
+		return nil, fmt.Errorf("ListSites: %w", err)
+	}
+
+	return res, nil
+}
+
 // AveragePublish average publish article to all site and category
 func (p PublishManager) AveragePublish(ctx context.Context, article zModel.PostArticleRequest) error {
 	// find first published category
