@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	zModel "github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
+	"github.com/ray31245/seo_cluster/cmd/publish_manager_service/model"
 	publishManager "github.com/ray31245/seo_cluster/service/publish_manager"
 
 	"github.com/gin-gonic/gin"
@@ -23,9 +23,9 @@ func NewHandler(publisher *publishManager.PublishManager) *Handler {
 
 func (p *Handler) AveragePublishHandler(c *gin.Context) {
 	// get data body from request
-	article := zModel.PostArticleRequest{}
+	req := model.PublishArticleRequest{}
 
-	err := c.ShouldBind(&article)
+	err := c.ShouldBind(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
@@ -35,7 +35,7 @@ func (p *Handler) AveragePublishHandler(c *gin.Context) {
 	}
 
 	// check data
-	if article.Title == "" || article.Content == "" {
+	if req.Title == "" || req.Content == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
 		})
@@ -43,7 +43,7 @@ func (p *Handler) AveragePublishHandler(c *gin.Context) {
 		return
 	}
 
-	err = p.publisher.AveragePublish(c, article)
+	err = p.publisher.AveragePublish(c, req.ToZBlogAPI())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
@@ -59,9 +59,9 @@ func (p *Handler) AveragePublishHandler(c *gin.Context) {
 
 func (p *Handler) PrePublishHandler(c *gin.Context) {
 	// get data body from request
-	article := zModel.PostArticleRequest{}
+	req := model.PublishArticleRequest{}
 
-	err := c.ShouldBind(&article)
+	err := c.ShouldBind(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
@@ -71,7 +71,7 @@ func (p *Handler) PrePublishHandler(c *gin.Context) {
 	}
 
 	// check data
-	if article.Title == "" || article.Content == "" {
+	if req.Title == "" || req.Content == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
 		})
@@ -79,7 +79,7 @@ func (p *Handler) PrePublishHandler(c *gin.Context) {
 		return
 	}
 
-	err = p.publisher.PrePublish(article)
+	err = p.publisher.PrePublish(req.ToZBlogAPI())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
@@ -95,9 +95,9 @@ func (p *Handler) PrePublishHandler(c *gin.Context) {
 
 func (p *Handler) FlexiblePublishHandler(c *gin.Context) {
 	// get data body from request
-	article := zModel.PostArticleRequest{}
+	req := model.PublishArticleRequest{}
 
-	err := c.ShouldBind(&article)
+	err := c.ShouldBind(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
@@ -107,7 +107,7 @@ func (p *Handler) FlexiblePublishHandler(c *gin.Context) {
 	}
 
 	// check data
-	if article.Title == "" || article.Content == "" {
+	if req.Title == "" || req.Content == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
 		})
@@ -115,9 +115,9 @@ func (p *Handler) FlexiblePublishHandler(c *gin.Context) {
 		return
 	}
 
-	err = p.publisher.AveragePublish(c, article)
+	err = p.publisher.AveragePublish(c, req.ToZBlogAPI())
 	if errors.Is(err, publishManager.ErrNoCategoryNeedToBePublished) {
-		err = p.publisher.PrePublish(article)
+		err = p.publisher.PrePublish(req.ToZBlogAPI())
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": fmt.Sprintf("error: %v", err),
@@ -138,15 +138,9 @@ func (p *Handler) FlexiblePublishHandler(c *gin.Context) {
 	})
 }
 
-type AddSiteRequest struct {
-	URL      string `json:"url"`
-	UserName string `json:"user_name"`
-	Password string `json:"password"`
-}
-
 func (p *Handler) AddSiteHandler(c *gin.Context) {
 	// get data body from request
-	req := AddSiteRequest{}
+	req := model.AddSiteRequest{}
 
 	err := c.ShouldBind(&req)
 	if err != nil {
