@@ -14,7 +14,10 @@ type Base struct {
 }
 
 func (b *Base) BeforeCreate(tx *gorm.DB) error { //nolint: revive
-	b.ID = uuid.New()
+	// generate uuid if not exist
+	if b.ID == uuid.Nil {
+		b.ID = uuid.New()
+	}
 	// b.CreatedAt = time.Now()
 	// b.UpdatedAt = time.Now()
 	return nil
