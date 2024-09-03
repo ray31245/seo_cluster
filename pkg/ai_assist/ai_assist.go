@@ -40,7 +40,12 @@ func NewAIAssist(ctx context.Context, token string) (*AIAssist, error) {
 }
 
 func (a *AIAssist) Close() error {
-	return a.client.Close()
+	err := a.client.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close client: %w", err)
+	}
+
+	return nil
 }
 
 func (a *AIAssist) Rewrite(ctx context.Context, text string) (model.RewriteResponse, error) {

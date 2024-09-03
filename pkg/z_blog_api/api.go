@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
+var _ zInterface.ZBlogAPI = (*ZBlogAPI)(nil)
+
 type ZBlogAPI struct {
 	// TODO: clientPool should be sync.Map
 	// key is site id

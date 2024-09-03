@@ -9,6 +9,7 @@ import (
 	"github.com/ray31245/seo_cluster/pkg/db"
 	zBlogApi "github.com/ray31245/seo_cluster/pkg/z_blog_api"
 	publishManager "github.com/ray31245/seo_cluster/service/publish_manager"
+	sitemanager "github.com/ray31245/seo_cluster/service/site_manager"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,6 +37,7 @@ func main() {
 
 	zAPI := zBlogApi.NewZBlogAPI()
 	publisher := publishManager.NewPublishManager(zAPI, publishManager.DAO{ArticleCacheDAOInterface: articleCacheDAO, SiteDAOInterface: siteDAO})
+	siteManager := sitemanager.NewSiteManager(zAPI, siteDAO)
 
 	mainCtx := context.TODO()
 
@@ -44,7 +46,7 @@ func main() {
 		panic(err)
 	}
 
-	handler := handler.NewHandler(publisher)
+	publishHandler := handler.NewPublishHandler(publisher)
 
 	r := gin.Default()
 	r.GET("/ping", func(c *gin.Context) {
@@ -53,11 +55,14 @@ func main() {
 		})
 	})
 
-	r.POST("/publish", handler.AveragePublishHandler)
-	r.POST("/site", handler.AddSiteHandler)
-	r.GET("/site", handler.ListSitesHandler)
-	r.POST("/prepublish", handler.PrePublishHandler)
-	r.POST("/flexiblePublish", handler.FlexiblePublishHandler)
+	r.POST("/publish", publishHandler.AveragePublishHandler)
+	r.POST("/prepublish", publishHandler.PrePublishHandler)
+	r.POST("/flexiblePublish", publishHandler.FlexiblePublishHandler)
+
+	siteHandler := handler.NewSiteHandler(siteManager)
+
+	r.POST("/site", siteHandler.AddSiteHandler)
+	r.GET("/site", siteHandler.ListSitesHandler)
 
 	err = r.Run(":7259")
 	if err != nil {

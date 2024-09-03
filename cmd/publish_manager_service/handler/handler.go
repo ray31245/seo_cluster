@@ -7,21 +7,22 @@ import (
 
 	"github.com/ray31245/seo_cluster/cmd/publish_manager_service/model"
 	publishManager "github.com/ray31245/seo_cluster/service/publish_manager"
+	sitemanager "github.com/ray31245/seo_cluster/service/site_manager"
 
 	"github.com/gin-gonic/gin"
 )
 
-type Handler struct {
+type PublishHandler struct {
 	publisher *publishManager.PublishManager
 }
 
-func NewHandler(publisher *publishManager.PublishManager) *Handler {
-	return &Handler{
+func NewPublishHandler(publisher *publishManager.PublishManager) *PublishHandler {
+	return &PublishHandler{
 		publisher: publisher,
 	}
 }
 
-func (p *Handler) AveragePublishHandler(c *gin.Context) {
+func (p *PublishHandler) AveragePublishHandler(c *gin.Context) {
 	// get data body from request
 	req := model.PublishArticleRequest{}
 
@@ -57,7 +58,7 @@ func (p *Handler) AveragePublishHandler(c *gin.Context) {
 	})
 }
 
-func (p *Handler) PrePublishHandler(c *gin.Context) {
+func (p *PublishHandler) PrePublishHandler(c *gin.Context) {
 	// get data body from request
 	req := model.PublishArticleRequest{}
 
@@ -93,7 +94,7 @@ func (p *Handler) PrePublishHandler(c *gin.Context) {
 	})
 }
 
-func (p *Handler) FlexiblePublishHandler(c *gin.Context) {
+func (p *PublishHandler) FlexiblePublishHandler(c *gin.Context) {
 	// get data body from request
 	req := model.PublishArticleRequest{}
 
@@ -138,7 +139,17 @@ func (p *Handler) FlexiblePublishHandler(c *gin.Context) {
 	})
 }
 
-func (p *Handler) AddSiteHandler(c *gin.Context) {
+type SiteHandler struct {
+	sitemanager *sitemanager.SiteManager
+}
+
+func NewSiteHandler(sitemanager *sitemanager.SiteManager) *SiteHandler {
+	return &SiteHandler{
+		sitemanager: sitemanager,
+	}
+}
+
+func (s *SiteHandler) AddSiteHandler(c *gin.Context) {
 	// get data body from request
 	req := model.AddSiteRequest{}
 
@@ -160,7 +171,7 @@ func (p *Handler) AddSiteHandler(c *gin.Context) {
 		return
 	}
 
-	err = p.publisher.AddSite(c, req.URL, req.UserName, req.Password)
+	err = s.sitemanager.AddSite(c, req.URL, req.UserName, req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
@@ -174,8 +185,8 @@ func (p *Handler) AddSiteHandler(c *gin.Context) {
 	})
 }
 
-func (p *Handler) ListSitesHandler(c *gin.Context) {
-	sites, err := p.publisher.ListSites()
+func (s *SiteHandler) ListSitesHandler(c *gin.Context) {
+	sites, err := s.sitemanager.ListSites()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
