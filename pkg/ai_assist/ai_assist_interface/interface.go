@@ -7,5 +7,5 @@ import (
 )
 
 type AIAssistInterface interface {
-	Rewrite(ctx context.Context, text string) (model.RewriteResponse, error)
+	Rewrite(ctx context.Context, text []byte) (model.RewriteResponse, error)
 }

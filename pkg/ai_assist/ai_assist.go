@@ -48,7 +48,7 @@ func (a *AIAssist) Close() error {
 	return nil
 }
 
-func (a *AIAssist) Rewrite(ctx context.Context, text string) (model.RewriteResponse, error) {
+func (a *AIAssist) Rewrite(ctx context.Context, text []byte) (model.RewriteResponse, error) {
 	//nolint:gosmopolitan // prompt is a string
 	prompt := "你是一位收悉區塊鏈的專欄作家，請你將以下內容用你的話重新闡述文章中的內容，並訂一個標題。請使用json格式輸出：{Title: string,Content: string}"
 

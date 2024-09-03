@@ -51,7 +51,7 @@ func main() {
 			return
 		}
 
-		art, err := ai.Rewrite(ctx, string(body))
+		art, err := ai.Rewrite(ctx, body)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)

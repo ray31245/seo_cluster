@@ -3,9 +3,13 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 
 	"github.com/ray31245/seo_cluster/cmd/publish_manager_service/model"
+	aiAssistInterface "github.com/ray31245/seo_cluster/pkg/ai_assist/ai_assist_interface"
+	"github.com/ray31245/seo_cluster/pkg/util"
 	publishManager "github.com/ray31245/seo_cluster/service/publish_manager"
 	sitemanager "github.com/ray31245/seo_cluster/service/site_manager"
 
@@ -202,4 +206,51 @@ func (s *SiteHandler) ListSitesHandler(c *gin.Context) {
 		"message": "ok",
 		"data":    data.Sites,
 	})
+}
+
+type RewriteHandler struct {
+	aiAssist aiAssistInterface.AIAssistInterface
+}
+
+func NewRewriteHandler(aiAssist aiAssistInterface.AIAssistInterface) *RewriteHandler {
+	return &RewriteHandler{
+		aiAssist: aiAssist,
+	}
+}
+
+func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
+	// get data body from request
+	req, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	// check data
+	if len(req) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", "data is not complete"),
+		})
+
+		return
+	}
+
+	art, err := r.aiAssist.Rewrite(c, req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	art.Content = string(util.MdToHTML([]byte(art.Content)))
+	log.Printf("%s", art.Content)
+
+	c.JSON(http.StatusOK, art)
 }
