@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -10,16 +9,9 @@ import (
 	"os"
 	"time"
 
+	aiassist "github.com/ray31245/seo_cluster/pkg/ai_assist"
 	"github.com/ray31245/seo_cluster/pkg/util"
-
-	"github.com/google/generative-ai-go/genai"
-	"google.golang.org/api/option"
 )
-
-type Article struct {
-	Title   string `json:"Title"`
-	Content string `json:"Content"`
-}
 
 var APIKey string //nolint:gochecknoglobals // APIKey can input from ldflags
 
@@ -36,17 +28,11 @@ func main() {
 		log.Fatal("api key is not set")
 	}
 	// Access your API key as an environment variable (see "Set up your API key" above)
-	client, err := genai.NewClient(ctx, option.WithAPIKey(APIKey))
+	ai, err := aiassist.NewAIAssist(ctx, APIKey)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer client.Close()
-
-	// The Gemini 1.5 models are versatile and work with both text-only and multimodal prompts
-	model := client.GenerativeModel("gemini-1.5-flash")
-	model.GenerationConfig = genai.GenerationConfig{
-		ResponseMIMEType: "application/json",
-	}
+	defer ai.Close()
 
 	port := 9527
 	server := &http.Server{
@@ -65,27 +51,7 @@ func main() {
 			return
 		}
 
-		//nolint:gosmopolitan // prompt is a string
-		prompt := "你是一位收悉區塊鏈的專欄作家，請你將以下內容用你的話重新闡述文章中的內容，並訂一個標題。請使用json格式輸出：{Title: string,Content: string}"
-
-		resp, err := model.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", prompt, body)))
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(err)
-
-			return
-		}
-
-		if len(resp.Candidates) < 1 {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println("no candidate")
-
-			return
-		}
-		// log.Println(len(resp.Candidates))
-		art := Article{}
-
-		err = json.Unmarshal([]byte(fmt.Sprintf("%s", resp.Candidates[0].Content.Parts[0])), &art)
+		art, err := ai.Rewrite(ctx, string(body))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
