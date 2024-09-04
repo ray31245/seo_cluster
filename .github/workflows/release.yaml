@@ -14,12 +14,15 @@ jobs:
 
     - name: Set up Go
       uses: actions/setup-go@v5
+      env:
+        GEMINI_TOKEN: ${{ secrets.GEMINI_TOKEN }}
       with:
         go-version: '^1.22.5'
       id: go
 
     - name: Build
-      run: go build -o publish_manager_service.exe cmd/publish_manager_service/main.go
+      run: go build -o publish_manager_service.exe -ldflags -X main.APIKey=${{ secrets.GEMINI_TOKEN }} cmd/publish_manager_service/main.go
+      # run: go build -o publish_manager_service.exe -ldflags -X main.APIKey=$GEMINI_TOKEN cmd/publish_manager_service/main.go
 
     - name: Create Release
       id: create_release
