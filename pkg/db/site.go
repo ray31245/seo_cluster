@@ -121,6 +121,13 @@ func (d *SiteDAO) MarkPublished(categoryID string) error {
 	return err
 }
 
-func (d *SiteDAO) IncreaseLackCount(siteID string, count int) error {
-	return d.db.Model(&model.Site{}).Where("id = ?", siteID).Update("lack_count", gorm.Expr("lack_count + ?", count)).Error
+func (s *SiteDAO) IncreaseLackCount(siteID string, count int) error {
+	return s.db.Model(&model.Site{}).Where("id = ?", siteID).Update("lack_count", gorm.Expr("lack_count + ?", count)).Error
+}
+
+func (s *SiteDAO) SumLackCount() (int, error) {
+	var sum int
+	err := s.db.Model(&model.Site{}).Select("sum(lack_count)").Row().Scan(&sum)
+
+	return sum, err
 }

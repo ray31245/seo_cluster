@@ -130,8 +130,6 @@ func (p PublishManager) cyclePublish(ctx context.Context) error {
 		return fmt.Errorf("cyclePublish: %w", err)
 	}
 
-	totalLackCount := 0
-
 	for _, site := range sites {
 		if site.LackCount != 0 {
 			continue
@@ -145,9 +143,13 @@ func (p PublishManager) cyclePublish(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("cyclePublish: %w", err)
 			}
-
-			totalLackCount += int(lackCount)
 		}
+	}
+
+	// get total lack count
+	totalLackCount, err := p.dao.SumLackCount()
+	if err != nil {
+		return fmt.Errorf("cyclePublish: %w", err)
 	}
 
 	articles, err := p.dao.ListArticleCacheByLimit(totalLackCount)
