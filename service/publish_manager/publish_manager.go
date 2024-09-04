@@ -55,6 +55,8 @@ func (p PublishManager) AveragePublish(ctx context.Context, article zModel.PostA
 		return fmt.Errorf("AveragePublish: %w", err)
 	}
 
+	log.Printf("category id %s, site id %s in AveragePublish", cate.ID, cate.SiteID)
+
 	// set category id
 	article.CateID = cate.ZBlogID
 
@@ -121,6 +123,8 @@ func (p PublishManager) StartRandomCyclePublish(ctx context.Context) error {
 }
 
 func (p PublishManager) cyclePublish(ctx context.Context) error {
+	log.Println("cyclePublish running...")
+
 	sites, err := p.dao.ListSites()
 	if err != nil {
 		return fmt.Errorf("cyclePublish: %w", err)
@@ -135,6 +139,8 @@ func (p PublishManager) cyclePublish(ctx context.Context) error {
 
 		lackCount := randomNum()
 		if lackCount > 0 {
+			log.Printf("site id %s, lack count %d in cyclePublish", site.ID, lackCount)
+
 			err := p.dao.IncreaseLackCount(site.ID.String(), int(lackCount))
 			if err != nil {
 				return fmt.Errorf("cyclePublish: %w", err)
