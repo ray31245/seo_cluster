@@ -12,4 +12,5 @@ type SiteDAOInterface interface {
 	LastPublishedCategory() (*model.Category, error)
 	MarkPublished(categoryID string) error
 	IncreaseLackCount(siteID string, count int) error
+	SumLackCount() (int, error)
 }
