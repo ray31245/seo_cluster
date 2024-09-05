@@ -14,6 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// TODO: error handling on middleware
+
 type SiteHandler struct {
 	sitemanager *sitemanager.SiteManager
 }
@@ -30,6 +32,7 @@ func (s *SiteHandler) AddSiteHandler(c *gin.Context) {
 
 	err := c.ShouldBind(&req)
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
@@ -39,6 +42,7 @@ func (s *SiteHandler) AddSiteHandler(c *gin.Context) {
 
 	// check data
 	if req.URL == "" || req.UserName == "" || req.Password == "" {
+		log.Println("data is not complete")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
 		})
@@ -48,6 +52,7 @@ func (s *SiteHandler) AddSiteHandler(c *gin.Context) {
 
 	err = s.sitemanager.AddSite(c, req.URL, req.UserName, req.Password)
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
@@ -63,6 +68,7 @@ func (s *SiteHandler) AddSiteHandler(c *gin.Context) {
 func (s *SiteHandler) ListSitesHandler(c *gin.Context) {
 	sites, err := s.sitemanager.ListSites()
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
@@ -103,6 +109,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 
 	// check data
 	if len(req) == 0 {
+		log.Println("data is not complete")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
 		})

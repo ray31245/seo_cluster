@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,7 @@ func (p *PublishHandler) AveragePublishHandler(c *gin.Context) {
 
 	err := c.ShouldBind(&req)
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
@@ -36,6 +38,7 @@ func (p *PublishHandler) AveragePublishHandler(c *gin.Context) {
 
 	// check data
 	if req.Title == "" || req.Content == "" {
+		log.Println("data is not complete")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
 		})
@@ -45,6 +48,7 @@ func (p *PublishHandler) AveragePublishHandler(c *gin.Context) {
 
 	req.Content, err = util.DecodeImageListDivFromHTMl([]byte(req.Content))
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
@@ -54,6 +58,7 @@ func (p *PublishHandler) AveragePublishHandler(c *gin.Context) {
 
 	err = p.publisher.AveragePublish(c, req.ToZBlogAPI())
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
@@ -72,6 +77,7 @@ func (p *PublishHandler) PrePublishHandler(c *gin.Context) {
 
 	err := c.ShouldBind(&req)
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
@@ -81,6 +87,7 @@ func (p *PublishHandler) PrePublishHandler(c *gin.Context) {
 
 	// check data
 	if req.Title == "" || req.Content == "" {
+		log.Println("data is not complete")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
 		})
@@ -90,6 +97,7 @@ func (p *PublishHandler) PrePublishHandler(c *gin.Context) {
 
 	req.Content, err = util.DecodeImageListDivFromHTMl([]byte(req.Content))
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
@@ -99,6 +107,7 @@ func (p *PublishHandler) PrePublishHandler(c *gin.Context) {
 
 	err = p.publisher.PrePublish(req.ToZBlogAPI())
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
@@ -117,6 +126,7 @@ func (p *PublishHandler) FlexiblePublishHandler(c *gin.Context) {
 
 	err := c.ShouldBind(&req)
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
@@ -126,6 +136,7 @@ func (p *PublishHandler) FlexiblePublishHandler(c *gin.Context) {
 
 	// check data
 	if req.Title == "" || req.Content == "" {
+		log.Println("data is not complete")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
 		})
@@ -135,6 +146,7 @@ func (p *PublishHandler) FlexiblePublishHandler(c *gin.Context) {
 
 	req.Content, err = util.DecodeImageListDivFromHTMl([]byte(req.Content))
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
@@ -146,6 +158,7 @@ func (p *PublishHandler) FlexiblePublishHandler(c *gin.Context) {
 	if errors.Is(err, publishManager.ErrNoCategoryNeedToBePublished) {
 		err = p.publisher.PrePublish(req.ToZBlogAPI())
 		if err != nil {
+			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": fmt.Sprintf("error: %v", err),
 			})
@@ -153,6 +166,7 @@ func (p *PublishHandler) FlexiblePublishHandler(c *gin.Context) {
 			return
 		}
 	} else if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
