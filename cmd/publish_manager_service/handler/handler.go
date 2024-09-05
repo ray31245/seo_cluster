@@ -48,6 +48,15 @@ func (p *PublishHandler) AveragePublishHandler(c *gin.Context) {
 		return
 	}
 
+	req.Content, err = util.DecodeImageListDivFromHTMl([]byte(req.Content))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
 	err = p.publisher.AveragePublish(c, req.ToZBlogAPI())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -84,6 +93,15 @@ func (p *PublishHandler) PrePublishHandler(c *gin.Context) {
 		return
 	}
 
+	req.Content, err = util.DecodeImageListDivFromHTMl([]byte(req.Content))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
 	err = p.publisher.PrePublish(req.ToZBlogAPI())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -115,6 +133,15 @@ func (p *PublishHandler) FlexiblePublishHandler(c *gin.Context) {
 	if req.Title == "" || req.Content == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
+		})
+
+		return
+	}
+
+	req.Content, err = util.DecodeImageListDivFromHTMl([]byte(req.Content))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
 		})
 
 		return
@@ -250,6 +277,14 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 	}
 
 	art.Content = string(util.MdToHTML([]byte(art.Content)))
+
+	imgDiv, err := util.GenImageListEncodeDiv(req)
+	if err != nil {
+		log.Printf("error: %v", err)
+	} else {
+		art.Content += imgDiv
+	}
+
 	log.Printf("%s", art.Content)
 
 	c.JSON(http.StatusOK, art)
