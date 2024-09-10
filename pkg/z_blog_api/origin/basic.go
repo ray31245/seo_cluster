@@ -19,7 +19,9 @@ const (
 	ModMember   = "member"
 	ModPost     = "post"
 	ModCategory = "category"
+	ModComment  = "comment"
 
+	ActGet    = "get"
 	ActList   = "list"
 	ActLogin  = "login"
 	ActPost   = "post"

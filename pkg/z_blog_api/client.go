@@ -16,7 +16,8 @@ type Client struct {
 	userName string
 	password string
 	// avoid duplicate login
-	lock *sync.Mutex
+	lock        *sync.Mutex
+	isAnonymous bool
 }
 
 func NewClient(ctx context.Context, urlStr string, userName string, password string) (*Client, error) {
@@ -41,6 +42,16 @@ func NewClient(ctx context.Context, urlStr string, userName string, password str
 	}
 
 	return res, nil
+}
+
+func NewAnonymousClient(ctx context.Context, urlStr string) *Client {
+	res := &Client{
+		baseURL:     urlStr,
+		lock:        &sync.Mutex{},
+		isAnonymous: true,
+	}
+
+	return res
 }
 
 func (t *Client) Login(ctx context.Context) error {
@@ -74,6 +85,26 @@ func (t *Client) ListMember(ctx context.Context) ([]model.Member, error) {
 	return res.Data.List, err
 }
 
+func (t *Client) PostMember(ctx context.Context, mem model.PostMemberRequest) error {
+	var err error
+
+	if mem.ID == "" {
+		mem.ID = "0"
+	}
+
+	task := func() error {
+		err = origin.PostMember(ctx, t.baseURL, t.token, mem)
+		if err != nil {
+			return fmt.Errorf("PostMember: %w", err)
+		}
+
+		return nil
+	}
+	err = t.retry(ctx, task)
+
+	return err
+}
+
 func (t *Client) PostArticle(ctx context.Context, art model.PostArticleRequest) error {
 	var err error
 
@@ -90,6 +121,28 @@ func (t *Client) PostArticle(ctx context.Context, art model.PostArticleRequest) 
 	return err
 }
 
+func (t *Client) GetArticle(ctx context.Context, id string) (model.Article, error) {
+	res := model.GetArticleResponse{}
+
+	var err error
+
+	task := func() error {
+		res, err = origin.GetArticle(ctx, t.baseURL, t.token, id)
+		if err != nil {
+			return fmt.Errorf("GetArticle: %w", err)
+		}
+
+		return nil
+	}
+	if !t.isAnonymous {
+		err = t.retry(ctx, task)
+	} else {
+		err = task()
+	}
+
+	return res.Data.Post, err
+}
+
 func (t *Client) ListArticle(ctx context.Context, req model.ListArticleRequest) ([]model.Article, error) {
 	res := model.ListArticleResponse{}
 
@@ -103,7 +156,11 @@ func (t *Client) ListArticle(ctx context.Context, req model.ListArticleRequest) 
 
 		return nil
 	}
-	err = t.retry(ctx, task)
+	if !t.isAnonymous {
+		err = t.retry(ctx, task)
+	} else {
+		err = task()
+	}
 
 	return res.Data.List, err
 }
@@ -133,6 +190,22 @@ func (t *Client) DeleteArticle(ctx context.Context, id string) error {
 		err = origin.DeleteArticle(ctx, t.baseURL, t.token, id)
 		if err != nil {
 			return fmt.Errorf("DeleteArticle: %w", err)
+		}
+
+		return nil
+	}
+	err = t.retry(ctx, task)
+
+	return err
+}
+
+func (t *Client) PostComment(ctx context.Context, comment model.PostCommentRequest) error {
+	var err error
+
+	task := func() error {
+		err = origin.PostComment(ctx, t.baseURL, t.token, comment)
+		if err != nil {
+			return fmt.Errorf("PostComment: %w", err)
 		}
 
 		return nil

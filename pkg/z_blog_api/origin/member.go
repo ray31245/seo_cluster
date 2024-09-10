@@ -46,3 +46,22 @@ func ListMember(ctx context.Context, baseURL string, token string) (model.ListMe
 
 	return resData, nil
 }
+
+func PostMember(ctx context.Context, baseURL string, token string, member model.PostMemberRequest) error {
+	bytesData, err := json.Marshal(member)
+	if err != nil {
+		return fmt.Errorf("marshal error: %w", err)
+	}
+
+	resBody, err := doRequest(ctx, baseURL, http.MethodPost, token, map[string]interface{}{ParamMod: ModMember, ParamAct: ActPost}, bytesData)
+	if err != nil {
+		return fmt.Errorf("post member error: %w", err)
+	}
+
+	resData := model.PostMemberResponse{}
+	if err := json.Unmarshal(resBody, &resData); err != nil {
+		return fmt.Errorf("unmarshal error: %w", err)
+	}
+
+	return nil
+}

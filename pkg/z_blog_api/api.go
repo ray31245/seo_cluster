@@ -12,7 +12,7 @@ var _ zInterface.ZBlogAPI = (*ZBlogAPI)(nil)
 
 type ZBlogAPI struct {
 	// TODO: clientPool should be sync.Map
-	// key is site id
+	// key is site id or user id
 	clientPool map[uuid.UUID]*Client
 }
 
@@ -22,8 +22,8 @@ func NewZBlogAPI() *ZBlogAPI {
 	}
 }
 
-func (t *ZBlogAPI) GetClient(ctx context.Context, siteID uuid.UUID, urlStr string, userName string, password string) (zInterface.ZBlogAPIClient, error) {
-	client, ok := t.clientPool[siteID]
+func (t *ZBlogAPI) GetClient(ctx context.Context, ID uuid.UUID, urlStr string, userName string, password string) (zInterface.ZBlogAPIClient, error) {
+	client, ok := t.clientPool[ID]
 
 	var err error
 	if !ok {
@@ -32,7 +32,7 @@ func (t *ZBlogAPI) GetClient(ctx context.Context, siteID uuid.UUID, urlStr strin
 			return nil, err
 		}
 
-		t.clientPool[siteID] = client
+		t.clientPool[ID] = client
 	}
 
 	return client, nil
@@ -40,4 +40,8 @@ func (t *ZBlogAPI) GetClient(ctx context.Context, siteID uuid.UUID, urlStr strin
 
 func (t *ZBlogAPI) NewClient(ctx context.Context, urlStr string, userName string, password string) (zInterface.ZBlogAPIClient, error) {
 	return NewClient(ctx, urlStr, userName, password)
+}
+
+func (t *ZBlogAPI) NewAnonymousClient(ctx context.Context, urlStr string) zInterface.ZBlogAPIClient {
+	return NewAnonymousClient(ctx, urlStr)
 }

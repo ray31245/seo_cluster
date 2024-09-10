@@ -29,6 +29,25 @@ func PostArticle(ctx context.Context, baseURL string, token string, art model.Po
 	return nil
 }
 
+func GetArticle(ctx context.Context, baseURL string, token string, id string) (model.GetArticleResponse, error) {
+	paramsMap := map[string]interface{}{}
+	paramsMap["mod"] = "post"
+	paramsMap["act"] = "get"
+	paramsMap["id"] = id
+
+	resBody, err := doRequest(ctx, baseURL, http.MethodGet, token, paramsMap, nil)
+	if err != nil {
+		return model.GetArticleResponse{}, fmt.Errorf("get article error: %w", err)
+	}
+
+	resData := model.GetArticleResponse{}
+	if err := json.Unmarshal(resBody, &resData); err != nil {
+		return model.GetArticleResponse{}, fmt.Errorf("unmarshal error: %w", err)
+	}
+
+	return resData, nil
+}
+
 func ListArticle(ctx context.Context, baseURL string, token string, req model.ListArticleRequest) (model.ListArticleResponse, error) {
 	params, err := json.Marshal(req)
 	if err != nil {

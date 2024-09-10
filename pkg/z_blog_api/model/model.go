@@ -27,22 +27,24 @@ type ListMemberResponse struct {
 }
 
 type Member struct {
-	ID     string `json:"ID"`
-	Level  string `json:"Level"`
-	Status string `json:"Status"`
-	Name   string `json:"Name"`
-	Email  string `json:"Email"`
+	ID     util.NumberString `json:"ID"`
+	Level  string            `json:"Level"`
+	Status string            `json:"Status"`
+	Name   string            `json:"Name"`
+	Alias  string            `json:"Alias"`
+	Email  string            `json:"Email"`
 }
 
 type Article struct {
-	ID         string `json:"ID"`
-	CateID     string `json:"CateID"`
-	AuthorID   string `json:"AuthorID"`
-	Title      string `json:"Title"`
-	Content    string `json:"Content"`
-	Intro      string `json:"Intro"`
-	PostTime   string `json:"PostTime"`
-	UpdateTime string `json:"UpdateTime"`
+	ID         string            `json:"ID"`
+	CateID     string            `json:"CateID"`
+	AuthorID   string            `json:"AuthorID"`
+	Title      string            `json:"Title"`
+	Content    string            `json:"Content"`
+	CommNums   util.StringNumber `json:"CommNums"`
+	Intro      string            `json:"Intro"`
+	PostTime   util.UnixTime     `json:"PostTime"`
+	UpdateTime util.UnixTime     `json:"UpdateTime"`
 	// IsTop    uint32    `json:"IsTop"`
 	// IsLock   uint32    `json:"IsLock"`
 }
@@ -51,9 +53,20 @@ type PostArticleResponse struct {
 	BasicResponse
 }
 
+type GetArticleResponse struct {
+	BasicResponse
+	Data struct {
+		Post Article `json:"post"`
+	} `json:"data"`
+}
+
 type ListArticleResponse struct {
 	BasicResponse
 	Data Data[Article] `json:"data"`
+}
+
+type PostCommentResponse struct {
+	BasicResponse
 }
 
 type PageBar struct {
@@ -89,6 +102,13 @@ type Data[E any] struct {
 	PageBar PageBar `json:"pagebar"`
 }
 
+type PostMemberResponse struct {
+	BasicResponse
+	Data struct {
+		Member Member `json:"member"`
+	} `json:"data"`
+}
+
 // ----request----
 
 type PostArticleRequest struct {
@@ -101,7 +121,21 @@ type PostArticleRequest struct {
 }
 
 type ListArticleRequest struct {
-	Page   uint32 `json:"page"`
-	CateID uint32 `json:"cate_id"`
-	TagID  uint32 `json:"tag_id"`
+	Page    uint32 `json:"page"`
+	CateID  uint32 `json:"cate_id"`
+	TagID   uint32 `json:"tag_id"`
+	Perpage uint32 `json:"perpage"`
+	Sortby  string `json:"sortby"`
+	Order   string `json:"order"`
+}
+
+type PostCommentRequest struct {
+	LogID   string `json:"LogID"`
+	Content string `json:"Content"`
+}
+
+type PostMemberRequest struct {
+	Member
+	Password   string `json:"Password"`
+	PasswordRe string `json:"PasswordRe"`
 }
