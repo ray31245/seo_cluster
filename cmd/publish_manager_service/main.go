@@ -9,6 +9,7 @@ import (
 	aiassist "github.com/ray31245/seo_cluster/pkg/ai_assist"
 	"github.com/ray31245/seo_cluster/pkg/db"
 	zBlogApi "github.com/ray31245/seo_cluster/pkg/z_blog_api"
+	commentbot "github.com/ray31245/seo_cluster/service/comment_bot"
 	publishManager "github.com/ray31245/seo_cluster/service/publish_manager"
 	sitemanager "github.com/ray31245/seo_cluster/service/site_manager"
 
@@ -25,17 +26,33 @@ func main() {
 		dsn = s
 	}
 
-	db, err := db.NewDB(dsn)
+	publishDB, err := db.NewDB(dsn)
+	if err != nil {
+		panic(err)
+	}
+	defer publishDB.Close()
+
+	commentBotDSN := "comment_bot.db"
+	if s, ok := os.LookupEnv("COMMENT_BOT_DSN"); ok {
+		commentBotDSN = s
+	}
+	commentBotDB, err := db.NewDB(commentBotDSN)
+	if err != nil {
+		panic(err)
+	}
+	defer commentBotDB.Close()
+
+	siteDAO, err := publishDB.NewSiteDAO()
 	if err != nil {
 		panic(err)
 	}
 
-	siteDAO, err := db.NewSiteDAO()
+	articleCacheDAO, err := publishDB.NewArticleCacheDAO()
 	if err != nil {
 		panic(err)
 	}
 
-	articleCacheDAO, err := db.NewArticleCacheDAO()
+	commentUserDAO, err := commentBotDB.NewCommentUserDAO()
 	if err != nil {
 		panic(err)
 	}
@@ -62,6 +79,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	commentBot := commentbot.NewCommentBot(zAPI, siteDAO, commentUserDAO, ai)
+	commentBot.StartCycleComment(mainCtx)
 
 	publishHandler := handler.NewPublishHandler(publisher)
 
