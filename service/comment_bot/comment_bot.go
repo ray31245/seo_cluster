@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"time"
 
 	aiAssistInterface "github.com/ray31245/seo_cluster/pkg/ai_assist/ai_assist_interface"
@@ -11,6 +12,12 @@ import (
 	dbModel "github.com/ray31245/seo_cluster/pkg/db/model"
 	zModel "github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
 	zInterface "github.com/ray31245/seo_cluster/pkg/z_blog_api/z_blog_Interface"
+)
+
+const (
+	// coefficientOfGape is the coefficient of gape
+	// if want increase probability of comment, decrease this value
+	coefficientOfGape = 10
 )
 
 type CommentBot struct {
@@ -85,7 +92,8 @@ func (c CommentBot) listArticleForComment(ctx context.Context, site dbModel.Site
 		gape := 0
 		// Decrease in probability over time
 		hours := time.Since(a.PostTime.Time).Hours() + 1
-		gape = int(hours) * int(a.CommNums)
+
+		gape = int(math.Sqrt(hours) * coefficientOfGape * float64(a.CommNums))
 
 		if randomNum() > int32(gape) {
 			res = append(res, a)
