@@ -53,7 +53,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// assert login info is correct
-	var reqBody map[string]interface{}
+	var reqBody map[string]string
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		http.Error(w, `{"code":400,"message":"bad request"}`, http.StatusBadRequest)
 
@@ -147,8 +147,6 @@ func TestClient_Login(t *testing.T) {
 			err := tr.Login(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Client.Login() error = %v, wantErr %v", err, tt.wantErr)
-
-				return
 			}
 
 			if len(tt.expectErrs) > 0 {
@@ -156,7 +154,7 @@ func TestClient_Login(t *testing.T) {
 					require.ErrorIs(err, expectErr)
 				}
 			} else {
-				assert.Equal(tt.expectToken, tr.token)
+				assert.Equal(tr.token, tt.expectToken)
 			}
 		})
 	}
