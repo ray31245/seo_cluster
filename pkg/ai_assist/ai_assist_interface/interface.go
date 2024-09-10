@@ -8,4 +8,5 @@ import (
 
 type AIAssistInterface interface {
 	Rewrite(ctx context.Context, text []byte) (model.RewriteResponse, error)
+	Comment(ctx context.Context, text []byte) (model.CommentResponse, error)
 }
