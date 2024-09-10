@@ -11,12 +11,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        GEMINI_TOKEN: ${{ secrets.GEMINI_TOKEN }}
 
     - name: Set up Go
       uses: actions/setup-go@v5
+      env:
+        GEMINI_TOKEN: ${{ secrets.GEMINI_TOKEN }}
       with:
         go-version: '^1.22.5'
       id: go
@@ -41,6 +40,8 @@ jobs:
     - name: Create Release
       id: create_release
       uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       with:
         files: publish_manager_service.exe
         tag_name: ${{ github.ref }}
