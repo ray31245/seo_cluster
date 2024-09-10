@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/gomarkdown/markdown"
@@ -43,12 +44,62 @@ type UnixTime struct {
 
 // MarshalJSON implements the json.Marshaler interface.
 func (t *UnixTime) UnmarshalJSON(data []byte) error {
-	var timestamp int64
+	var timestamp StringNumber
 	if err := json.Unmarshal(data, &timestamp); err != nil {
 		return fmt.Errorf("UnixTime.UnmarshalJSON: json unmarshal error: %w", err)
 	}
 
-	t.Time = time.Unix(timestamp, 0)
+	t.Time = time.Unix(int64(timestamp), 0)
+
+	return nil
+}
+
+type StringNumber int
+
+func (i *StringNumber) UnmarshalJSON(data []byte) error {
+	var str interface{}
+	if err := json.Unmarshal(data, &str); err != nil {
+		return fmt.Errorf("StringNumber.UnmarshalJSON: json unmarshal error: %w", err)
+	}
+
+	switch v := str.(type) {
+	case string:
+		number, err := strconv.Atoi(v)
+		if err != nil {
+			return fmt.Errorf("StringNumber.UnmarshalJSON: strconv.Atoi error: %w", err)
+		}
+
+		*i = StringNumber(number)
+	case float64:
+		*i = StringNumber(int(v))
+	case int:
+		*i = StringNumber(v)
+	default:
+		return fmt.Errorf("StringNumber.UnmarshalJSON: unknown type: %T", v)
+	}
+
+	return nil
+}
+
+type NumberString string
+
+// MarshalJSON implements the json.Marshaler interface.
+func (i *NumberString) UnmarshalJSON(data []byte) error {
+	var str interface{}
+	if err := json.Unmarshal(data, &str); err != nil {
+		return fmt.Errorf("NumberString.UnmarshalJSON: json unmarshal error: %w", err)
+	}
+
+	switch v := str.(type) {
+	case string:
+		*i = NumberString(v)
+	case float64:
+		*i = NumberString(fmt.Sprintf("%d", int(v)))
+	case int:
+		*i = NumberString(fmt.Sprintf("%d", v))
+	default:
+		return fmt.Errorf("NumberString.UnmarshalJSON: unknown type: %T", v)
+	}
 
 	return nil
 }
