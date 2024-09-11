@@ -1,0 +1,30 @@
+name: create artifact
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '^1.22.5'
+      id: go
+      
+    - name: Install dependencies
+      run: go mod download
+      
+    - name: Build
+      run: go build -o publish_manager_service.exe -ldflags "-X main.APIKey=${{ secrets.GEMINI_TOKEN }}" cmd/publish_manager_service/main.go
+      # run: go build -o publish_manager_service.exe -ldflags -X main.APIKey=$GEMINI_TOKEN cmd/publish_manager_service/main.go
+
+    - name: Create Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: publish_manager_service
+        path: publish_manager_service.exe
