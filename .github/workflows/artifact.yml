@@ -26,5 +26,5 @@ jobs:
     - name: Create Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: publish_manager_service-$(git rev-parse --short $GITHUB_SHA)
+        name: publish_manager_service-${{ github.sha}}
         path: publish_manager_service.exe
