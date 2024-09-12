@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -82,6 +83,34 @@ func (s *SiteHandler) ListSitesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ok",
 		"data":    data.Sites,
+	})
+}
+
+func (s *SiteHandler) GetSiteHandler(c *gin.Context) {
+	id := c.Param("siteID")
+
+	site, err := s.sitemanager.GetSite(id)
+	if err != nil {
+		log.Println(err)
+
+		errCode := http.StatusInternalServerError
+		if errors.Is(err, sitemanager.ErrSiteNotFound) {
+			errCode = http.StatusNotFound
+		}
+
+		c.JSON(errCode, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	data := model.GetSiteResponse{}
+	data.FromDBSite(*site)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+		"data":    data.Site,
 	})
 }
 

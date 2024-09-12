@@ -20,3 +20,11 @@ func (l *ListSitesResponse) FromDBSites(sites []model.Site) {
 		l.Sites = append(l.Sites, site{ID: s.ID, URL: s.URL, Lack: s.LackCount})
 	}
 }
+
+type GetSiteResponse struct {
+	Site site `json:"site"`
+}
+
+func (g *GetSiteResponse) FromDBSite(s model.Site) {
+	g.Site = site{ID: s.ID, URL: s.URL, Lack: s.LackCount}
+}

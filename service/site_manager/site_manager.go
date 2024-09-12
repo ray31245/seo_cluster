@@ -7,9 +7,12 @@ import (
 	"strconv"
 
 	dbInterface "github.com/ray31245/seo_cluster/pkg/db/db_interface"
+	dberror "github.com/ray31245/seo_cluster/pkg/db/error"
 	dbModel "github.com/ray31245/seo_cluster/pkg/db/model"
 	zInterface "github.com/ray31245/seo_cluster/pkg/z_blog_api/z_blog_Interface"
 )
+
+var ErrSiteNotFound = errors.New("site not found")
 
 // SiteManager is a struct that contains the necessary information for the site manager service.
 type SiteManager struct {
@@ -77,4 +80,16 @@ func (s SiteManager) ListSites() ([]dbModel.Site, error) {
 	}
 
 	return res, nil
+}
+
+// Get site by id
+func (s SiteManager) GetSite(siteID string) (*dbModel.Site, error) {
+	site, err := s.siteDAO.GetSite(siteID)
+	if dberror.IsNotfoundErr(err) {
+		return nil, fmt.Errorf("GetSite: %w", errors.Join(ErrSiteNotFound, err))
+	} else if err != nil {
+		return nil, fmt.Errorf("GetSite: %w", err)
+	}
+
+	return site, nil
 }

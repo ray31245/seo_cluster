@@ -36,6 +36,7 @@ func main() {
 	if s, ok := os.LookupEnv("COMMENT_BOT_DSN"); ok {
 		commentBotDSN = s
 	}
+
 	commentBotDB, err := db.NewDB(commentBotDSN)
 	if err != nil {
 		panic(err)
@@ -100,6 +101,7 @@ func main() {
 
 	r.POST("/site", siteHandler.AddSiteHandler)
 	r.GET("/site", siteHandler.ListSitesHandler)
+	r.GET("/site/:siteID", siteHandler.GetSiteHandler)
 
 	rewriteHandler := handler.NewRewriteHandler(ai)
 
