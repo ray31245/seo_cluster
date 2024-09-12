@@ -67,7 +67,7 @@ func (d *SiteDAO) DeleteCategory(categoryID string) error {
 
 func (d *SiteDAO) GetSite(siteID string) (*model.Site, error) {
 	var site model.Site
-	err := d.db.Preload("Categories").First(&site, siteID).Error
+	err := d.db.Preload("Categories").First(&site, fmt.Sprintf("id = '%s'", siteID)).Error
 
 	return &site, err
 }
