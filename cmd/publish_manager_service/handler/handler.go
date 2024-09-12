@@ -114,6 +114,40 @@ func (s *SiteHandler) GetSiteHandler(c *gin.Context) {
 	})
 }
 
+func (s *SiteHandler) IncreaseLackCountHandler(c *gin.Context) {
+	req := model.IncreaseLackCountRequest{}
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	err = s.sitemanager.IncreaseLackCount(req.SiteID, req.Count)
+	if err != nil {
+		log.Println(err)
+
+		errCode := http.StatusInternalServerError
+		if errors.Is(err, sitemanager.ErrSiteNotFound) {
+			errCode = http.StatusNotFound
+		}
+
+		c.JSON(errCode, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
 type RewriteHandler struct {
 	aiAssist aiAssistInterface.AIAssistInterface
 }

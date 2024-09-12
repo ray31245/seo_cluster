@@ -25,3 +25,8 @@ type AddSiteRequest struct {
 	UserName string `json:"user_name"`
 	Password string `json:"password"`
 }
+
+type IncreaseLackCountRequest struct {
+	SiteID string `json:"site_id"`
+	Count  int    `json:"count"`
+}

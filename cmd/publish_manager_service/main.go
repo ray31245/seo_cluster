@@ -102,6 +102,7 @@ func main() {
 	r.POST("/site", siteHandler.AddSiteHandler)
 	r.GET("/site", siteHandler.ListSitesHandler)
 	r.GET("/site/:siteID", siteHandler.GetSiteHandler)
+	r.POST("/site/increase_lack", siteHandler.IncreaseLackCountHandler)
 
 	rewriteHandler := handler.NewRewriteHandler(ai)
 

@@ -93,3 +93,15 @@ func (s SiteManager) GetSite(siteID string) (*dbModel.Site, error) {
 
 	return site, nil
 }
+
+// Increase lack count of site
+func (s SiteManager) IncreaseLackCount(siteID string, count int) error {
+	err := s.siteDAO.IncreaseLackCount(siteID, count)
+	if dberror.IsNotfoundErr(err) {
+		return fmt.Errorf("IncreaseLackCount: %w", errors.Join(ErrSiteNotFound, err))
+	} else if err != nil {
+		return fmt.Errorf("IncreaseLackCount: %w", err)
+	}
+
+	return nil
+}
