@@ -38,6 +38,17 @@ func (t *ZBlogAPI) GetClient(ctx context.Context, ID uuid.UUID, urlStr string, u
 	return client, nil
 }
 
+func (t *ZBlogAPI) UpdateClient(ctx context.Context, ID uuid.UUID, urlStr string, userName string, password string) (zInterface.ZBlogAPIClient, error) {
+	client, err := NewClient(ctx, urlStr, userName, password)
+	if err != nil {
+		return nil, err
+	}
+
+	t.clientPool[ID] = client
+
+	return client, nil
+}
+
 func (t *ZBlogAPI) NewClient(ctx context.Context, urlStr string, userName string, password string) (zInterface.ZBlogAPIClient, error) {
 	return NewClient(ctx, urlStr, userName, password)
 }

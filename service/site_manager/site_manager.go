@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	dbInterface "github.com/ray31245/seo_cluster/pkg/db/db_interface"
-	dberror "github.com/ray31245/seo_cluster/pkg/db/error"
+	dbErr "github.com/ray31245/seo_cluster/pkg/db/error"
 	dbModel "github.com/ray31245/seo_cluster/pkg/db/model"
 	zInterface "github.com/ray31245/seo_cluster/pkg/z_blog_api/z_blog_Interface"
 )
@@ -85,7 +85,7 @@ func (s SiteManager) ListSites() ([]dbModel.Site, error) {
 // Get site by id
 func (s SiteManager) GetSite(siteID string) (*dbModel.Site, error) {
 	site, err := s.siteDAO.GetSite(siteID)
-	if dberror.IsNotfoundErr(err) {
+	if dbErr.IsNotfoundErr(err) {
 		return nil, fmt.Errorf("GetSite: %w", errors.Join(ErrSiteNotFound, err))
 	} else if err != nil {
 		return nil, fmt.Errorf("GetSite: %w", err)
@@ -94,10 +94,46 @@ func (s SiteManager) GetSite(siteID string) (*dbModel.Site, error) {
 	return site, nil
 }
 
+// Update site
+func (s SiteManager) UpdateSite(ctx context.Context, ID string, urlStr string, userName string, password string) error {
+	site, err := s.siteDAO.GetSite(ID)
+	if dbErr.IsNotfoundErr(err) {
+		return fmt.Errorf("UpdateSite: %w", errors.Join(ErrSiteNotFound, err))
+	} else if err != nil {
+		return fmt.Errorf("UpdateSite: %w", err)
+	}
+
+	if urlStr != "" {
+		site.URL = urlStr
+	}
+
+	if userName != "" {
+		site.UserName = userName
+	}
+
+	if password != "" {
+		site.Password = password
+	}
+
+	_, err = s.zAPI.UpdateClient(ctx, site.ID, site.URL, site.UserName, site.Password)
+	if err != nil {
+		return fmt.Errorf("UpdateSite: %w", err)
+	}
+
+	err = s.siteDAO.UpdateSite(site)
+	if dbErr.IsNotfoundErr(err) {
+		return fmt.Errorf("UpdateSite: %w", errors.Join(ErrSiteNotFound, err))
+	} else if err != nil {
+		return fmt.Errorf("UpdateSite: %w", err)
+	}
+
+	return nil
+}
+
 // Increase lack count of site
 func (s SiteManager) IncreaseLackCount(siteID string, count int) error {
 	err := s.siteDAO.IncreaseLackCount(siteID, count)
-	if dberror.IsNotfoundErr(err) {
+	if dbErr.IsNotfoundErr(err) {
 		return fmt.Errorf("IncreaseLackCount: %w", errors.Join(ErrSiteNotFound, err))
 	} else if err != nil {
 		return fmt.Errorf("IncreaseLackCount: %w", err)

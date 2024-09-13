@@ -51,7 +51,16 @@ func (d *SiteDAO) CreateCategory(category *model.Category) error {
 }
 
 func (d *SiteDAO) UpdateSite(site *model.Site) error {
-	return d.db.Save(site).Error
+	tx := d.db.Model(site).Updates(site)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	if tx.RowsAffected == 0 {
+		return dbErr.ErrNotFound
+	}
+
+	return nil
 }
 
 func (d *SiteDAO) UpdateCategory(category *model.Category) error {

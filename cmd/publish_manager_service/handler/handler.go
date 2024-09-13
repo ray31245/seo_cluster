@@ -66,6 +66,51 @@ func (s *SiteHandler) AddSiteHandler(c *gin.Context) {
 	})
 }
 
+func (s *SiteHandler) UpdateSiteHandler(c *gin.Context) {
+	// get data body from request
+	req := model.UpdateSiteRequest{}
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	// check data
+	if req.SiteID == "" {
+		log.Println("data is not complete")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", "data is not complete"),
+		})
+
+		return
+	}
+
+	err = s.sitemanager.UpdateSite(c, req.SiteID, req.URL, req.UserName, req.Password)
+	if err != nil {
+		log.Println(err)
+
+		errCode := http.StatusInternalServerError
+		if errors.Is(err, sitemanager.ErrSiteNotFound) {
+			errCode = http.StatusNotFound
+		}
+
+		c.JSON(errCode, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
 func (s *SiteHandler) ListSitesHandler(c *gin.Context) {
 	sites, err := s.sitemanager.ListSites()
 	if err != nil {

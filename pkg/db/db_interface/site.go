@@ -9,6 +9,7 @@ type SiteDAOInterface interface {
 	CreateSite(site *model.Site) (model.Site, error)
 	ListSites() ([]model.Site, error)
 	GetSite(siteID string) (*model.Site, error)
+	UpdateSite(site *model.Site) error
 	FirstPublishedCategory() (*model.Category, error)
 	LastPublishedCategory() (*model.Category, error)
 	MarkPublished(categoryID string) error
