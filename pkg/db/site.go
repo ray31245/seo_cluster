@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	dbErr "github.com/ray31245/seo_cluster/pkg/db/error"
 	"github.com/ray31245/seo_cluster/pkg/db/model"
 
 	"gorm.io/gorm"
@@ -122,7 +123,17 @@ func (d *SiteDAO) MarkPublished(categoryID string) error {
 }
 
 func (s *SiteDAO) IncreaseLackCount(siteID string, count int) error {
-	return s.db.Model(&model.Site{}).Where("id = ?", siteID).Update("lack_count", gorm.Expr("lack_count + ?", count)).Error
+	tx := s.db.Model(&model.Site{}).Where("id = ?", siteID).Update("lack_count", gorm.Expr("lack_count + ?", count))
+
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	if tx.RowsAffected == 0 {
+		return dbErr.ErrNotFound
+	}
+
+	return nil
 }
 
 func (s *SiteDAO) SumLackCount() (int, error) {
