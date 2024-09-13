@@ -104,6 +104,8 @@ func (c CommentBot) listArticleForComment(ctx context.Context, site dbModel.Site
 }
 
 func (c CommentBot) Comment(ctx context.Context, site dbModel.Site, article zModel.Article) error {
+	log.Printf("site url %s, article id %s, start comment", site.URL, article.ID)
+
 	commentUser, err := c.commentUserDAO.GetRandomCommentUser()
 	if err != nil {
 		return fmt.Errorf("Comment: %w", err)
