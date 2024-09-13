@@ -93,7 +93,7 @@ func (c CommentBot) listArticleForComment(ctx context.Context, site dbModel.Site
 		// Decrease in probability over time
 		hours := time.Since(a.PostTime.Time).Hours() + 1
 
-		gape = int(math.Sqrt(hours) * coefficientOfGape * float64(a.CommNums))
+		gape = int(math.Sqrt(hours) * coefficientOfGape * float64(a.CommNums+1))
 
 		if randomNum() > int32(gape) {
 			res = append(res, a)
