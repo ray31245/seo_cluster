@@ -19,7 +19,7 @@ const (
 	// if want increase probability of comment, decrease this value
 	coefficientOfGape = 10
 	// rateLimitDelay is the delay between each comment
-	// to avoid rate limit of Gemini
+	// to avoid rate limit of Gemini( googleapi: Error 429: Resource has been exhausted (e.g. check quota) )
 	rateLimitDelay = time.Millisecond * 500
 )
 
