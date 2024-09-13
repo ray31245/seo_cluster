@@ -39,11 +39,15 @@ func NewCommentBot(zBlogAPI zInterface.ZBlogAPI, siteDAO dbInterface.SiteDAOInte
 func (c CommentBot) StartCycleComment(ctx context.Context) {
 	go func() {
 		for {
-			time.Sleep(randomTime())
-
-			err := c.cycleComment(ctx)
-			if err != nil {
-				log.Println(err)
+			select {
+			case <-ctx.Done():
+				// Exit the loop if the context is cancelled
+				return
+			case <-time.After(randomTime()):
+				// Proceed with the publishing cycle after a random duration
+				if err := c.cycleComment(ctx); err != nil {
+					log.Printf("Error in cycleComment: %v", err)
+				}
 			}
 		}
 	}()

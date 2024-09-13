@@ -110,11 +110,15 @@ func (p PublishManager) StartRandomCyclePublish(ctx context.Context) error {
 
 	go func() {
 		for {
-			time.Sleep(randomTime())
-
-			err = p.cyclePublish(ctx)
-			if err != nil {
-				log.Println(err)
+			select {
+			case <-ctx.Done():
+				// Exit the loop if the context is cancelled
+				return
+			case <-time.After(randomTime()):
+				// Proceed with the publishing cycle after a random duration
+				if err := p.cyclePublish(ctx); err != nil {
+					log.Println("Error during cyclePublish:", err)
+				}
 			}
 		}
 	}()
