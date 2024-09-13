@@ -18,6 +18,9 @@ const (
 	// coefficientOfGape is the coefficient of gape
 	// if want increase probability of comment, decrease this value
 	coefficientOfGape = 10
+	// rateLimitDelay is the delay between each comment
+	// to avoid rate limit of Gemini
+	rateLimitDelay = time.Millisecond * 500
 )
 
 type CommentBot struct {
@@ -72,6 +75,8 @@ func (c CommentBot) cycleComment(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("cycleComment: %w", err)
 			}
+
+			time.Sleep(rateLimitDelay)
 		}
 	}
 
