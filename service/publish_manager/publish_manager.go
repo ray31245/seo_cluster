@@ -98,7 +98,12 @@ func (p PublishManager) PrePublish(article zModel.PostArticleRequest) error {
 func (p PublishManager) StartRandomCyclePublish(ctx context.Context) error {
 	lastCategory, err := p.dao.LastPublishedCategory()
 	if err == nil {
+		log.Printf("last Publish time %s in StartRandomCyclePublish", lastCategory.LastPublished)
+		log.Printf("time now %s in StartRandomCyclePublish", time.Now())
+
 		if time.Since(lastCategory.LastPublished).Minutes() > maxCycleTime {
+			log.Println("Duration is more than maxCycleTime in StartRandomCyclePublish, cyclePublish forced to run")
+
 			err = p.cyclePublish(ctx)
 			if err != nil {
 				return fmt.Errorf("StartRandomCyclePublish: %w", err)
