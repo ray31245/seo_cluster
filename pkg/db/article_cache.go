@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/ray31245/seo_cluster/pkg/db/model"
 
@@ -28,6 +29,10 @@ func (d *ArticleCacheDAO) AddArticleToCache(article model.ArticleCache) error {
 func (d *ArticleCacheDAO) ListArticleCacheByLimit(limit int) ([]model.ArticleCache, error) {
 	var articles []model.ArticleCache
 	err := d.db.Limit(limit).Order("created_at").Find(&articles).Error
+
+	if len(articles) < limit {
+		log.Println("ArticleCacheDAO: ListArticleCacheByLimit: less than limit")
+	}
 
 	return articles, err
 }
