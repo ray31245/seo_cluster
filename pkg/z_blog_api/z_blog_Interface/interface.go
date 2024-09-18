@@ -11,6 +11,7 @@ import (
 type ZBlogAPI interface {
 	GetClient(ctx context.Context, ID uuid.UUID, urlStr string, userName string, password string) (ZBlogAPIClient, error)
 	UpdateClient(ctx context.Context, ID uuid.UUID, urlStr string, userName string, password string) (ZBlogAPIClient, error)
+	DeleteClient(ID uuid.UUID)
 	NewClient(ctx context.Context, urlStr string, userName string, password string) (ZBlogAPIClient, error)
 	NewAnonymousClient(ctx context.Context, urlStr string) ZBlogAPIClient
 }

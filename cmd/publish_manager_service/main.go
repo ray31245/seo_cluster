@@ -100,6 +100,7 @@ func main() {
 	siteHandler := handler.NewSiteHandler(siteManager)
 
 	r.POST("/site", siteHandler.AddSiteHandler)
+	r.DELETE("/site/:siteID", siteHandler.DeleteSiteHandler)
 	r.GET("/site", siteHandler.ListSitesHandler)
 	r.GET("/site/:siteID", siteHandler.GetSiteHandler)
 	r.PUT("/site", siteHandler.UpdateSiteHandler)

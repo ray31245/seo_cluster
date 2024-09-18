@@ -49,6 +49,10 @@ func (t *ZBlogAPI) UpdateClient(ctx context.Context, ID uuid.UUID, urlStr string
 	return client, nil
 }
 
+func (t *ZBlogAPI) DeleteClient(ID uuid.UUID) {
+	delete(t.clientPool, ID)
+}
+
 func (t *ZBlogAPI) NewClient(ctx context.Context, urlStr string, userName string, password string) (zInterface.ZBlogAPIClient, error) {
 	return NewClient(ctx, urlStr, userName, password)
 }

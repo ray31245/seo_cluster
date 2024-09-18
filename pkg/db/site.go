@@ -68,11 +68,15 @@ func (d *SiteDAO) UpdateCategory(category *model.Category) error {
 }
 
 func (d *SiteDAO) DeleteSite(siteID string) error {
-	return d.db.Delete(&model.Site{}, siteID).Error
+	return d.db.Delete(&model.Site{}, fmt.Sprintf("id = '%s'", siteID)).Error
 }
 
 func (d *SiteDAO) DeleteCategory(categoryID string) error {
 	return d.db.Delete(&model.Category{}, categoryID).Error
+}
+
+func (d *SiteDAO) DeleteSiteCategories(siteID string) error {
+	return d.db.Where("site_id = ?", siteID).Delete(&model.Category{}).Error
 }
 
 func (d *SiteDAO) GetSite(siteID string) (*model.Site, error) {

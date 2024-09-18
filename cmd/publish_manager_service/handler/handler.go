@@ -71,6 +71,30 @@ func (s *SiteHandler) AddSiteHandler(c *gin.Context) {
 	})
 }
 
+func (s *SiteHandler) DeleteSiteHandler(c *gin.Context) {
+	id := c.Param("siteID")
+
+	err := s.sitemanager.DeleteSite(id)
+	if err != nil {
+		log.Println(err)
+
+		errCode := http.StatusInternalServerError
+		if errors.Is(err, sitemanager.ErrSiteNotFound) {
+			errCode = http.StatusNotFound
+		}
+
+		c.JSON(errCode, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
 func (s *SiteHandler) UpdateSiteHandler(c *gin.Context) {
 	// get data body from request
 	req := model.UpdateSiteRequest{}

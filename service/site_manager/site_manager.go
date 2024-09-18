@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/google/uuid"
 	dbInterface "github.com/ray31245/seo_cluster/pkg/db/db_interface"
 	dbErr "github.com/ray31245/seo_cluster/pkg/db/error"
 	dbModel "github.com/ray31245/seo_cluster/pkg/db/model"
@@ -67,6 +68,25 @@ func (s SiteManager) AddSite(ctx context.Context, urlStr string, userName string
 
 	if multiErr != nil {
 		return fmt.Errorf("AddSite: %w", multiErr)
+	}
+
+	return nil
+}
+
+// DeleteSite is a method that deletes a site from the site manager.
+func (s SiteManager) DeleteSite(siteID string) error {
+	err := s.siteDAO.DeleteSite(siteID)
+	if dbErr.IsNotfoundErr(err) {
+		return fmt.Errorf("DeleteSite: %w", errors.Join(ErrSiteNotFound, err))
+	} else if err != nil {
+		return fmt.Errorf("DeleteSite: %w", err)
+	}
+
+	s.zAPI.DeleteClient(uuid.MustParse(siteID))
+
+	err = s.siteDAO.DeleteSiteCategories(siteID)
+	if err != nil {
+		return fmt.Errorf("DeleteSite: %w", err)
 	}
 
 	return nil
