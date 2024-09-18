@@ -9,10 +9,15 @@ import (
 
 	"github.com/ray31245/seo_cluster/cmd/publish_manager_service/model"
 	aiAssistInterface "github.com/ray31245/seo_cluster/pkg/ai_assist/ai_assist_interface"
+	aiAssistModel "github.com/ray31245/seo_cluster/pkg/ai_assist/model"
 	"github.com/ray31245/seo_cluster/pkg/util"
 	sitemanager "github.com/ray31245/seo_cluster/service/site_manager"
 
 	"github.com/gin-gonic/gin"
+)
+
+const (
+	retryLimit = 3
 )
 
 // TODO: error handling on middleware
@@ -225,9 +230,19 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		return
 	}
 
-	art, err := r.aiAssist.Rewrite(c, req)
-	if err != nil {
+	art := aiAssistModel.RewriteResponse{}
+
+	for range retryLimit {
+		art, err = r.aiAssist.Rewrite(c, req)
+		if err == nil {
+			break
+		}
+
 		log.Println(err)
+		log.Println("retrying...")
+	}
+
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
