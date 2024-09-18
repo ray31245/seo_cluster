@@ -68,7 +68,16 @@ func (d *SiteDAO) UpdateCategory(category *model.Category) error {
 }
 
 func (d *SiteDAO) DeleteSite(siteID string) error {
-	return d.db.Delete(&model.Site{}, fmt.Sprintf("id = '%s'", siteID)).Error
+	tx := d.db.Delete(&model.Site{}, fmt.Sprintf("id = '%s'", siteID))
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	if tx.RowsAffected == 0 {
+		return dbErr.ErrNotFound
+	}
+
+	return nil
 }
 
 func (d *SiteDAO) DeleteCategory(categoryID string) error {
