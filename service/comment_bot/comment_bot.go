@@ -17,7 +17,7 @@ import (
 const (
 	// coefficientOfGape is the coefficient of gape
 	// if want increase probability of comment, decrease this value
-	coefficientOfGape = 15
+	coefficientOfGape = 25
 	// rateLimitDelay is the delay between each comment
 	// to avoid rate limit of Gemini( googleapi: Error 429: Resource has been exhausted (e.g. check quota) )
 	rateLimitDelay = time.Millisecond * 500
@@ -102,7 +102,7 @@ func (c CommentBot) listArticleForComment(ctx context.Context, site dbModel.Site
 		// Decrease in probability over time
 		hours := time.Since(a.PostTime.Time).Hours() + 1
 
-		gape = int(math.Sqrt(hours) * coefficientOfGape * float64(a.CommNums+1))
+		gape = int(math.Sqrt(hours)*coefficientOfGape*float64(a.CommNums+1)) - int(hours)
 
 		if randomNum() > int32(gape) {
 			res = append(res, a)
