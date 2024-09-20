@@ -22,9 +22,11 @@ func (l *ListSitesResponse) FromDBSites(sites []model.Site) {
 }
 
 type GetSiteResponse struct {
-	Site site `json:"site"`
+	Site        site `json:"site"`
+	CategoryNum int  `json:"category_num"`
 }
 
 func (g *GetSiteResponse) FromDBSite(s model.Site) {
 	g.Site = site{ID: s.ID, URL: s.URL, Lack: s.LackCount}
+	g.CategoryNum = len(s.Categories)
 }

@@ -184,7 +184,7 @@ func (s *SiteHandler) GetSiteHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ok",
-		"data":    data.Site,
+		"data":    data,
 	})
 }
 
