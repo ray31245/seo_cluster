@@ -21,9 +21,10 @@ func (p *PublishArticleRequest) ToZBlogAPI() zModel.PostArticleRequest {
 }
 
 type AddSiteRequest struct {
-	URL      string `json:"url"`
-	UserName string `json:"user_name"`
-	Password string `json:"password"`
+	URL               string `json:"url"`
+	UserName          string `json:"user_name"`
+	Password          string `json:"password"`
+	ExpectCategoryNum uint8  `json:"expect_category_num"`
 }
 
 type UpdateSiteRequest struct {

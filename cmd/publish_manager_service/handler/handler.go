@@ -56,7 +56,7 @@ func (s *SiteHandler) AddSiteHandler(c *gin.Context) {
 		return
 	}
 
-	err = s.sitemanager.AddSite(c, req.URL, req.UserName, req.Password)
+	err = s.sitemanager.AddSite(c, req.URL, req.UserName, req.Password, req.ExpectCategoryNum)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
