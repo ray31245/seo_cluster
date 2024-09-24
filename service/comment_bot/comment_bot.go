@@ -67,13 +67,17 @@ func (c CommentBot) cycleComment(ctx context.Context) error {
 	for _, site := range sites {
 		articles, err := c.listArticleForComment(ctx, site)
 		if err != nil {
-			return fmt.Errorf("cycleComment: %w", err)
+			log.Printf("site url %s, listArticleForComment error: %v", site.URL, err)
+
+			continue
 		}
 
 		for _, a := range articles {
 			err = c.Comment(ctx, site, a)
 			if err != nil {
-				return fmt.Errorf("cycleComment: %w", err)
+				log.Printf("site url %s, article id %s, Comment error: %v", site.URL, a.ID, err)
+
+				continue
 			}
 
 			time.Sleep(rateLimitDelay)

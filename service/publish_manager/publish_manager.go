@@ -171,7 +171,9 @@ func (p PublishManager) cyclePublish(ctx context.Context) error {
 	for _, article := range articles {
 		err := p.AveragePublish(ctx, zModel.PostArticleRequest{Title: article.Title, Content: article.Content})
 		if err != nil {
-			return fmt.Errorf("cyclePublish: %w", err)
+			log.Printf("Error in AveragePublish: %v", err)
+
+			continue
 		}
 
 		err = p.dao.DeleteArticleCache(article.ID.String())
