@@ -16,7 +16,7 @@ func (t *Client) retry(ctx context.Context, f func() error) error {
 	if errors.Is(err, zBlogErr.ErrHTTPUnauthorized) || errors.Is(err, zBlogErr.ErrHTTPForbidden) || errors.Is(err, zBlogErr.ErrIllegalAccess) {
 		err = t.Login(ctx)
 		if err != nil {
-			return fmt.Errorf("login error: %w", err)
+			return fmt.Errorf("retry error: %w", err)
 		}
 
 		err = f()
