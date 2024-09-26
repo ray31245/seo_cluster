@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	dbInterface "github.com/ray31245/seo_cluster/pkg/db/db_interface"
 	dbErr "github.com/ray31245/seo_cluster/pkg/db/error"
 	dbModel "github.com/ray31245/seo_cluster/pkg/db/model"
@@ -15,6 +16,15 @@ import (
 )
 
 var ErrNoCategoryNeedToBePublished = errors.New("no category need to be published")
+
+type PublishErr struct {
+	SiteID uuid.UUID
+	CateID uuid.UUID
+}
+
+func (s PublishErr) Error() string {
+	return fmt.Sprintf("site id %s, cate id %s", s.SiteID, s.CateID)
+}
 
 type DAO struct {
 	dbInterface.ArticleCacheDAOInterface
@@ -60,22 +70,32 @@ func (p PublishManager) AveragePublish(ctx context.Context, article zModel.PostA
 	// set category id
 	article.CateID = cate.ZBlogID
 
-	// get zblog api client
-	client, err := p.zAPI.GetClient(ctx, cate.SiteID, cate.Site.URL, cate.Site.UserName, cate.Site.Password)
+	// do publish
+	err = p.doPublish(ctx, article, cate.Site)
 	if err != nil {
-		return fmt.Errorf("AveragePublish: %w", err)
-	}
-
-	// post article
-	err = client.PostArticle(ctx, article)
-	if err != nil {
-		return fmt.Errorf("AveragePublish: %w", err)
+		return errors.Join(PublishErr{SiteID: cate.SiteID, CateID: cate.ID}, err)
 	}
 
 	// mark last published
 	err = p.dao.MarkPublished(cate.ID.String())
 	if err != nil {
 		return fmt.Errorf("AveragePublish: %w", err)
+	}
+
+	return nil
+}
+
+func (p PublishManager) doPublish(ctx context.Context, article zModel.PostArticleRequest, site dbModel.Site) error {
+	// get zblog api client
+	client, err := p.zAPI.GetClient(ctx, site.ID, site.URL, site.UserName, site.Password)
+	if err != nil {
+		return fmt.Errorf("doPublish: %w", err)
+	}
+
+	// post article
+	err = client.PostArticle(ctx, article)
+	if err != nil {
+		return fmt.Errorf("doPublish: %w", err)
 	}
 
 	return nil
@@ -172,6 +192,19 @@ func (p PublishManager) cyclePublish(ctx context.Context) error {
 		err := p.AveragePublish(ctx, zModel.PostArticleRequest{Title: article.Title, Content: article.Content})
 		if err != nil {
 			log.Printf("Error in AveragePublish: %v", err)
+
+			var pErr PublishErr
+			if errors.As(err, &pErr) {
+				// mark published, if error is PublishErr
+				// avoid publish to the same category
+				// usually caused by the site is down or the domain is expired
+				err = p.dao.MarkPublished(pErr.CateID.String())
+				if err != nil {
+					return fmt.Errorf("cyclePublish: %w", err)
+				}
+			} else {
+				return fmt.Errorf("cyclePublish: %w", err)
+			}
 
 			continue
 		}
