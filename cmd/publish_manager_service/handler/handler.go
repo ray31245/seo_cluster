@@ -256,13 +256,14 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 
 	art := aiAssistModel.RewriteResponse{}
 
+	log.Println("rewriting...")
+
 	for range retryLimit {
 		art, err = r.aiAssist.Rewrite(c, req)
 		if err == nil {
 			break
 		}
 
-		log.Println(err)
 		log.Println("retrying...")
 	}
 

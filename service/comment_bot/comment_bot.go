@@ -65,6 +65,8 @@ func (c CommentBot) cycleComment(ctx context.Context) error {
 	}
 
 	for _, site := range sites {
+		log.Printf("site url %s, start cycleComment", site.URL)
+
 		articles, err := c.listArticleForComment(ctx, site)
 		if err != nil {
 			log.Printf("site url %s, listArticleForComment error: %v", site.URL, err)
