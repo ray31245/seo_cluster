@@ -110,9 +110,12 @@ func (c CommentBot) listArticleForComment(ctx context.Context, site dbModel.Site
 
 		gape = int(math.Sqrt(hours)*coefficientOfGape*float64(a.CommNums+1)) - int(hours)
 
-		if randomNum() > int32(gape) {
+		randomN := randomNum()
+		if randomN > int32(gape) {
 			res = append(res, a)
 		}
+
+		log.Printf("site url %s, article id %s, gape: %d, randomN: %d", site.URL, a.ID, gape, randomN)
 	}
 
 	return res, nil
