@@ -102,23 +102,23 @@ func (c CommentBot) listArticleForComment(ctx context.Context, site dbModel.Site
 	}
 
 	for _, a := range articles {
-		// gape is the probability of comment, if gape=0, then comment
-		// if value of gape is more probability of comment is less
-		gape := 0
-		// Decrease in probability over time
-		hours := time.Since(a.PostTime.Time).Hours() + 1
-
-		gape = int(math.Sqrt(hours)*coefficientOfGape*float64(a.CommNums+1)) - int(hours)
+		gap := computeGap(a)
 
 		randomN := randomNum()
-		if randomN > int32(gape) {
+		if randomN > int32(gap) {
 			res = append(res, a)
 		}
 
-		log.Printf("site url %s, article id %s, gape: %d, randomN: %d", site.URL, a.ID, gape, randomN)
+		log.Printf("site url %s, article id %s, gape: %d, randomN: %d", site.URL, a.ID, gap, randomN)
 	}
 
 	return res, nil
+}
+
+func computeGap(article zModel.Article) int {
+	hours := time.Since(article.PostTime.Time).Hours() + 1
+
+	return int(math.Sqrt(hours)*coefficientOfGape*float64(article.CommNums+1)) - int(hours)
 }
 
 func (c CommentBot) Comment(ctx context.Context, site dbModel.Site, article zModel.Article) error {
