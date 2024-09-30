@@ -284,7 +284,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		art.Content += imgDiv
 	}
 
-	log.Printf("%s", art.Content)
+	// log.Printf("%s", art.Content)
 
 	c.JSON(http.StatusOK, art)
 }
