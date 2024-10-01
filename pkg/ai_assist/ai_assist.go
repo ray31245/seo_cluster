@@ -73,7 +73,7 @@ func (a *AIAssist) Close() error {
 
 func (a *AIAssist) Rewrite(ctx context.Context, text []byte) (model.RewriteResponse, error) {
 	//nolint:gosmopolitan // prompt is a string
-	prompt := "你是一位收悉區塊鏈的專欄作家，請你將以下內容用你的話重新闡述文章中的內容，並訂一個標題。請使用json格式輸出：{Title: string,Content: string}"
+	prompt := "你是一位收悉区块链的简体中文语系专栏作家，请你将以下内容用你的话重新阐述文章中的内容，并订一个标题。请使用json格式输出：{Title: string,Content: string}"
 
 	resp, err := a.rewriter.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", prompt, text)))
 	if err != nil {
