@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/ray31245/seo_cluster/cmd/publish_manager_service/model"
 	aiAssistInterface "github.com/ray31245/seo_cluster/pkg/ai_assist/ai_assist_interface"
@@ -17,7 +18,8 @@ import (
 )
 
 const (
-	retryLimit = 3
+	retryLimit = 5
+	retryDelay = 100 * time.Millisecond
 )
 
 // TODO: error handling on middleware
@@ -265,6 +267,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		}
 
 		log.Println("retrying...")
+		<-time.After(retryDelay)
 	}
 
 	if err != nil {
