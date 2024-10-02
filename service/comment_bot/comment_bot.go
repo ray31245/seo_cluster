@@ -82,12 +82,13 @@ func (c CommentBot) cycleComment(ctx context.Context) error {
 				continue
 			}
 
+		rateLimitDelay:
 			for {
 				select {
 				case <-ctx.Done():
 					return nil
 				case <-time.After(rateLimitDelay):
-					break
+					break rateLimitDelay
 				}
 			}
 		}
