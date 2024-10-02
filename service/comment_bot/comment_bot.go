@@ -124,10 +124,10 @@ func (c CommentBot) listArticleForComment(ctx context.Context, site dbModel.Site
 }
 
 func computeGap(article zModel.Article) int {
-	// observe the time of post and the number of comments
-	log.Printf("article id %s, post time: %s, commNums: %d", article.ID, article.PostTime, article.CommNums)
-
 	hours := time.Since(article.PostTime.Time).Hours() + 1
+
+	// observe the time of post and the number of comments
+	log.Printf("article id %s, post time: %s,hours: %f, commNums: %d", article.ID, article.PostTime, hours, article.CommNums)
 
 	return int(math.Sqrt(hours)*coefficientOfGape*float64(article.CommNums+1)) - int(hours)*5
 }
