@@ -125,6 +125,10 @@ func (c CommentBot) listArticleForComment(ctx context.Context, site dbModel.Site
 
 func computeGap(article zModel.Article) int {
 	hours := time.Since(article.PostTime.Time).Hours() + 1
+	// hours should be at least 1
+	if hours < 1 {
+		hours = 1
+	}
 
 	// observe the time of post and the number of comments
 	log.Printf("article id %s, post time: %s,hours: %f, commNums: %d", article.ID, article.PostTime, hours, article.CommNums)
