@@ -46,7 +46,13 @@ func main() {
 			}
 		}
 		// the request header is the header
-		log.Println("Request Header: ", r.Header)
+		log.Println("Request Header:")
+
+		for k, v := range r.Header {
+			log.Println("Key: ", k, " Value: ", v)
+		}
+
+		w.Write([]byte(r.URL.Path))
 	})
 
 	log.Printf("Server is running on port %d\n", port)
