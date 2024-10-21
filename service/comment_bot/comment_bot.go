@@ -59,7 +59,7 @@ func (c CommentBot) StartCycleComment(ctx context.Context) {
 func (c CommentBot) cycleComment(ctx context.Context) error {
 	log.Println("cycleComment running...")
 
-	sites, err := c.siteDAO.ListSites()
+	sites, err := c.siteDAO.ListSitesRandom()
 	if err != nil {
 		return fmt.Errorf("cycleComment: %w", err)
 	}

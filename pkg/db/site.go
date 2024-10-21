@@ -46,6 +46,13 @@ func (d *SiteDAO) ListSites() ([]model.Site, error) {
 	return sites, err
 }
 
+func (d *SiteDAO) ListSitesRandom() ([]model.Site, error) {
+	var sites []model.Site
+	err := d.db.Order("RANDOM()").Find(&sites).Error
+
+	return sites, err
+}
+
 func (d *SiteDAO) CreateCategory(category *model.Category) error {
 	return d.db.Create(category).Error
 }

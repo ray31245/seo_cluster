@@ -9,6 +9,7 @@ type SiteDAOInterface interface {
 	DeleteSiteCategories(siteID string) error
 	CreateSite(site *model.Site) (model.Site, error)
 	ListSites() ([]model.Site, error)
+	ListSitesRandom() ([]model.Site, error)
 	GetSite(siteID string) (*model.Site, error)
 	DeleteSite(siteID string) error
 	UpdateSite(site *model.Site) error
