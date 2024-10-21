@@ -20,7 +20,8 @@ const (
 	coefficientOfGape = 15
 	// rateLimitDelay is the delay between each comment
 	// to avoid rate limit of Gemini( googleapi: Error 429: Resource has been exhausted (e.g. check quota) )
-	rateLimitDelay = time.Millisecond * 500
+	rateLimitDelay        = time.Millisecond * 500
+	maxContinueErrorCount = 3
 )
 
 type CommentBot struct {
@@ -74,13 +75,25 @@ func (c CommentBot) cycleComment(ctx context.Context) error {
 			continue
 		}
 
+		continueErrorCount := 0
+
 		for _, a := range articles {
 			err = c.Comment(ctx, site, a)
 			if err != nil {
+				continueErrorCount++
+
 				log.Printf("site url %s, article id %s, Comment error: %v", site.URL, a.ID, err)
+
+				if continueErrorCount > maxContinueErrorCount {
+					log.Printf("site url %s, article id %s, Comment error count > 3, break", site.URL, a.ID)
+
+					break
+				}
 
 				continue
 			}
+
+			continueErrorCount = 0
 
 		rateLimitDelay:
 			for {
