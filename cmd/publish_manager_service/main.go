@@ -81,6 +81,8 @@ func main() {
 		panic(err)
 	}
 
+	publisher.StartPublishByLack(mainCtx)
+
 	commentBot := commentbot.NewCommentBot(zAPI, siteDAO, commentUserDAO, ai)
 	commentBot.StartCycleComment(mainCtx)
 
