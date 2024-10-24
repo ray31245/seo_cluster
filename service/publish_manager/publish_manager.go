@@ -153,6 +153,25 @@ func (p PublishManager) StartRandomCyclePublish(ctx context.Context) error {
 	return nil
 }
 
+func (p PublishManager) StartPublishByLack(ctx context.Context) {
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				// Exit the loop if the context is cancelled
+				return
+			case <-time.After(time.Minute * 5):
+				// Proceed with the publishing cycle after a random duration
+				if err := p.publishByLack(ctx); err != nil {
+					log.Println("Error during publishByLack:", err)
+				}
+			}
+		}
+	}()
+
+	return
+}
+
 func (p PublishManager) cyclePublish(ctx context.Context) error {
 	log.Println("cyclePublish running...")
 
@@ -177,15 +196,24 @@ func (p PublishManager) cyclePublish(ctx context.Context) error {
 		}
 	}
 
-	// get total lack count
-	totalLackCount, err := p.dao.SumLackCount()
+	err = p.publishByLack(ctx)
 	if err != nil {
 		return fmt.Errorf("cyclePublish: %w", err)
 	}
 
+	return nil
+}
+
+func (p PublishManager) publishByLack(ctx context.Context) error {
+	// get total lack count
+	totalLackCount, err := p.dao.SumLackCount()
+	if err != nil {
+		return fmt.Errorf("publishByLack: %w", err)
+	}
+
 	articles, err := p.dao.ListArticleCacheByLimit(totalLackCount)
 	if err != nil {
-		return fmt.Errorf("cyclePublish: %w", err)
+		return fmt.Errorf("publishByLack: %w", err)
 	}
 
 	for _, article := range articles {
@@ -200,10 +228,10 @@ func (p PublishManager) cyclePublish(ctx context.Context) error {
 				// usually caused by the site is down or the domain is expired
 				err = p.dao.MarkPublished(pErr.CateID.String())
 				if err != nil {
-					return fmt.Errorf("cyclePublish: %w", err)
+					return fmt.Errorf("publishByLack: %w", err)
 				}
 			} else {
-				return fmt.Errorf("cyclePublish: %w", err)
+				return fmt.Errorf("publishByLack: %w", err)
 			}
 
 			continue
@@ -211,7 +239,7 @@ func (p PublishManager) cyclePublish(ctx context.Context) error {
 
 		err = p.dao.DeleteArticleCache(article.ID.String())
 		if err != nil {
-			return fmt.Errorf("cyclePublish: %w", err)
+			return fmt.Errorf("publishByLack: %w", err)
 		}
 	}
 
