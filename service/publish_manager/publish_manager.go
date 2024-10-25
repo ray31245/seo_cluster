@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,8 +33,9 @@ type DAO struct {
 }
 
 type PublishManager struct {
-	zAPI zInterface.ZBlogAPI
-	dao  DAO
+	zAPI        zInterface.ZBlogAPI
+	dao         DAO
+	publishLock sync.Mutex
 }
 
 func NewPublishManager(zAPI zInterface.ZBlogAPI, dao DAO) *PublishManager {
@@ -44,7 +46,7 @@ func NewPublishManager(zAPI zInterface.ZBlogAPI, dao DAO) *PublishManager {
 }
 
 // List sites of publish manager
-func (p PublishManager) ListSites() ([]dbModel.Site, error) {
+func (p *PublishManager) ListSites() ([]dbModel.Site, error) {
 	res, err := p.dao.ListSites()
 	if err != nil {
 		return nil, fmt.Errorf("ListSites: %w", err)
@@ -54,7 +56,7 @@ func (p PublishManager) ListSites() ([]dbModel.Site, error) {
 }
 
 // AveragePublish average publish article to all site and category
-func (p PublishManager) AveragePublish(ctx context.Context, article zModel.PostArticleRequest) error {
+func (p *PublishManager) AveragePublish(ctx context.Context, article zModel.PostArticleRequest) error {
 	// find first published category
 	cate, err := p.dao.FirstPublishedCategory()
 	if err != nil {
@@ -85,7 +87,7 @@ func (p PublishManager) AveragePublish(ctx context.Context, article zModel.PostA
 	return nil
 }
 
-func (p PublishManager) doPublish(ctx context.Context, article zModel.PostArticleRequest, site dbModel.Site) error {
+func (p *PublishManager) doPublish(ctx context.Context, article zModel.PostArticleRequest, site dbModel.Site) error {
 	// get zblog api client
 	client, err := p.zAPI.GetClient(ctx, site.ID, site.URL, site.UserName, site.Password)
 	if err != nil {
@@ -101,7 +103,7 @@ func (p PublishManager) doPublish(ctx context.Context, article zModel.PostArticl
 	return nil
 }
 
-func (p PublishManager) PrePublish(article zModel.PostArticleRequest) error {
+func (p *PublishManager) PrePublish(article zModel.PostArticleRequest) error {
 	cache := dbModel.ArticleCache{
 		Title:   article.Title,
 		Content: article.Content,
@@ -115,7 +117,7 @@ func (p PublishManager) PrePublish(article zModel.PostArticleRequest) error {
 	return nil
 }
 
-func (p PublishManager) StartRandomCyclePublish(ctx context.Context) error {
+func (p *PublishManager) StartRandomCyclePublish(ctx context.Context) error {
 	lastCategory, err := p.dao.LastPublishedCategory()
 	if err == nil {
 		log.Printf("last Publish time %s in StartRandomCyclePublish", lastCategory.LastPublished)
@@ -124,7 +126,7 @@ func (p PublishManager) StartRandomCyclePublish(ctx context.Context) error {
 		if time.Since(lastCategory.LastPublished).Minutes() > maxCycleTime {
 			log.Println("Duration is more than maxCycleTime in StartRandomCyclePublish, cyclePublish forced to run")
 
-			err = p.cyclePublish(ctx)
+			err = p.CyclePublish(ctx)
 			if err != nil {
 				return fmt.Errorf("StartRandomCyclePublish: %w", err)
 			}
@@ -143,7 +145,7 @@ func (p PublishManager) StartRandomCyclePublish(ctx context.Context) error {
 				return
 			case <-time.After(nextTime):
 				// Proceed with the publishing cycle after a random duration
-				if err := p.cyclePublish(ctx); err != nil {
+				if err := p.CyclePublish(ctx); err != nil {
 					log.Println("Error during cyclePublish:", err)
 				}
 			}
@@ -153,7 +155,7 @@ func (p PublishManager) StartRandomCyclePublish(ctx context.Context) error {
 	return nil
 }
 
-func (p PublishManager) StartPublishByLack(ctx context.Context) {
+func (p *PublishManager) StartPublishByLack(ctx context.Context) {
 	go func() {
 		for {
 			select {
@@ -162,7 +164,7 @@ func (p PublishManager) StartPublishByLack(ctx context.Context) {
 				return
 			case <-time.After(time.Minute * 5):
 				// Proceed with the publishing cycle after a random duration
-				if err := p.publishByLack(ctx); err != nil {
+				if err := p.PublishByLack(ctx); err != nil {
 					log.Println("Error during publishByLack:", err)
 				}
 			}
@@ -172,7 +174,14 @@ func (p PublishManager) StartPublishByLack(ctx context.Context) {
 	return
 }
 
-func (p PublishManager) cyclePublish(ctx context.Context) error {
+func (p *PublishManager) CyclePublish(ctx context.Context) error {
+	p.publishLock.Lock()
+	defer p.publishLock.Unlock()
+
+	return p.cyclePublish(ctx)
+}
+
+func (p *PublishManager) cyclePublish(ctx context.Context) error {
 	log.Println("cyclePublish running...")
 
 	sites, err := p.dao.ListSites()
@@ -204,7 +213,16 @@ func (p PublishManager) cyclePublish(ctx context.Context) error {
 	return nil
 }
 
-func (p PublishManager) publishByLack(ctx context.Context) error {
+func (p *PublishManager) PublishByLack(ctx context.Context) error {
+	if ok := p.publishLock.TryLock(); !ok {
+		return nil
+	}
+	defer p.publishLock.Unlock()
+
+	return p.publishByLack(ctx)
+}
+
+func (p *PublishManager) publishByLack(ctx context.Context) error {
 	// get total lack count
 	totalLackCount, err := p.dao.SumLackCount()
 	if err != nil {
