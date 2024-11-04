@@ -13,3 +13,7 @@ type CommentResponse struct {
 type EvaluateResponse struct {
 	Score int `json:"Score"`
 }
+
+type FindKeyWordsResponse struct {
+	KeyWords []string `json:"KeyWords"`
+}

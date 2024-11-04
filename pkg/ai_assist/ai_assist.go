@@ -19,11 +19,12 @@ const (
 )
 
 type AIAssist struct {
-	token     string
-	client    *genai.Client
-	rewriter  *genai.GenerativeModel
-	commenter *genai.GenerativeModel
-	evaluator *genai.GenerativeModel
+	token         string
+	client        *genai.Client
+	rewriter      *genai.GenerativeModel
+	commenter     *genai.GenerativeModel
+	evaluator     *genai.GenerativeModel
+	keyWordFinder *genai.GenerativeModel
 }
 
 func NewAIAssist(ctx context.Context, token string) (*AIAssist, error) {
@@ -53,12 +54,18 @@ func NewAIAssist(ctx context.Context, token string) (*AIAssist, error) {
 		ResponseMIMEType: "application/json",
 	}
 
+	keyWordFinder := client.GenerativeModel("gemini-1.5-pro")
+	keyWordFinder.GenerationConfig = genai.GenerationConfig{
+		ResponseMIMEType: "application/json",
+	}
+
 	return &AIAssist{
-		token:     token,
-		client:    client,
-		rewriter:  rewriter,
-		commenter: commenter,
-		evaluator: evaluator,
+		token:         token,
+		client:        client,
+		rewriter:      rewriter,
+		commenter:     commenter,
+		evaluator:     evaluator,
+		keyWordFinder: keyWordFinder,
 	}, nil
 }
 
@@ -135,6 +142,41 @@ func (a *AIAssist) Evaluate(ctx context.Context, text []byte) (model.EvaluateRes
 	err = json.Unmarshal([]byte(fmt.Sprintf("%s", resp.Candidates[0].Content.Parts[0])), &res)
 	if err != nil {
 		return model.EvaluateResponse{}, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return res, nil
+}
+
+func (a *AIAssist) FindKeyWords(ctx context.Context, text []byte) (model.FindKeyWordsResponse, error) {
+	//nolint:gosmopolitan // prompt is a string
+	prompt := "你是一位区块链专栏作家并且擅长seo，你需要列出这篇文章中与区块链、数位货币、投资相关的中文长尾关键字。请使用json格式输出：{KeyWords: []string}。"
+
+	resp, err := a.rewriter.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", prompt, text)))
+	if err != nil {
+		return model.FindKeyWordsResponse{}, fmt.Errorf("failed to find keywords: %w", err)
+	}
+
+	if len(resp.Candidates) == 0 {
+		return model.FindKeyWordsResponse{}, errors.New("no content generated")
+	}
+
+	//nolint:gosmopolitan // prompt is a string
+	// prompt = "请你将以下的词语中长度少于4个字的词语改写成长度4到5个字的同义词。请使用json格式输出：{KeyWords: []string}。"
+
+	// resp, err = a.rewriter.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", prompt, text)))
+	// if err != nil {
+	// 	return model.FindKeyWordsResponse{}, fmt.Errorf("failed to filter keywords: %w", err)
+	// }
+
+	// if len(resp.Candidates) == 0 {
+	// 	return model.FindKeyWordsResponse{}, errors.New("no content generated")
+	// }
+
+	res := model.FindKeyWordsResponse{}
+
+	err = json.Unmarshal([]byte(fmt.Sprintf("%s", resp.Candidates[0].Content.Parts[0])), &res)
+	if err != nil {
+		return model.FindKeyWordsResponse{}, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
 	return res, nil
