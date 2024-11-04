@@ -24,3 +24,9 @@ local_publish_service:
 	-X main.UserName=$(USERNAME) \
 	-X main.Password=$(PASSWORD) \
 	" -v cmd/publish_service/main.go
+
+.PHONY google_indexer_linux_amd64:
+google_indexer_linux_amd64:
+	@echo "Building google indexer for Linux amd64"
+	GOOS=linux GOARCH=amd64 go build -o release/google_indexer_linux_amd64 \
+	-v "cmd/google_index_spider/main.go"
