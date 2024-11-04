@@ -2,12 +2,14 @@ package commentbot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math"
 	"time"
 
 	aiAssistInterface "github.com/ray31245/seo_cluster/pkg/ai_assist/ai_assist_interface"
+	"github.com/ray31245/seo_cluster/pkg/ai_assist/model"
 	dbInterface "github.com/ray31245/seo_cluster/pkg/db/db_interface"
 	dbModel "github.com/ray31245/seo_cluster/pkg/db/model"
 	zModel "github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
@@ -168,7 +170,7 @@ func (c CommentBot) Comment(ctx context.Context, site dbModel.Site, article zMod
 	}
 
 	// comment
-	comment, err := c.aiAssist.Comment(ctx, []byte(article.Content))
+	comment, err := c.comment(ctx, article)
 	if err != nil {
 		return fmt.Errorf("Comment: %w", err)
 	}
@@ -181,4 +183,18 @@ func (c CommentBot) Comment(ctx context.Context, site dbModel.Site, article zMod
 	log.Printf("site url %s, article id %s,score: %d, comment success", site.URL, article.ID, comment.Score)
 
 	return nil
+}
+
+func (c CommentBot) comment(ctx context.Context, article zModel.Article) (model.CommentResponse, error) {
+	if ok := c.aiAssist.TryLock(); !ok {
+		return model.CommentResponse{}, fmt.Errorf("Comment: %w", errors.New("AIAssist is locked"))
+	}
+	defer c.aiAssist.Unlock()
+
+	comment, err := c.aiAssist.Comment(ctx, []byte(article.Content))
+	if err != nil {
+		return model.CommentResponse{}, fmt.Errorf("Comment: %w", err)
+	}
+
+	return comment, nil
 }

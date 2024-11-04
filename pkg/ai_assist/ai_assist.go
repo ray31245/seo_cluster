@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/google/generative-ai-go/genai"
 	aiassistinterface "github.com/ray31245/seo_cluster/pkg/ai_assist/ai_assist_interface"
@@ -25,6 +26,7 @@ type AIAssist struct {
 	commenter     *genai.GenerativeModel
 	evaluator     *genai.GenerativeModel
 	keyWordFinder *genai.GenerativeModel
+	lock          sync.Mutex
 }
 
 func NewAIAssist(ctx context.Context, token string) (*AIAssist, error) {
@@ -145,6 +147,18 @@ func (a *AIAssist) Evaluate(ctx context.Context, text []byte) (model.EvaluateRes
 	}
 
 	return res, nil
+}
+
+func (a *AIAssist) Lock() {
+	a.lock.Lock()
+}
+
+func (a *AIAssist) TryLock() bool {
+	return a.lock.TryLock()
+}
+
+func (a *AIAssist) Unlock() {
+	a.lock.Unlock()
 }
 
 func (a *AIAssist) FindKeyWords(ctx context.Context, text []byte) (model.FindKeyWordsResponse, error) {

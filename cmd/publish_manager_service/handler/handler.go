@@ -256,20 +256,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		return
 	}
 
-	art := aiAssistModel.RewriteResponse{}
-
-	log.Println("rewriting...")
-
-	for range retryLimit {
-		art, err = r.aiAssist.Rewrite(c, req)
-		if err == nil {
-			break
-		}
-
-		log.Println("retrying...")
-		<-time.After(retryDelay)
-	}
-
+	art, err := r.rewriteUntil(c, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
@@ -290,4 +277,23 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 	// log.Printf("%s", art.Content)
 
 	c.JSON(http.StatusOK, art)
+}
+
+func (r *RewriteHandler) rewriteUntil(c *gin.Context, req []byte) (art aiAssistModel.RewriteResponse, err error) {
+	log.Println("rewriting...")
+
+	r.aiAssist.Lock()
+	defer r.aiAssist.Unlock()
+
+	for range retryLimit {
+		art, err = r.aiAssist.Rewrite(c, req)
+		if err == nil {
+			break
+		}
+
+		log.Println("retrying...")
+		<-time.After(retryDelay)
+	}
+
+	return
 }
