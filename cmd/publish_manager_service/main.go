@@ -21,7 +21,7 @@ import (
 var APIKey string //nolint:gochecknoglobals // APIKey can input from ldflags
 
 func main() {
-	port := flag.String("port", ":7259", "port")
+	port := flag.Int("port", 7259, "port")
 	flag.Parse()
 
 	mainCtx := context.TODO()
@@ -117,7 +117,7 @@ func main() {
 
 	r.POST("/rewrite", rewriteHandler.RewriteHandler)
 
-	err = r.Run(fmt.Sprintf("%s", *port))
+	err = r.Run(fmt.Sprintf(":%d", *port))
 	if err != nil {
 		panic(err)
 	}
