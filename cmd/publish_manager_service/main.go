@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -19,6 +21,9 @@ import (
 var APIKey string //nolint:gochecknoglobals // APIKey can input from ldflags
 
 func main() {
+	port := flag.String("port", ":7259", "port")
+	flag.Parse()
+
 	mainCtx := context.TODO()
 
 	dsn := "publish_manager.db"
@@ -112,7 +117,7 @@ func main() {
 
 	r.POST("/rewrite", rewriteHandler.RewriteHandler)
 
-	err = r.Run(":7259")
+	err = r.Run(fmt.Sprintf("%s", *port))
 	if err != nil {
 		panic(err)
 	}
