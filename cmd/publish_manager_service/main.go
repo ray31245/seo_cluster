@@ -94,6 +94,7 @@ func main() {
 	publishHandler := handler.NewPublishHandler(publisher)
 
 	r := gin.Default()
+	r.Use(gin.Recovery())
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",
