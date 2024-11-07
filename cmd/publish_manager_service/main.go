@@ -14,6 +14,7 @@ import (
 	commentbot "github.com/ray31245/seo_cluster/service/comment_bot"
 	publishManager "github.com/ray31245/seo_cluster/service/publish_manager"
 	sitemanager "github.com/ray31245/seo_cluster/service/site_manager"
+	usermanager "github.com/ray31245/seo_cluster/service/user_manager"
 
 	"github.com/gin-gonic/gin"
 )
@@ -48,6 +49,17 @@ func main() {
 	}
 	defer commentBotDB.Close()
 
+	userDSN := "user.db"
+	if s, ok := os.LookupEnv("USER_DSN"); ok {
+		userDSN = s
+	}
+
+	userDB, err := db.NewDB(userDSN)
+	if err != nil {
+		panic(err)
+	}
+	defer userDB.Close()
+
 	siteDAO, err := publishDB.NewSiteDAO()
 	if err != nil {
 		panic(err)
@@ -59,6 +71,11 @@ func main() {
 	}
 
 	commentUserDAO, err := commentBotDB.NewCommentUserDAO()
+	if err != nil {
+		panic(err)
+	}
+
+	userDAO, err := userDB.NewUserDAO()
 	if err != nil {
 		panic(err)
 	}
@@ -80,6 +97,7 @@ func main() {
 	zAPI := zBlogApi.NewZBlogAPI()
 	publisher := publishManager.NewPublishManager(zAPI, publishManager.DAO{ArticleCacheDAOInterface: articleCacheDAO, SiteDAOInterface: siteDAO})
 	siteManager := sitemanager.NewSiteManager(zAPI, siteDAO)
+	userManager := usermanager.NewUserManager(userDAO)
 
 	err = publisher.StartRandomCyclePublish(mainCtx)
 	if err != nil {
@@ -117,6 +135,10 @@ func main() {
 	rewriteHandler := handler.NewRewriteHandler(ai)
 
 	r.POST("/rewrite", rewriteHandler.RewriteHandler)
+
+	userHandler := handler.NewUserHandler(userManager)
+
+	r.POST("/first_user", userHandler.AddFirstAdminUser)
 
 	err = r.Run(fmt.Sprintf(":%d", *port))
 	if err != nil {

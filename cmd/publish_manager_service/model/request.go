@@ -38,3 +38,8 @@ type IncreaseLackCountRequest struct {
 	SiteID string `json:"site_id"`
 	Count  int    `json:"count"`
 }
+
+type AddFirstAdminUserRequest struct {
+	UserName string `json:"user_name"`
+	Password string `json:"password"`
+}
