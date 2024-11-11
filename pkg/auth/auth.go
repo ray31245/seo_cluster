@@ -6,6 +6,7 @@ import (
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ray31245/seo_cluster/pkg/auth/model"
 	dbInterface "github.com/ray31245/seo_cluster/pkg/db/db_interface"
 	dbModel "github.com/ray31245/seo_cluster/pkg/db/model"
 	jwtkitInterface "github.com/ray31245/seo_cluster/pkg/jwt_kit/jwt_kit_interface"
@@ -67,10 +68,7 @@ func (a *Auth) SetUpJWTKit(setJWT jwtkitInterface.SetJWTKit) {
 	setJWT.SetIdentityHandler(identityHandler)
 
 	authenticator := func(c *gin.Context) (interface{}, error) {
-		var login struct {
-			UserName string `json:"username"`
-			Password string `json:"password"`
-		}
+		var login model.LoginRequest
 
 		if err := c.ShouldBind(&login); err != nil {
 			return nil, jwt.ErrMissingLoginValues
