@@ -5,5 +5,8 @@ import (
 )
 
 type UserDAOInterface interface {
-	CreateFirstAdminUser(user *model.User) error
+	CreateUser(user *model.User) error
+	Count() (int64, error)
+	GetUserByID(id string) (*model.User, error)
+	GetUserByName(name string) (*model.User, error)
 }

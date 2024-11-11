@@ -6,10 +6,14 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/ray31245/seo_cluster/cmd/publish_manager_service/handler"
 	aiassist "github.com/ray31245/seo_cluster/pkg/ai_assist"
+	"github.com/ray31245/seo_cluster/pkg/auth"
 	"github.com/ray31245/seo_cluster/pkg/db"
+	jwt_kit "github.com/ray31245/seo_cluster/pkg/jwt_kit"
+	util "github.com/ray31245/seo_cluster/pkg/util"
 	zBlogApi "github.com/ray31245/seo_cluster/pkg/z_blog_api"
 	commentbot "github.com/ray31245/seo_cluster/service/comment_bot"
 	publishManager "github.com/ray31245/seo_cluster/service/publish_manager"
@@ -95,9 +99,16 @@ func main() {
 	defer ai.Close()
 
 	zAPI := zBlogApi.NewZBlogAPI()
+
+	secret := util.GenerateRandomString(32)
+	jwtKit := jwt_kit.NewJWTKit([]byte(secret), time.Hour, time.Hour, "loginInfo", nil, nil, nil, nil, nil)
+	auth := auth.NewAuth(userDAO)
+
+	auth.SetUpJWTKit(jwtKit)
+
 	publisher := publishManager.NewPublishManager(zAPI, publishManager.DAO{ArticleCacheDAOInterface: articleCacheDAO, SiteDAOInterface: siteDAO})
 	siteManager := sitemanager.NewSiteManager(zAPI, siteDAO)
-	userManager := usermanager.NewUserManager(userDAO)
+	userManager := usermanager.NewUserManager(userDAO, auth)
 
 	err = publisher.StartRandomCyclePublish(mainCtx)
 	if err != nil {
@@ -109,8 +120,6 @@ func main() {
 	commentBot := commentbot.NewCommentBot(zAPI, siteDAO, commentUserDAO, ai)
 	commentBot.StartCycleComment(mainCtx)
 
-	publishHandler := handler.NewPublishHandler(publisher)
-
 	r := gin.Default()
 	r.Use(gin.Recovery())
 	r.GET("/ping", func(c *gin.Context) {
@@ -119,26 +128,34 @@ func main() {
 		})
 	})
 
-	r.POST("/publish", publishHandler.AveragePublishHandler)
-	r.POST("/prepublish", publishHandler.PrePublishHandler)
-	r.POST("/flexiblePublish", publishHandler.FlexiblePublishHandler)
-
-	siteHandler := handler.NewSiteHandler(siteManager)
-
-	r.POST("/site", siteHandler.AddSiteHandler)
-	r.DELETE("/site/:siteID", siteHandler.DeleteSiteHandler)
-	r.GET("/site", siteHandler.ListSitesHandler)
-	r.GET("/site/:siteID", siteHandler.GetSiteHandler)
-	r.PUT("/site", siteHandler.UpdateSiteHandler)
-	r.POST("/site/increase_lack", siteHandler.IncreaseLackCountHandler)
-
-	rewriteHandler := handler.NewRewriteHandler(ai)
-
-	r.POST("/rewrite", rewriteHandler.RewriteHandler)
+	r.POST("/login", jwtKit.LoginHandler)
+	r.POST("/refresh_token", jwtKit.RefreshHandler)
 
 	userHandler := handler.NewUserHandler(userManager)
 
 	r.POST("/first_user", userHandler.AddFirstAdminUser)
+
+	publishHandler := handler.NewPublishHandler(publisher)
+	rewriteHandler := handler.NewRewriteHandler(ai)
+
+	r.Use(jwtKit.InitMiddleWare())
+	r.Use(jwtKit.MiddlewareFunc())
+
+	articleRoute := r.Group("/article")
+	articleRoute.POST("/publish", publishHandler.AveragePublishHandler)
+	articleRoute.POST("/prepublish", publishHandler.PrePublishHandler)
+	articleRoute.POST("/flexiblePublish", publishHandler.FlexiblePublishHandler)
+	articleRoute.POST("/rewrite", rewriteHandler.RewriteHandler)
+
+	siteHandler := handler.NewSiteHandler(siteManager)
+
+	siteRoute := r.Group("/site")
+	siteRoute.POST("/", siteHandler.AddSiteHandler)
+	siteRoute.GET("/", siteHandler.ListSitesHandler)
+	siteRoute.PUT("/", siteHandler.UpdateSiteHandler)
+	siteRoute.DELETE("/:siteID", siteHandler.DeleteSiteHandler)
+	siteRoute.GET("/:siteID", siteHandler.GetSiteHandler)
+	siteRoute.POST("/increase_lack", siteHandler.IncreaseLackCountHandler)
 
 	err = r.Run(fmt.Sprintf(":%d", *port))
 	if err != nil {

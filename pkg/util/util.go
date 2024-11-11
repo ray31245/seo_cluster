@@ -103,3 +103,14 @@ func (i *NumberString) UnmarshalJSON(data []byte) error {
 
 	return nil
 }
+
+func GenerateRandomString(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
+	}
+
+	return string(b)
+}

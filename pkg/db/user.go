@@ -3,7 +3,6 @@ package db
 import (
 	"fmt"
 
-	dbErr "github.com/ray31245/seo_cluster/pkg/db/error"
 	"github.com/ray31245/seo_cluster/pkg/db/model"
 
 	"gorm.io/gorm"
@@ -22,24 +21,44 @@ func (d *DB) NewUserDAO() (*UserDAO, error) {
 	return &UserDAO{db: d.db}, nil
 }
 
-func (d *UserDAO) CreateFirstAdminUser(user *model.User) error {
-	var count int64
-
-	err := d.db.Model(&model.User{}).Count(&count).Error
-	if err != nil {
-		return err
-	}
-
-	if count > 0 {
-		return dbErr.ErrUserAlreadyExist
-	}
-
-	user.IsAdmin = true
-
-	err = d.db.Create(user).Error
+func (d *UserDAO) CreateUser(user *model.User) error {
+	err := d.db.Create(user).Error
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (d *UserDAO) Count() (int64, error) {
+	var count int64
+
+	err := d.db.Model(&model.User{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (d *UserDAO) GetUserByID(id string) (*model.User, error) {
+	var user model.User
+
+	err := d.db.First(&user, "id = ?", id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (d *UserDAO) GetUserByName(name string) (*model.User, error) {
+	var user model.User
+
+	err := d.db.First(&user, "name = ?", name).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }
