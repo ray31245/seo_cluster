@@ -30,3 +30,9 @@ google_indexer_linux_amd64:
 	@echo "Building google indexer for Linux amd64"
 	GOOS=linux GOARCH=amd64 go build -o release/google_indexer_linux_amd64 \
 	-v "cmd/google_index_spider/main.go"
+
+.PHONY forwarder_windows_amd64:
+forwarder_windows_amd64:
+	@echo "Building forwarder for Windows amd64"
+	GOOS=windows GOARCH=amd64 go build -o release/forwarder_windows_amd64.exe \
+	-v "cmd/forwarder/main.go"
