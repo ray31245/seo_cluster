@@ -178,3 +178,19 @@ func (p *PublishHandler) FlexiblePublishHandler(c *gin.Context) {
 		"message": "ok",
 	})
 }
+
+func (p *PublishHandler) GetArticleCacheCountHandler(c *gin.Context) {
+	count, err := p.publisher.CountArticleCache()
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"count": count,
+	})
+}

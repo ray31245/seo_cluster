@@ -8,4 +8,5 @@ type ArticleCacheDAOInterface interface {
 	AddArticleToCache(article model.ArticleCache) error
 	ListArticleCacheByLimit(limit int) ([]model.ArticleCache, error)
 	DeleteArticleCache(id string) error
+	CountArticleCache() (int64, error)
 }

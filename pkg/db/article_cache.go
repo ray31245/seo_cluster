@@ -40,3 +40,10 @@ func (d *ArticleCacheDAO) ListArticleCacheByLimit(limit int) ([]model.ArticleCac
 func (d *ArticleCacheDAO) DeleteArticleCache(id string) error {
 	return d.db.Delete(&model.ArticleCache{}, fmt.Sprintf("id = '%s'", id)).Error
 }
+
+func (d *ArticleCacheDAO) CountArticleCache() (int64, error) {
+	var count int64
+	err := d.db.Model(&model.ArticleCache{}).Count(&count).Error
+
+	return count, err
+}

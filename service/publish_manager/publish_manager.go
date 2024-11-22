@@ -263,3 +263,7 @@ func (p *PublishManager) publishByLack(ctx context.Context) error {
 
 	return nil
 }
+
+func (p *PublishManager) CountArticleCache() (int64, error) {
+	return p.dao.CountArticleCache()
+}

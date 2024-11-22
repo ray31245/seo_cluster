@@ -146,6 +146,7 @@ func main() {
 	articleRoute.POST("/prepublish", publishHandler.PrePublishHandler)
 	articleRoute.POST("/flexiblePublish", publishHandler.FlexiblePublishHandler)
 	articleRoute.POST("/rewrite", rewriteHandler.RewriteHandler)
+	articleRoute.GET("/cacheCount", publishHandler.GetArticleCacheCountHandler)
 
 	siteHandler := handler.NewSiteHandler(siteManager)
 
