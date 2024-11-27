@@ -10,7 +10,7 @@ import (
 )
 
 // WordpressApi is a struct to implement WordpressApi interface
-var _ wordpressinterface.WordpressApi = &WordpressApi{}
+var _ wordpressinterface.WordpressAPI = &WordpressApi{}
 
 type WordpressApi struct {
 	// TODO: clientPool should be sync.Map

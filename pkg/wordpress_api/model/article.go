@@ -132,7 +132,7 @@ type CreateArticleArgs struct {
 	// The excerpt for the post.
 	Excerpt string `json:"excerpt,omitempty"`
 	// The terms assigned to the post in the category taxonomy.
-	Categories []int `json:"categories,omitempty"`
+	Categories []uint32 `json:"categories,omitempty"`
 	// The terms assigned to the post in the post_tag taxonomy.
 	Tags []int `json:"tags,omitempty"`
 	// A named status for the post.

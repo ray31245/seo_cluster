@@ -7,7 +7,7 @@ import (
 	"github.com/ray31245/seo_cluster/pkg/wordpress_api/model"
 )
 
-type WordpressApi interface {
+type WordpressAPI interface {
 	GetClient(ctx context.Context, ID uuid.UUID, urlStr string, userName string, password string) (WordpressClient, error)
 	UpdateClient(ctx context.Context, ID uuid.UUID, urlStr string, userName string, password string) (WordpressClient, error)
 	DeleteClient(ID uuid.UUID)

@@ -46,6 +46,13 @@ func (d *SiteDAO) ListSites() ([]model.Site, error) {
 	return sites, err
 }
 
+func (d *SiteDAO) ListSitesByCMSType(cmsType model.CMSType) ([]model.Site, error) {
+	var sites []model.Site
+	err := d.db.Where("cms_type = ?", cmsType).Find(&sites).Error
+
+	return sites, err
+}
+
 func (d *SiteDAO) ListSitesRandom() ([]model.Site, error) {
 	var sites []model.Site
 	err := d.db.Order("RANDOM()").Find(&sites).Error
@@ -122,10 +129,10 @@ func (d *SiteDAO) FirstPublishedCategory() (*model.Category, error) {
 	return &category, nil
 }
 
-func (d *SiteDAO) LastPublishedCategory() (*model.Category, error) {
+func (d *SiteDAO) LastPublishedCategoryByCMSType(cmsType model.CMSType) (*model.Category, error) {
 	var category model.Category
 
-	err := d.db.Preload("Site").Order("last_published desc").First(&category).Error
+	err := d.db.Where("exists (select 1 from sites where sites.id = categories.site_id and cms_type = ?)", cmsType).Preload("Site").Order("last_published desc").First(&category).Error
 	if err != nil {
 		return nil, fmt.Errorf("LastPublishedCategory: %w", err)
 	}

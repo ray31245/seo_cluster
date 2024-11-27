@@ -14,6 +14,7 @@ import (
 	"github.com/ray31245/seo_cluster/pkg/db"
 	jwt_kit "github.com/ray31245/seo_cluster/pkg/jwt_kit"
 	util "github.com/ray31245/seo_cluster/pkg/util"
+	wordpressApi "github.com/ray31245/seo_cluster/pkg/wordpress_api"
 	zBlogApi "github.com/ray31245/seo_cluster/pkg/z_blog_api"
 	commentbot "github.com/ray31245/seo_cluster/service/comment_bot"
 	publishManager "github.com/ray31245/seo_cluster/service/publish_manager"
@@ -99,6 +100,7 @@ func main() {
 	defer ai.Close()
 
 	zAPI := zBlogApi.NewZBlogAPI()
+	wordpressAPI := wordpressApi.NewWordpressApi()
 
 	secret := util.GenerateRandomString(32)
 	jwtKit := jwt_kit.NewJWTKit([]byte(secret), time.Hour, time.Hour, "loginInfo", nil, nil, nil, nil, nil)
@@ -106,11 +108,11 @@ func main() {
 
 	auth.SetUpJWTKit(jwtKit)
 
-	publisher := publishManager.NewPublishManager(zAPI, publishManager.DAO{ArticleCacheDAOInterface: articleCacheDAO, SiteDAOInterface: siteDAO})
-	siteManager := sitemanager.NewSiteManager(zAPI, siteDAO)
+	publisher := publishManager.NewPublishManager(zAPI, wordpressAPI, publishManager.DAO{ArticleCacheDAOInterface: articleCacheDAO, SiteDAOInterface: siteDAO})
+	siteManager := sitemanager.NewSiteManager(zAPI, wordpressAPI, siteDAO)
 	userManager := usermanager.NewUserManager(userDAO, auth)
 
-	err = publisher.StartRandomCyclePublish(mainCtx)
+	err = publisher.StartRandomCyclePublishZblog(mainCtx)
 	if err != nil {
 		panic(err)
 	}

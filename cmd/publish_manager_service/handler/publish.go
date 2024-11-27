@@ -56,7 +56,7 @@ func (p *PublishHandler) AveragePublishHandler(c *gin.Context) {
 		return
 	}
 
-	err = p.publisher.AveragePublish(c, req.ToZBlogAPI())
+	err = p.publisher.AveragePublish(c, req.ToPublishManager())
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -105,7 +105,7 @@ func (p *PublishHandler) PrePublishHandler(c *gin.Context) {
 		return
 	}
 
-	err = p.publisher.PrePublish(req.ToZBlogAPI())
+	err = p.publisher.PrePublish(req.ToPublishManager())
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -154,9 +154,9 @@ func (p *PublishHandler) FlexiblePublishHandler(c *gin.Context) {
 		return
 	}
 
-	err = p.publisher.AveragePublish(c, req.ToZBlogAPI())
+	err = p.publisher.AveragePublish(c, req.ToPublishManager())
 	if errors.Is(err, publishManager.ErrNoCategoryNeedToBePublished) {
-		err = p.publisher.PrePublish(req.ToZBlogAPI())
+		err = p.publisher.PrePublish(req.ToPublishManager())
 		if err != nil {
 			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{
