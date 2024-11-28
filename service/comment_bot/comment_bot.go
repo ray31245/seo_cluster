@@ -154,34 +154,56 @@ func computeGap(article zModel.Article) int {
 func (c CommentBot) Comment(ctx context.Context, site dbModel.Site, article zModel.Article) error {
 	log.Printf("site url %s, article id %s, start comment", site.URL, article.ID)
 
-	commentUser, err := c.commentUserDAO.GetRandomCommentUser()
+	var err error
+	if site.CmsType == dbModel.CMSTypeWordPress {
+		err = c.commentWordPress(ctx, site, article)
+	} else if site.CmsType == dbModel.CMSTypeZBlog {
+		err = c.commentZBlog(ctx, site, article)
+	} else {
+		err = errors.New("unsupported cms type")
+	}
+
 	if err != nil {
 		return fmt.Errorf("Comment: %w", err)
+	}
+
+	return nil
+}
+
+func (c CommentBot) commentZBlog(ctx context.Context, site dbModel.Site, article zModel.Article) error {
+	commentUser, err := c.commentUserDAO.GetRandomCommentUser()
+	if err != nil {
+		return fmt.Errorf("commentZBlog: %w", err)
 	}
 
 	client, err := c.zBlogAPI.GetClient(ctx, commentUser.ID, site.URL, commentUser.Name, commentUser.Password)
 	if err != nil {
-		return fmt.Errorf("Comment: %w", err)
+		return fmt.Errorf("commentZBlog: %w", err)
 	}
 
 	article, err = client.GetArticle(ctx, article.ID)
 	if err != nil {
-		return fmt.Errorf("Comment: %w", err)
+		return fmt.Errorf("commentZBlog: %w", err)
 	}
 
 	// comment
 	comment, err := c.comment(ctx, article)
 	if err != nil {
-		return fmt.Errorf("Comment: %w", err)
+		return fmt.Errorf("commentZBlog: %w", err)
 	}
 
 	err = client.PostComment(ctx, zModel.PostCommentRequest{LogID: article.ID, Content: comment.Comment})
 	if err != nil {
-		return fmt.Errorf("Comment: %w", err)
+		return fmt.Errorf("commentZBlog: %w", err)
 	}
 
 	log.Printf("site url %s, article id %s,score: %d, comment success", site.URL, article.ID, comment.Score)
 
+	return nil
+}
+
+func (c CommentBot) commentWordPress(ctx context.Context, site dbModel.Site, article zModel.Article) error {
+	// TODO: implement commentWordPress
 	return nil
 }
 
