@@ -6,9 +6,10 @@ import (
 )
 
 type site struct {
-	ID   uuid.UUID `json:"id"`
-	URL  string    `json:"url"`
-	Lack int       `json:"lack"`
+	ID      uuid.UUID `json:"id"`
+	URL     string    `json:"url"`
+	CMSType string    `json:"cms_type"`
+	Lack    int       `json:"lack"`
 }
 
 type ListSitesResponse struct {
@@ -17,7 +18,7 @@ type ListSitesResponse struct {
 
 func (l *ListSitesResponse) FromDBSites(sites []model.Site) {
 	for _, s := range sites {
-		l.Sites = append(l.Sites, site{ID: s.ID, URL: s.URL, Lack: s.LackCount})
+		l.Sites = append(l.Sites, site{ID: s.ID, URL: s.URL, Lack: s.LackCount, CMSType: string(s.CmsType)})
 	}
 }
 
