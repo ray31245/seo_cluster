@@ -252,6 +252,7 @@ func (p *PublishManager) StartRandomCyclePublishWordPress(ctx context.Context) e
 	go func() {
 		for {
 			timeArr := computeTimePointArray()
+			log.Printf("timeArr is %v in StartRandomCyclePublishWordPress", timeArr)
 			select {
 			case <-ctx.Done():
 				return
