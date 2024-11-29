@@ -117,6 +117,11 @@ func main() {
 		panic(err)
 	}
 
+	err = publisher.StartRandomCyclePublishWordPress(mainCtx)
+	if err != nil {
+		panic(err)
+	}
+
 	publisher.StartPublishByLack(mainCtx)
 
 	commentBot := commentbot.NewCommentBot(zAPI, siteDAO, commentUserDAO, ai)
