@@ -243,37 +243,25 @@ func (p *PublishManager) cyclePublishZblog(ctx context.Context) error {
 	return nil
 }
 
+// StartRandomCyclePublishWordPress start random cycle publish wordpress
+// do 4 or 5 times publish in a day
+// 2 times in 12 hours
+// 2 times in next 12 hours
+// may extra 1 times in next 24 hours
 func (p *PublishManager) StartRandomCyclePublishWordPress(ctx context.Context) error {
-	lastCategory, err := p.dao.LastPublishedCategoryByCMSType(dbModel.CMSTypeWordPress)
-	if err == nil {
-		log.Printf("last Publish time %s in StartRandomCyclePublish", lastCategory.LastPublished)
-		log.Printf("time now %s in StartRandomCyclePublish", time.Now())
-
-		if time.Since(lastCategory.LastPublished).Minutes() > maxCycleTime {
-			log.Println("Duration is more than maxCycleTime in StartRandomCyclePublish, cyclePublish forced to run")
-
-			err = p.CyclePublishWordPress(ctx)
-			if err != nil {
-				return fmt.Errorf("StartRandomCyclePublish: %w", err)
-			}
-		}
-	} else if !dbErr.IsNotfoundErr(err) {
-		return fmt.Errorf("StartRandomCyclePublish: %w", err)
-	}
-
 	go func() {
 		for {
-			nextTime := randomTime()
-			log.Printf("next time run cyclePublish is %s in StartRandomCyclePublish", time.Now().Add(nextTime))
+			timeArr := computeTimePointArray()
 			select {
 			case <-ctx.Done():
-				// Exit the loop if the context is cancelled
 				return
-			case <-time.After(nextTime):
-				// Proceed with the publishing cycle after a random duration
-				if err := p.CyclePublishWordPress(ctx); err != nil {
-					log.Println("Error during cyclePublish:", err)
-				}
+			default:
+				timeArrSchedule(ctx, timeArr, func() {
+					err := p.CyclePublishWordPress(ctx)
+					if err != nil {
+						log.Println("Error during CyclePublishWordPress:", err)
+					}
+				})
 			}
 		}
 	}()
