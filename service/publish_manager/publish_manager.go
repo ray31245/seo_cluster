@@ -117,13 +117,13 @@ func (p *PublishManager) doPublishWordPress(ctx context.Context, article model.A
 	// get wordpress api client
 	client, err := p.wordpressAPI.GetClient(ctx, site.ID, site.URL, site.UserName, site.Password)
 	if err != nil {
-		return fmt.Errorf("doPublish: %w", err)
+		return fmt.Errorf("doPublishWordPress: %w", err)
 	}
 
 	// post article
 	_, err = client.CreateArticle(ctx, postArticle)
 	if err != nil {
-		return fmt.Errorf("doPublish: %w", err)
+		return fmt.Errorf("doPublishWordPress: %w", err)
 	}
 
 	return nil
@@ -169,25 +169,25 @@ func (p *PublishManager) PrePublish(article model.Article) error {
 func (p *PublishManager) StartRandomCyclePublishZblog(ctx context.Context) error {
 	lastCategory, err := p.dao.LastPublishedCategoryByCMSType(dbModel.CMSTypeZBlog)
 	if err == nil {
-		log.Printf("last Publish time %s in StartRandomCyclePublish", lastCategory.LastPublished)
-		log.Printf("time now %s in StartRandomCyclePublish", time.Now())
+		log.Printf("last Publish time %s in StartRandomCyclePublishZblog", lastCategory.LastPublished)
+		log.Printf("time now %s in StartRandomCyclePublishZblog", time.Now())
 
 		if time.Since(lastCategory.LastPublished).Minutes() > maxCycleTime {
-			log.Println("Duration is more than maxCycleTime in StartRandomCyclePublish, cyclePublish forced to run")
+			log.Println("Duration is more than maxCycleTime in StartRandomCyclePublishZblog, cyclePublish forced to run")
 
 			err = p.CyclePublishZblog(ctx)
 			if err != nil {
-				return fmt.Errorf("StartRandomCyclePublish: %w", err)
+				return fmt.Errorf("StartRandomCyclePublishZblog: %w", err)
 			}
 		}
 	} else if !dbErr.IsNotfoundErr(err) {
-		return fmt.Errorf("StartRandomCyclePublish: %w", err)
+		return fmt.Errorf("StartRandomCyclePublishZblog: %w", err)
 	}
 
 	go func() {
 		for {
 			nextTime := randomTime()
-			log.Printf("next time run cyclePublish is %s in StartRandomCyclePublish", time.Now().Add(nextTime))
+			log.Printf("next time run cyclePublish is %s in StartRandomCyclePublishZblog", time.Now().Add(nextTime))
 			select {
 			case <-ctx.Done():
 				// Exit the loop if the context is cancelled
@@ -195,7 +195,7 @@ func (p *PublishManager) StartRandomCyclePublishZblog(ctx context.Context) error
 			case <-time.After(nextTime):
 				// Proceed with the publishing cycle after a random duration
 				if err := p.CyclePublishZblog(ctx); err != nil {
-					log.Println("Error during cyclePublish:", err)
+					log.Println("Error during CyclePublishZblog:", err)
 				}
 			}
 		}
@@ -226,18 +226,18 @@ func (p *PublishManager) cyclePublishZblog(ctx context.Context) error {
 
 		lackCount := randomNum()
 		if lackCount > 0 {
-			log.Printf("site id %s, lack count %d in cyclePublish", site.ID, lackCount)
+			log.Printf("site id %s, lack count %d in cyclePublishZblog", site.ID, lackCount)
 
 			err := p.dao.IncreaseLackCount(site.ID.String(), int(lackCount))
 			if err != nil {
-				return fmt.Errorf("cyclePublish: %w", err)
+				return fmt.Errorf("cyclePublishZblog: %w", err)
 			}
 		}
 	}
 
 	err = p.publishByLack(ctx)
 	if err != nil {
-		return fmt.Errorf("cyclePublish: %w", err)
+		return fmt.Errorf("cyclePublishZblog: %w", err)
 	}
 
 	return nil
@@ -278,11 +278,11 @@ func (p *PublishManager) CyclePublishWordPress(ctx context.Context) error {
 }
 
 func (p *PublishManager) cyclePublishWordPress(ctx context.Context) error {
-	log.Println("cyclePublish running...")
+	log.Println("cyclePublishWordPress running...")
 
 	sites, err := p.dao.ListSitesByCMSType(dbModel.CMSTypeWordPress)
 	if err != nil {
-		return fmt.Errorf("cyclePublish: %w", err)
+		return fmt.Errorf("cyclePublishWordPress: %w", err)
 	}
 
 	for _, site := range sites {
@@ -292,18 +292,18 @@ func (p *PublishManager) cyclePublishWordPress(ctx context.Context) error {
 
 		lackCount := randomNum()
 		if lackCount > 0 {
-			log.Printf("site id %s, lack count %d in cyclePublish", site.ID, lackCount)
+			log.Printf("site id %s, lack count %d in cyclePublishWordPress", site.ID, lackCount)
 
 			err := p.dao.IncreaseLackCount(site.ID.String(), int(lackCount))
 			if err != nil {
-				return fmt.Errorf("cyclePublish: %w", err)
+				return fmt.Errorf("cyclePublishWordPress: %w", err)
 			}
 		}
 	}
 
 	err = p.publishByLack(ctx)
 	if err != nil {
-		return fmt.Errorf("cyclePublish: %w", err)
+		return fmt.Errorf("cyclePublishWordPress: %w", err)
 	}
 
 	return nil
