@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/google/uuid"
 	dbInterface "github.com/ray31245/seo_cluster/pkg/db/db_interface"
@@ -349,7 +348,7 @@ func (s SiteManager) SyncCategoryFromSiteWordpress(ctx context.Context, site *db
 		return fmt.Errorf("SyncCategoryFromSiteWordpress: %w", err)
 	}
 
-	wordpressCategories, err := client.ListCategory(ctx, wordpressModel.ListCategoryArgs{PerPage: int(time.Now().UnixMicro() % 100)})
+	wordpressCategories, err := client.ListCategory(ctx, wordpressModel.ListCategoryArgs{})
 	if err != nil {
 		return fmt.Errorf("SyncCategoryFromSiteWordpress: %w", err)
 	}
