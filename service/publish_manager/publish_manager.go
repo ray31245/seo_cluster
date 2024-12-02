@@ -290,14 +290,11 @@ func (p *PublishManager) cyclePublishWordPress(ctx context.Context) error {
 			continue
 		}
 
-		lackCount := randomNum()
-		if lackCount > 0 {
-			log.Printf("site id %s, lack count %d in cyclePublishWordPress", site.ID, lackCount)
+		log.Printf("site id %s, lack count %d in cyclePublishWordPress", site.ID, 1)
 
-			err := p.dao.IncreaseLackCount(site.ID.String(), int(lackCount))
-			if err != nil {
-				return fmt.Errorf("cyclePublishWordPress: %w", err)
-			}
+		err := p.dao.IncreaseLackCount(site.ID.String(), 1)
+		if err != nil {
+			return fmt.Errorf("cyclePublishWordPress: %w", err)
 		}
 	}
 
