@@ -237,6 +237,24 @@ func (s SiteManager) UpdateSite(ctx context.Context, ID string, urlStr string, u
 	return nil
 }
 
+func (s SiteManager) SyncCategoryFromAllSite(ctx context.Context) error {
+	sites, err := s.ListSites()
+	if err != nil {
+		return fmt.Errorf("SyncCategoryFromAllSite: %w", err)
+	}
+
+	var multiErr error
+
+	for _, site := range sites {
+		err = s.SyncCategoryFromSite(ctx, site.ID.String())
+		if err != nil {
+			multiErr = errors.Join(multiErr, err)
+		}
+	}
+
+	return err
+}
+
 func (s SiteManager) SyncCategoryFromSite(ctx context.Context, siteID string) error {
 	site, err := s.siteDAO.GetSite(siteID)
 	if dbErr.IsNotfoundErr(err) {

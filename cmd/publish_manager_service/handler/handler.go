@@ -191,6 +191,24 @@ func (s *SiteHandler) GetSiteHandler(c *gin.Context) {
 	})
 }
 
+func (s *SiteHandler) SyncCategoryFromAllSiteHandler(c *gin.Context) {
+	err := s.sitemanager.SyncCategoryFromAllSite(c)
+	if err != nil {
+		log.Println(err)
+
+		errCode := http.StatusMultiStatus
+		c.JSON(errCode, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
 func (s *SiteHandler) SyncCategoryFromSiteHandler(c *gin.Context) {
 	id := c.Param("siteID")
 
