@@ -132,7 +132,7 @@ func (c CommentBot) listArticleForComment(ctx context.Context, site dbModel.Site
 			res = append(res, a)
 		}
 
-		log.Printf("site url %s, article id %s, gape: %d, randomN: %d", site.URL, a.ID, gap, randomN)
+		// log.Printf("site url %s, article id %s, gape: %d, randomN: %d", site.URL, a.ID, gap, randomN)
 	}
 
 	return res, nil
@@ -146,7 +146,7 @@ func computeGap(article zModel.Article) int {
 	}
 
 	// observe the time of post and the number of comments
-	log.Printf("article id %s, post time: %s,hours: %f, commNums: %d", article.ID, article.PostTime, hours, article.CommNums)
+	// log.Printf("article id %s, post time: %s,hours: %f, commNums: %d", article.ID, article.PostTime, hours, article.CommNums)
 
 	return int(math.Sqrt(hours)*coefficientOfGape*float64(article.CommNums+1)) - int(hours)*2
 }
