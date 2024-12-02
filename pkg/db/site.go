@@ -95,7 +95,7 @@ func (d *SiteDAO) DeleteSite(siteID string) error {
 }
 
 func (d *SiteDAO) DeleteCategory(categoryID string) error {
-	return d.db.Delete(&model.Category{}, categoryID).Error
+	return d.db.Delete(&model.Category{}, fmt.Sprintf("id = '%s'", categoryID)).Error
 }
 
 func (d *SiteDAO) DeleteSiteCategories(siteID string) error {

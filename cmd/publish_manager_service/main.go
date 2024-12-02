@@ -163,6 +163,7 @@ func main() {
 	siteRoute.PUT("/", siteHandler.UpdateSiteHandler)
 	siteRoute.DELETE("/:siteID", siteHandler.DeleteSiteHandler)
 	siteRoute.GET("/:siteID", siteHandler.GetSiteHandler)
+	siteRoute.PUT("/syncCateFromSite/:siteID", siteHandler.SyncCategoryFromSiteHandler)
 	siteRoute.POST("/increase_lack", siteHandler.IncreaseLackCountHandler)
 
 	err = r.Run(fmt.Sprintf(":%d", *port))

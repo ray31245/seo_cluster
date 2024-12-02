@@ -191,6 +191,30 @@ func (s *SiteHandler) GetSiteHandler(c *gin.Context) {
 	})
 }
 
+func (s *SiteHandler) SyncCategoryFromSiteHandler(c *gin.Context) {
+	id := c.Param("siteID")
+
+	err := s.sitemanager.SyncCategoryFromSite(c, id)
+	if err != nil {
+		log.Println(err)
+
+		errCode := http.StatusInternalServerError
+		if errors.Is(err, sitemanager.ErrSiteNotFound) {
+			errCode = http.StatusNotFound
+		}
+
+		c.JSON(errCode, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
 func (s *SiteHandler) IncreaseLackCountHandler(c *gin.Context) {
 	req := model.IncreaseLackCountRequest{}
 

@@ -6,6 +6,8 @@ import (
 
 type SiteDAOInterface interface {
 	CreateCategory(category *model.Category) error
+	DeleteCategory(categoryID string) error
+	UpdateCategory(category *model.Category) error
 	DeleteSiteCategories(siteID string) error
 	CreateSite(site *model.Site) (model.Site, error)
 	ListSites() ([]model.Site, error)

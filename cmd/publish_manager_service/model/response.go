@@ -12,6 +12,12 @@ type site struct {
 	Lack    int       `json:"lack"`
 }
 
+type category struct {
+	Name        string `json:"name"`
+	ZblogID     uint32 `json:"z_blog_id"`
+	WordpressID uint32 `json:"wordpress_id"`
+}
+
 type ListSitesResponse struct {
 	Sites []site `json:"sites"`
 }
@@ -23,11 +29,13 @@ func (l *ListSitesResponse) FromDBSites(sites []model.Site) {
 }
 
 type GetSiteResponse struct {
-	Site        site `json:"site"`
-	CategoryNum int  `json:"category_num"`
+	Site       site       `json:"site"`
+	Categories []category `json:"categories"`
 }
 
 func (g *GetSiteResponse) FromDBSite(s model.Site) {
-	g.Site = site{ID: s.ID, URL: s.URL, Lack: s.LackCount}
-	g.CategoryNum = len(s.Categories)
+	g.Site = site{ID: s.ID, URL: s.URL, Lack: s.LackCount, CMSType: string(s.CmsType)}
+	for _, c := range s.Categories {
+		g.Categories = append(g.Categories, category{Name: c.Name, ZblogID: c.ZBlogID, WordpressID: c.WordpressID})
+	}
 }
