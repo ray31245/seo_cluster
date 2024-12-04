@@ -111,7 +111,7 @@ func (d *SiteDAO) GetSite(siteID string) (*model.Site, error) {
 
 func (d *SiteDAO) GetCategory(categoryID string) (*model.Category, error) {
 	var category model.Category
-	err := d.db.First(&category, fmt.Sprintf("id = '%s'", categoryID)).Error
+	err := d.db.Preload("Site").First(&category, fmt.Sprintf("id = '%s'", categoryID)).Error
 
 	return &category, err
 }
