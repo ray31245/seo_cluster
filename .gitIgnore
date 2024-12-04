@@ -1,4 +1,5 @@
 .env
 release/
+data/
 .DS_Store
 .vscode/
