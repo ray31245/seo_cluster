@@ -137,14 +137,19 @@ func (p *PublishManager) findFirstMatchCategory(ctx context.Context, article mod
 
 	var cate *dbModel.Category
 
-	if selectResp.ID != "" && selectResp.IsFind {
+	switch {
+	case selectResp.ID != "" && selectResp.IsFind:
 		cate, err = p.dao.GetCategory(selectResp.ID)
-		if err != nil {
+		if err != nil && !dbErr.IsNotfoundErr(err) {
 			return nil, fmt.Errorf("FindFirstMatchCategory: %w", err)
+		} else if err == nil {
+			break
 		}
-	} else if notMatchCate.Name != "" {
+		// if not found, fall back to notMatchCate or first published category
+		fallthrough
+	case notMatchCate.Name != "":
 		cate = &notMatchCate
-	} else {
+	default:
 		// find first published category
 		cate = &cates[0]
 	}
