@@ -20,13 +20,14 @@ const (
 )
 
 type AIAssist struct {
-	token         string
-	client        *genai.Client
-	rewriter      *genai.GenerativeModel
-	commenter     *genai.GenerativeModel
-	evaluator     *genai.GenerativeModel
-	keyWordFinder *genai.GenerativeModel
-	lock          sync.Mutex
+	token          string
+	client         *genai.Client
+	rewriter       *genai.GenerativeModel
+	commenter      *genai.GenerativeModel
+	evaluator      *genai.GenerativeModel
+	keyWordFinder  *genai.GenerativeModel
+	categorySelect *genai.GenerativeModel
+	lock           sync.Mutex
 }
 
 func NewAIAssist(ctx context.Context, token string) (*AIAssist, error) {
@@ -61,13 +62,28 @@ func NewAIAssist(ctx context.Context, token string) (*AIAssist, error) {
 		ResponseMIMEType: "application/json",
 	}
 
+	categorySelect := client.GenerativeModel("gemini-1.5-flash")
+	categorySelect.ResponseMIMEType = "application/json"
+	categorySelect.ResponseSchema = &genai.Schema{
+		Type: genai.TypeObject,
+		Properties: map[string]*genai.Schema{
+			"id": {
+				Type: genai.TypeString,
+			},
+			"isFind": {
+				Type: genai.TypeBoolean,
+			},
+		},
+	}
+
 	return &AIAssist{
-		token:         token,
-		client:        client,
-		rewriter:      rewriter,
-		commenter:     commenter,
-		evaluator:     evaluator,
-		keyWordFinder: keyWordFinder,
+		token:          token,
+		client:         client,
+		rewriter:       rewriter,
+		commenter:      commenter,
+		evaluator:      evaluator,
+		keyWordFinder:  keyWordFinder,
+		categorySelect: categorySelect,
 	}, nil
 }
 
@@ -149,6 +165,41 @@ func (a *AIAssist) Evaluate(ctx context.Context, text []byte) (model.EvaluateRes
 	return res, nil
 }
 
+func (a *AIAssist) SelectCategory(ctx context.Context, req model.SelectCategoryRequest) (model.SelectCategoryResponse, error) {
+	optionStr, err := json.Marshal(req.CategoriesOption)
+	if err != nil {
+		return model.SelectCategoryResponse{}, fmt.Errorf("failed to marshal categories option: %w", err)
+	}
+	prompts := []genai.Part{
+		genai.Text("請幫我對以下文章根據提供的選項選擇最適合的分類，如果有多個分類選擇順序最優先的分類，例如選項（币安交易所、加密货币交易所、火币交易所、加密货币再质押）那順序最優先的選項就是\"币安交易所\"。"),
+		genai.Text("完整的例子如下："),
+		genai.Text("文章：<p>本文分析了埃隆·马斯克在2024年美国大选中对唐纳德·特朗普胜选所起到的关键作用，以及这种合作关系对美国政治和社会可能产生的深远影响。马斯克利用其在科技、商业和社交媒体上的巨大影响力，为特朗普的竞选提供了资金、地面组织和宣传支持，吸引了大量对特朗普的政策感兴趣但对其性格感到厌倦的年轻选民。</p>\n\n<p>文章指出，马斯克与特朗普的合作关系并非完全一致，两人的个性都强势，未来可能出现冲突。马斯克的动机也值得深思，其最终目标可能是为了实现其在太空探索方面的宏伟计划，而将美国政府作为实现这一目标的工具。</p>\n\n<p>马斯克被特朗普任命领导一个名为“政府效率部 (DOGE)”的新部门，其目标是精简联邦政府机构，削减开支。文章质疑了这一目标的可行性以及对社会福利计划可能造成的负面影响，特别是对弱势群体的冲击。马斯克的“效率”承诺可能导致医疗、教育等公共服务的削减，对依赖政府支持的民众造成严重后果。</p>\n\n<p>文章还探讨了马斯克与特朗普合作关系中潜在的利益冲突，以及马斯克在影响政府监管机构方面可能扮演的角色。马斯克旗下公司特斯拉和SpaceX此前都与政府监管机构发生过冲突，而“政府效率部”的成立可能使其更容易影响甚至规避这些监管。</p>\n\n<p>文章最后指出，马斯克的政治立场并不明确，其与特朗普的关系也曾经历过动荡。马斯克所宣扬的“言论自由”理念与其在Twitter上的行为存在矛盾，其对“工作思维病毒”的批评也反映出其某种意识形态立场。文章警告说，马斯克和特朗普的合作可能导致一种“寡头政治”的局面，对美国的民主和社会公平造成威胁，普通民众可能无法从这种权力结合中获益，反而可能遭受损失。</p>\n<img src=\"https://img.jinse.cn/7324717_watermarknone.png\"/><img src=\"https://img.jinse.cn/7324724_watermarknone.png\"/><img src=\"https://img.jinse.cn/7324738_watermarknone.png\"/><img src=\"https://img.jinse.cn/7324746_watermarknone.png\"/>"),
+		genai.Text("選項：[{name:DOGE,id:ba9f1ec9-bfd7-405f-967b-45449011fbe5},{name:马斯克,id:22f585dd-c50d-4d8f-93c6-534eb89682c7},{name:時事,id:c32084ff-b335-4c60-8804-8fa9d54cf216},{name:美食,id:dcdc2fe2-6a1b-4231-9179-48ee3520de2a},{name:美国政府,id:48fb04ce-1834-474b-94e6-addaaedf6dc2}]，這些選項中的id為ba9f1ec9-bfd7-405f-967b-45449011fbe5或22f585dd-c50d-4d8f-93c6-534eb89682c7或c32084ff-b335-4c60-8804-8fa9d54cf216或48fb04ce-1834-474b-94e6-addaaedf6dc2都符合這個文章的分類，但是順序最優先的分類為ba9f1ec9-bfd7-405f-967b-45449011fbe5。那回傳結果會是：{id:\"ba9f1ec9-bfd7-405f-967b-45449011fbe5\",isFind:true}"),
+		genai.Text("另外如果選項中找不到符合的分類則回傳空字串，以上面同一例子來說，選項為[{name:沙丁魚,id:ba9f1ec9-bfd7-405f-967b-45449011fbe5},{name:園藝景觀,id:22f585dd-c50d-4d8f-93c6-534eb89682c7},{name:咖啡,id:c32084ff-b335-4c60-8804-8fa9d54cf216},{name:美食,id:dcdc2fe2-6a1b-4231-9179-48ee3520de2a},{name:宮崎英高,id:48fb04ce-1834-474b-94e6-addaaedf6dc2}]，這些選項都不符合此文章的分類則回傳空字串。那回傳結果會是：{id:\"\",isFind:false}"),
+		genai.Text(fmt.Sprintf("文章：%s\n", req.Text)),
+		genai.Text("選項："),
+		genai.Text(fmt.Sprintf("%s\n", optionStr)),
+	}
+
+	resp, err := a.categorySelect.GenerateContent(ctx, prompts...)
+	if err != nil {
+		return model.SelectCategoryResponse{}, fmt.Errorf("failed to select category: %w", err)
+	}
+
+	if len(resp.Candidates) == 0 {
+		return model.SelectCategoryResponse{}, errors.New("no content generated")
+	}
+
+	res := model.SelectCategoryResponse{}
+
+	err = json.Unmarshal([]byte(fmt.Sprintf("%s", resp.Candidates[0].Content.Parts[0])), &res)
+	if err != nil {
+		return model.SelectCategoryResponse{}, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return res, nil
+}
+
 func (a *AIAssist) Lock() {
 	a.lock.Lock()
 }
@@ -163,7 +214,8 @@ func (a *AIAssist) Unlock() {
 
 func (a *AIAssist) FindKeyWords(ctx context.Context, text []byte) (model.FindKeyWordsResponse, error) {
 	//nolint:gosmopolitan // prompt is a string
-	prompt := "你是一位区块链专栏作家并且擅长seo，你需要列出这篇文章中与区块链、数位货币、投资相关的中文长尾关键字。请使用json格式输出：{KeyWords: []string}。"
+	// prompt := "你是一位区块链专栏作家并且擅长seo，你需要列出这篇文章中与区块链、数位货币、投资相关的中文长尾关键字。请使用json格式输出：{KeyWords: []string}。"
+	prompt := "你是一位区块链专栏作家并且擅长seo，你需要列出这篇文章中与区块链、数位货币、投资相关的中文核心关键字。请使用json格式输出：{KeyWords: []string}。"
 
 	resp, err := a.rewriter.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", prompt, text)))
 	if err != nil {

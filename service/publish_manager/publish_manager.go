@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	aiAssistInterface "github.com/ray31245/seo_cluster/pkg/ai_assist/ai_assist_interface"
+	aiAssistModel "github.com/ray31245/seo_cluster/pkg/ai_assist/model"
 	dbInterface "github.com/ray31245/seo_cluster/pkg/db/db_interface"
 	dbErr "github.com/ray31245/seo_cluster/pkg/db/error"
 	dbModel "github.com/ray31245/seo_cluster/pkg/db/model"
@@ -17,6 +20,10 @@ import (
 	zModel "github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
 	zInterface "github.com/ray31245/seo_cluster/pkg/z_blog_api/z_blog_Interface"
 	"github.com/ray31245/seo_cluster/service/publish_manager/model"
+)
+
+const (
+	ConfigUnCateName = "un_cate_name"
 )
 
 var ErrNoCategoryNeedToBePublished = errors.New("no category need to be published")
@@ -33,32 +40,30 @@ func (s PublishErr) Error() string {
 type DAO struct {
 	dbInterface.ArticleCacheDAOInterface
 	dbInterface.SiteDAOInterface
+	dbInterface.KVConfigDAOInterface
 }
 
 type PublishManager struct {
 	zAPI         zInterface.ZBlogAPI
 	wordpressAPI wordpressInterface.WordpressAPI
+	aiAssist     aiAssistInterface.AIAssistInterface
 	dao          DAO
 	publishLock  sync.Mutex
 }
 
-func NewPublishManager(zAPI zInterface.ZBlogAPI, wordpressAPI wordpressInterface.WordpressAPI, dao DAO) *PublishManager {
+func NewPublishManager(zAPI zInterface.ZBlogAPI, wordpressAPI wordpressInterface.WordpressAPI, dao DAO, aiAssist aiAssistInterface.AIAssistInterface) *PublishManager {
 	return &PublishManager{
 		zAPI:         zAPI,
 		wordpressAPI: wordpressAPI,
+		aiAssist:     aiAssist,
 		dao:          dao,
 	}
 }
 
 // AveragePublish average publish article to all site and category
 func (p *PublishManager) AveragePublish(ctx context.Context, article model.Article) error {
-	// find first published category
-	cate, err := p.dao.FirstPublishedCategory()
+	cate, err := p.findFirstMatchCategory(ctx, article)
 	if err != nil {
-		if dbErr.IsNotfoundErr(err) {
-			err = errors.Join(ErrNoCategoryNeedToBePublished, err)
-		}
-
 		return fmt.Errorf("AveragePublish: %w", err)
 	}
 
@@ -86,6 +91,65 @@ func (p *PublishManager) AveragePublish(ctx context.Context, article model.Artic
 	}
 
 	return nil
+}
+
+func (p *PublishManager) findFirstMatchCategory(ctx context.Context, article model.Article) (*dbModel.Category, error) {
+	cates, err := p.dao.ListPublishedCategories()
+	if err != nil {
+		return nil, fmt.Errorf("FindFirstMatchCategory: %w", err)
+	}
+
+	if len(cates) == 0 {
+		return nil, fmt.Errorf("FindFirstMatchCategory: %w", ErrNoCategoryNeedToBePublished)
+	}
+
+	notMatchCate := dbModel.Category{}
+	cateOpts := []aiAssistModel.CategoryOption{}
+
+	configUnCateName, err := p.dao.GetByKeyWithDefault(ConfigUnCateName, "ThisIsUnCate")
+	if err != nil {
+		return nil, fmt.Errorf("FindFirstMatchCategory: %w", err)
+	}
+
+	for _, cate := range cates {
+		if strings.Trim(cate.Name, " ") == configUnCateName.Value {
+			if notMatchCate.ID.String() == "" {
+				{
+					notMatchCate = cate
+				}
+
+				continue
+			}
+
+			cateOpts = append(cateOpts, aiAssistModel.CategoryOption{ID: cate.ID.String(), Name: cate.Name})
+		}
+	}
+
+	selectResp, err := p.aiAssist.SelectCategory(ctx,
+		aiAssistModel.SelectCategoryRequest{
+			Text:             []byte(article.Content),
+			CategoriesOption: cateOpts,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("FindFirstMatchCategory: %w", err)
+	}
+
+	var cate *dbModel.Category
+
+	if selectResp.ID != "" && selectResp.IsFind {
+		cate, err = p.dao.GetCategory(selectResp.ID)
+		if err != nil {
+			return nil, fmt.Errorf("FindFirstMatchCategory: %w", err)
+		}
+	} else if notMatchCate.Name != "" {
+		cate = &notMatchCate
+	} else {
+		// find first published category
+		cate = &cates[0]
+	}
+
+	return cate, nil
 }
 
 func (p *PublishManager) doPublish(ctx context.Context, article model.Article, site dbModel.Site) error {
@@ -378,4 +442,17 @@ func (p *PublishManager) publishByLack(ctx context.Context) error {
 
 func (p *PublishManager) CountArticleCache() (int64, error) {
 	return p.dao.CountArticleCache()
+}
+
+func (p *PublishManager) SetConfigUnCateName(ctx context.Context, name string) error {
+	return p.dao.UpsertByKey(ConfigUnCateName, name)
+}
+
+func (p *PublishManager) GetConfigUnCateName() (string, error) {
+	res, err := p.dao.GetByKey(ConfigUnCateName)
+	if err != nil {
+		return "", fmt.Errorf("GetConfigUnCateName: %w", err)
+	}
+
+	return res.Value, nil
 }

@@ -32,6 +32,17 @@ func main() {
 
 	mainCtx := context.TODO()
 
+	configDSN := "config.db"
+	if s, ok := os.LookupEnv("CONFIG_DSN"); ok {
+		configDSN = s
+	}
+
+	configBD, err := db.NewDB(configDSN)
+	if err != nil {
+		panic(err)
+	}
+	defer configBD.Close()
+
 	dsn := "publish_manager.db"
 	if s, ok := os.LookupEnv("DSN"); ok {
 		dsn = s
@@ -64,6 +75,11 @@ func main() {
 		panic(err)
 	}
 	defer userDB.Close()
+
+	configDAO, err := configBD.NewKVConfigDAO()
+	if err != nil {
+		panic(err)
+	}
 
 	siteDAO, err := publishDB.NewSiteDAO()
 	if err != nil {
@@ -108,7 +124,7 @@ func main() {
 
 	auth.SetUpJWTKit(jwtKit)
 
-	publisher := publishManager.NewPublishManager(zAPI, wordpressAPI, publishManager.DAO{ArticleCacheDAOInterface: articleCacheDAO, SiteDAOInterface: siteDAO})
+	publisher := publishManager.NewPublishManager(zAPI, wordpressAPI, publishManager.DAO{ArticleCacheDAOInterface: articleCacheDAO, SiteDAOInterface: siteDAO, KVConfigDAOInterface: configDAO}, ai)
 	siteManager := sitemanager.NewSiteManager(zAPI, wordpressAPI, siteDAO)
 	userManager := usermanager.NewUserManager(userDAO, auth)
 
@@ -147,6 +163,10 @@ func main() {
 
 	r.Use(jwtKit.InitMiddleWare())
 	r.Use(jwtKit.MiddlewareFunc())
+
+	configRoute := r.Group("/config")
+	configRoute.PUT("/set_un_cate_Name", publishHandler.SetConfigUnCategoryNameHandler)
+	configRoute.GET("/get_un_cate_Name", publishHandler.GetConfigUnCateNameHandler)
 
 	articleRoute := r.Group("/article")
 	articleRoute.POST("/publish", publishHandler.AveragePublishHandler)

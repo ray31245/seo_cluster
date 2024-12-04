@@ -17,3 +17,18 @@ type EvaluateResponse struct {
 type FindKeyWordsResponse struct {
 	KeyWords []string `json:"KeyWords"`
 }
+
+type CategoryOption struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type SelectCategoryRequest struct {
+	Text             []byte
+	CategoriesOption []CategoryOption
+}
+
+type SelectCategoryResponse struct {
+	ID     string `json:"id"`
+	IsFind bool   `json:"isFind"`
+}

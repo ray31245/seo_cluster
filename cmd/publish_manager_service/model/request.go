@@ -53,3 +53,7 @@ type AddFirstAdminUserRequest struct {
 	UserName string `json:"user_name"`
 	Password string `json:"password"`
 }
+
+type SetUnconfigCategoryNameRequest struct {
+	Name string `json:"name"`
+}

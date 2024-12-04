@@ -16,7 +16,9 @@ type SiteDAOInterface interface {
 	GetSite(siteID string) (*model.Site, error)
 	DeleteSite(siteID string) error
 	UpdateSite(site *model.Site) error
+	GetCategory(categoryID string) (*model.Category, error)
 	FirstPublishedCategory() (*model.Category, error)
+	ListPublishedCategories() ([]model.Category, error)
 	LastPublishedCategoryByCMSType(cmsType model.CMSType) (*model.Category, error)
 	MarkPublished(categoryID string) error
 	IncreaseLackCount(siteID string, count int) error

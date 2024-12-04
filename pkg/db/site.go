@@ -116,17 +116,28 @@ func (d *SiteDAO) GetCategory(categoryID string) (*model.Category, error) {
 	return &category, err
 }
 
+func (d *SiteDAO) queryPublishAbleCateGories() (tx *gorm.DB) {
+	return d.db.Where("exists (select 1 from sites where sites.id = categories.site_id and sites.lack_count != 0)").
+		Order("last_published")
+}
+
 func (d *SiteDAO) FirstPublishedCategory() (*model.Category, error) {
 	var category model.Category
 
-	err := d.db.
-		Where("exists (select 1 from sites where sites.id = categories.site_id and sites.lack_count != 0)").
-		Preload("Site").Order("last_published").First(&category).Error
+	err := d.queryPublishAbleCateGories().Preload("Site").First(&category).Error
 	if err != nil {
 		return nil, fmt.Errorf("FirstPublishedCategory: %w", err)
 	}
 
 	return &category, nil
+}
+
+func (d *SiteDAO) ListPublishedCategories() ([]model.Category, error) {
+	var categories []model.Category
+
+	err := d.queryPublishAbleCateGories().Preload("Site").Find(&categories).Error
+
+	return categories, err
 }
 
 func (d *SiteDAO) LastPublishedCategoryByCMSType(cmsType model.CMSType) (*model.Category, error) {

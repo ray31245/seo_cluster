@@ -194,3 +194,58 @@ func (p *PublishHandler) GetArticleCacheCountHandler(c *gin.Context) {
 		"count": count,
 	})
 }
+
+func (p *PublishHandler) SetConfigUnCategoryNameHandler(c *gin.Context) {
+	// get data body from request
+	req := model.SetUnconfigCategoryNameRequest{}
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	// check data
+	if req.Name == "" {
+		log.Println("data is not complete")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", "data is not complete"),
+		})
+
+		return
+	}
+
+	err = p.publisher.SetConfigUnCateName(c, req.Name)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+func (p *PublishHandler) GetConfigUnCateNameHandler(c *gin.Context) {
+	name, err := p.publisher.GetConfigUnCateName()
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"name": name,
+	})
+}
