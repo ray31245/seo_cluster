@@ -9,6 +9,7 @@ import (
 type AIAssistInterface interface {
 	Rewrite(ctx context.Context, text []byte) (model.RewriteResponse, error)
 	Comment(ctx context.Context, text []byte) (model.CommentResponse, error)
+	FindKeyWords(ctx context.Context, text []byte) (model.FindKeyWordsResponse, error)
 	SelectCategory(ctx context.Context, req model.SelectCategoryRequest) (model.SelectCategoryResponse, error)
 	Lock()
 	Unlock()

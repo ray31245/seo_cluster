@@ -19,7 +19,7 @@ func RetrieveUserMe(ctx context.Context, baseURL string, basicAuth model.BasicAu
 
 	// paramsMap["_fields"] = "id,name,slug,email,roles,avatar_urls"
 
-	resBody, err := doRequest(ctx, baseURL, http.MethodGet, route, basicAuth, paramsMap, nil)
+	resBody, _, err := doRequest(ctx, baseURL, http.MethodGet, route, basicAuth, paramsMap, nil)
 	if err != nil {
 		return model.RetrieveUserMeResponse{}, fmt.Errorf("retrieve user me error: %w", err)
 	}

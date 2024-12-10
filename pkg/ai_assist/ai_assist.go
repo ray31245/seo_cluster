@@ -26,6 +26,7 @@ type AIAssist struct {
 	commenter      *genai.GenerativeModel
 	evaluator      *genai.GenerativeModel
 	keyWordFinder  *genai.GenerativeModel
+	keyWordMatcher *genai.GenerativeModel
 	categorySelect *genai.GenerativeModel
 	lock           sync.Mutex
 }
@@ -60,6 +61,28 @@ func NewAIAssist(ctx context.Context, token string) (*AIAssist, error) {
 	keyWordFinder := client.GenerativeModel("gemini-1.5-pro")
 	keyWordFinder.GenerationConfig = genai.GenerationConfig{
 		ResponseMIMEType: "application/json",
+		ResponseSchema: &genai.Schema{
+			Type: genai.TypeObject,
+			Properties: map[string]*genai.Schema{
+				"KeyWords": {
+					Type: genai.TypeArray,
+					Items: &genai.Schema{
+						Type: genai.TypeString,
+					},
+				},
+			},
+		},
+	}
+
+	keyWordMatcher := client.GenerativeModel("gemini-1.5-flash")
+	keyWordMatcher.GenerationConfig = genai.GenerationConfig{
+		ResponseMIMEType: "application/json",
+		ResponseSchema: &genai.Schema{
+			Type: genai.TypeArray,
+			Items: &genai.Schema{
+				Type: genai.TypeString,
+			},
+		},
 	}
 
 	categorySelect := client.GenerativeModel("gemini-1.5-flash")
@@ -83,6 +106,7 @@ func NewAIAssist(ctx context.Context, token string) (*AIAssist, error) {
 		commenter:      commenter,
 		evaluator:      evaluator,
 		keyWordFinder:  keyWordFinder,
+		keyWordMatcher: keyWordMatcher,
 		categorySelect: categorySelect,
 	}, nil
 }
@@ -218,7 +242,7 @@ func (a *AIAssist) FindKeyWords(ctx context.Context, text []byte) (model.FindKey
 	// prompt := "你是一位区块链专栏作家并且擅长seo，你需要列出这篇文章中与区块链、数位货币、投资相关的中文长尾关键字。请使用json格式输出：{KeyWords: []string}。"
 	prompt := "你是一位区块链专栏作家并且擅长seo，你需要列出这篇文章中与区块链、数位货币、投资相关的中文核心关键字。请使用json格式输出：{KeyWords: []string}。"
 
-	resp, err := a.rewriter.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", prompt, text)))
+	resp, err := a.keyWordFinder.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", prompt, text)))
 	if err != nil {
 		return model.FindKeyWordsResponse{}, fmt.Errorf("failed to find keywords: %w", err)
 	}
@@ -244,6 +268,33 @@ func (a *AIAssist) FindKeyWords(ctx context.Context, text []byte) (model.FindKey
 	err = json.Unmarshal([]byte(fmt.Sprintf("%s", resp.Candidates[0].Content.Parts[0])), &res)
 	if err != nil {
 		return model.FindKeyWordsResponse{}, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return res, nil
+}
+
+func (a *AIAssist) MatchKeyWords(ctx context.Context, text []byte, keywords []string) (model.MatchKeyWordsResponse, error) {
+	optionStr, err := json.Marshal(keywords)
+	if err != nil {
+		return model.MatchKeyWordsResponse{}, fmt.Errorf("failed to marshal keywords: %w", err)
+	}
+
+	prompt := fmt.Sprintf("以下将提供文章及标签，请从标签的阵列中找出最多五个适合此文章的，如果找不到就回传空阵列\n标签：\n%s\n文章：%s", optionStr, text)
+
+	resp, err := a.keyWordMatcher.GenerateContent(ctx, genai.Text(prompt))
+	if err != nil {
+		return model.MatchKeyWordsResponse{}, fmt.Errorf("failed to match keywords: %w", err)
+	}
+
+	if len(resp.Candidates) == 0 {
+		return model.MatchKeyWordsResponse{}, errors.New("no content generated")
+	}
+
+	res := model.MatchKeyWordsResponse{}
+
+	err = json.Unmarshal([]byte(fmt.Sprintf("%s", resp.Candidates[0].Content.Parts[0])), &res)
+	if err != nil {
+		return model.MatchKeyWordsResponse{}, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
 	return res, nil

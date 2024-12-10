@@ -249,3 +249,58 @@ func (p *PublishHandler) GetConfigUnCateNameHandler(c *gin.Context) {
 		"name": name,
 	})
 }
+
+func (p *PublishHandler) SetConfigTagBlackList(c *gin.Context) {
+	// get data body from request
+	req := model.SetConfigTagBlackListRequest{}
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	// check data
+	if req.Tags == nil {
+		log.Println("data is not complete")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", "data is not complete"),
+		})
+
+		return
+	}
+
+	err = p.publisher.SetTagsBlockList(c, req.Tags)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+func (p *PublishHandler) GetConfigTagBlackList(c *gin.Context) {
+	tags, err := p.publisher.GetTagsBlockList()
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"tags": tags,
+	})
+}

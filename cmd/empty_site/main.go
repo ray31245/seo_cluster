@@ -79,7 +79,7 @@ func main() {
 		for _, v := range list {
 			log.Printf("delete article id: %s\nname: %s\n", v.ID, v.Title)
 
-			if err := api.DeleteArticle(context.Background(), v.ID); err != nil {
+			if err := api.DeleteArticle(context.Background(), string(v.ID)); err != nil {
 				log.Println(err)
 			}
 

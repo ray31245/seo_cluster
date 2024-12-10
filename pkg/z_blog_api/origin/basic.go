@@ -20,6 +20,7 @@ const (
 	ModPost     = "post"
 	ModCategory = "category"
 	ModComment  = "comment"
+	ModTag      = "tag"
 
 	ActGet    = "get"
 	ActList   = "list"

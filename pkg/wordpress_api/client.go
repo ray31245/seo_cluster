@@ -57,9 +57,34 @@ func (c *Client) RetrieveUserMe(ctx context.Context) (model.RetrieveUserMeRespon
 }
 
 func (c *Client) ListTag(ctx context.Context, args model.ListTagArgs) (model.ListTagResponse, error) {
-	res, err := origin.ListTag(ctx, c.baseURL, c.basicAuth, args)
+	res, _, err := origin.ListTag(ctx, c.baseURL, c.basicAuth, args)
 	if err != nil {
 		return model.ListTagResponse{}, fmt.Errorf("list tag error: %w", err)
+	}
+
+	return res, nil
+}
+
+func (c *Client) ListTagAll(ctx context.Context) (model.ListTagResponse, error) {
+	res := model.ListTagResponse{}
+
+	listArgs := model.ListTagArgs{
+		Page: 1,
+	}
+
+	for {
+		listRes, page, err := origin.ListTag(ctx, c.baseURL, c.basicAuth, listArgs)
+		if err != nil {
+			return model.ListTagResponse{}, fmt.Errorf("list tag all error: %w", err)
+		}
+
+		res = append(res, listRes...)
+
+		if len(res) >= page.Total {
+			break
+		}
+
+		listArgs.Page += 1
 	}
 
 	return res, nil
@@ -96,6 +121,15 @@ func (c *Client) CreateArticle(ctx context.Context, args model.CreateArticleArgs
 	res, err := origin.CreateArticle(ctx, c.baseURL, c.basicAuth, args)
 	if err != nil {
 		return model.CreateArticleResponse{}, fmt.Errorf("create article error: %w", err)
+	}
+
+	return res, nil
+}
+
+func (c *Client) UpdateArticle(ctx context.Context, args model.UpdateArticleArgs) (model.UpdateArticleResponse, error) {
+	res, err := origin.UpdateArticle(ctx, c.baseURL, c.basicAuth, args)
+	if err != nil {
+		return model.UpdateArticleResponse{}, fmt.Errorf("update article error: %w", err)
 	}
 
 	return res, nil

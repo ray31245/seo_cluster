@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -24,6 +25,9 @@ import (
 
 const (
 	ConfigUnCateName = "un_cate_name"
+	TagsBlockList    = "tags_block_list"
+
+	maxKeyWords = 5
 )
 
 var ErrNoCategoryNeedToBePublished = errors.New("no category need to be published")
@@ -160,9 +164,9 @@ func (p *PublishManager) findFirstMatchCategory(ctx context.Context, article mod
 func (p *PublishManager) doPublish(ctx context.Context, article model.Article, site dbModel.Site) error {
 	var err error
 	if site.CmsType == dbModel.CMSTypeWordPress {
-		err = p.doPublishWordPress(ctx, article, site)
+		_, err = p.doPublishWordPress(ctx, article, site)
 	} else if site.CmsType == dbModel.CMSTypeZBlog {
-		err = p.doPublishZblog(ctx, article, site)
+		_, err = p.doPublishZblog(ctx, article, site)
 	} else {
 		err = errors.New("cms type not support")
 	}
@@ -174,7 +178,7 @@ func (p *PublishManager) doPublish(ctx context.Context, article model.Article, s
 	return nil
 }
 
-func (p *PublishManager) doPublishWordPress(ctx context.Context, article model.Article, site dbModel.Site) error {
+func (p *PublishManager) doPublishWordPress(ctx context.Context, article model.Article, site dbModel.Site) (wordpressModel.CreateArticleResponse, error) {
 	// set post article request
 	postArticle := wordpressModel.CreateArticleArgs{
 		Title:      article.Title,
@@ -186,19 +190,26 @@ func (p *PublishManager) doPublishWordPress(ctx context.Context, article model.A
 	// get wordpress api client
 	client, err := p.wordpressAPI.GetClient(ctx, site.ID, site.URL, site.UserName, site.Password)
 	if err != nil {
-		return fmt.Errorf("doPublishWordPress: %w", err)
+		return wordpressModel.CreateArticleResponse{}, fmt.Errorf("doPublishWordPress: %w", err)
 	}
 
 	// post article
-	_, err = client.CreateArticle(ctx, postArticle)
+	postArt, err := client.CreateArticle(ctx, postArticle)
 	if err != nil {
-		return fmt.Errorf("doPublishWordPress: %w", err)
+		return wordpressModel.CreateArticleResponse{}, fmt.Errorf("doPublishWordPress: %w", err)
 	}
 
-	return nil
+	go func(ctx context.Context, artContent string, ID int, site dbModel.Site) {
+		err = p.updateArticleWordpress(ctx, artContent, ID, site)
+		if err != nil {
+			log.Printf("Error in updateArticleWordpress: %v", err)
+		}
+	}(ctx, article.Content, postArt.ID, site)
+
+	return postArt, nil
 }
 
-func (p *PublishManager) doPublishZblog(ctx context.Context, article model.Article, site dbModel.Site) error {
+func (p *PublishManager) doPublishZblog(ctx context.Context, article model.Article, site dbModel.Site) (zModel.Article, error) {
 	// set post article request
 	postArticle := zModel.PostArticleRequest{
 		Title:   article.Title,
@@ -209,13 +220,161 @@ func (p *PublishManager) doPublishZblog(ctx context.Context, article model.Artic
 	// get zblog api client
 	client, err := p.zAPI.GetClient(ctx, site.ID, site.URL, site.UserName, site.Password)
 	if err != nil {
-		return fmt.Errorf("doPublishZblog: %w", err)
+		return zModel.Article{}, fmt.Errorf("doPublishZblog: %w", err)
 	}
 
 	// post article
-	err = client.PostArticle(ctx, postArticle)
+	postArt, err := client.PostArticle(ctx, postArticle)
 	if err != nil {
-		return fmt.Errorf("doPublishZblog: %w", err)
+		return zModel.Article{}, fmt.Errorf("doPublishZblog: %w", err)
+	}
+
+	artID, err := strconv.Atoi(string(postArt.ID))
+	if err != nil {
+		return zModel.Article{}, fmt.Errorf("doPublishZblog: %w", err)
+	}
+
+	go func(ctx context.Context, artContent string, ID int, site dbModel.Site) {
+		err = p.updateArticleTagZblog(ctx, artContent, ID, site)
+		if err != nil {
+			log.Printf("Error in updateArticleTagZblog: %v", err)
+		}
+	}(ctx, article.Content, artID, site)
+
+	return postArt, nil
+}
+
+func (p *PublishManager) updateArticleTagZblog(ctx context.Context, artContent string, artID int, site dbModel.Site) error {
+	client, err := p.zAPI.GetClient(ctx, site.ID, site.URL, site.UserName, site.Password)
+	if err != nil {
+		return fmt.Errorf("updateArticleTagZblog: %w", err)
+	}
+
+	tagBlackList, err := p.GetTagsBlockList()
+	if err != nil && !dbErr.IsNotfoundErr(err) {
+		return fmt.Errorf("updateArticleTagZblog: %w", err)
+	}
+
+	tagBlackListMap := make(map[string]bool)
+
+	for _, tag := range tagBlackList {
+		tagBlackListMap[tag] = true
+	}
+
+	siteTags, err := client.ListTagAll(ctx)
+	if err != nil {
+		return fmt.Errorf("updateArticleTagZblog: %w", err)
+	}
+
+	siteTagsMap := map[string]zModel.Tag{}
+	for _, t := range siteTags {
+		siteTagsMap[t.Name] = t
+	}
+
+	matchedTags := []string{}
+
+	// find matched tags
+	keywords, err := p.aiAssist.FindKeyWords(ctx, []byte(artContent))
+	if err != nil {
+		return fmt.Errorf("updateArticleTagZblog: %w", err)
+	}
+
+	for _, keyword := range keywords.KeyWords {
+		if _, ok := tagBlackListMap[keyword]; ok {
+			continue
+		}
+
+		if _, ok := siteTagsMap[keyword]; !ok {
+			_, err := client.PostTag(ctx, zModel.PostTagRequest{Name: keyword})
+			if err != nil {
+				log.Printf("Error in PostTag: %v", err)
+
+				continue
+			}
+		}
+
+		matchedTags = append(matchedTags, keyword)
+
+		if len(matchedTags) >= maxKeyWords {
+			break
+		}
+	}
+
+	_, err = client.PostArticle(ctx, zModel.PostArticleRequest{
+		ID:  uint32(artID),
+		Tag: strings.Join(matchedTags, ","),
+	})
+	if err != nil {
+		return fmt.Errorf("updateArticleTagZblog: %w", err)
+	}
+
+	return nil
+}
+
+func (p *PublishManager) updateArticleWordpress(ctx context.Context, artContent string, artID int, site dbModel.Site) error {
+	client, err := p.wordpressAPI.GetClient(ctx, site.ID, site.URL, site.UserName, site.Password)
+	if err != nil {
+		return fmt.Errorf("updateArticleWordpress: %w", err)
+	}
+
+	tagBlackList, err := p.GetTagsBlockList()
+	if err != nil && !dbErr.IsNotfoundErr(err) {
+		return fmt.Errorf("updateArticleWordpress: %w", err)
+	}
+
+	tagBlackListMap := make(map[string]bool)
+
+	for _, tag := range tagBlackList {
+		tagBlackListMap[tag] = true
+	}
+
+	siteTags, err := client.ListTagAll(ctx)
+	if err != nil {
+		return fmt.Errorf("updateArticleWordpress: %w", err)
+	}
+
+	siteTagsMap := map[string]wordpressModel.TagSchema{}
+	for _, t := range siteTags {
+		siteTagsMap[t.Name] = t
+	}
+
+	matchedTags := []int{}
+
+	// find matched tags
+	keywords, err := p.aiAssist.FindKeyWords(ctx, []byte(artContent))
+	if err != nil {
+		return fmt.Errorf("updateArticleWordpress: %w", err)
+	}
+
+	for _, keyword := range keywords.KeyWords {
+		if _, ok := tagBlackListMap[keyword]; ok {
+			continue
+		}
+
+		if _, ok := siteTagsMap[keyword]; ok {
+			matchedTags = append(matchedTags, siteTagsMap[keyword].ID)
+		} else {
+			newTag, err := client.CreateTag(ctx, wordpressModel.CreateTagArgs{Name: keyword})
+			if err != nil {
+				log.Printf("Error in PostTag: %v", err)
+
+				continue
+			}
+
+			matchedTags = append(matchedTags, newTag.ID)
+		}
+
+		if len(matchedTags) >= maxKeyWords {
+			break
+		}
+	}
+
+	_, err = client.UpdateArticle(ctx, wordpressModel.UpdateArticleArgs{
+		ID:   artID,
+		Tags: matchedTags,
+	})
+	if err != nil {
+		return fmt.Errorf("updateArticleWordpress: %w", err)
 	}
 
 	return nil
@@ -460,4 +619,17 @@ func (p *PublishManager) GetConfigUnCateName() (string, error) {
 	}
 
 	return res.Value, nil
+}
+
+func (p *PublishManager) SetTagsBlockList(ctx context.Context, tags []string) error {
+	return p.dao.UpsertByKey(TagsBlockList, strings.Join(tags, ","))
+}
+
+func (p *PublishManager) GetTagsBlockList() ([]string, error) {
+	res, err := p.dao.GetByKey(TagsBlockList)
+	if err != nil {
+		return nil, fmt.Errorf("GetTagsBlockList: %w", err)
+	}
+
+	return strings.Split(res.Value, ","), nil
 }

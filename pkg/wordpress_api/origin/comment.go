@@ -27,7 +27,7 @@ func ListComment(ctx context.Context, baseURL string, basicAuth model.BasicAuthe
 
 	route := "comments"
 
-	resBody, err := doRequest(ctx, baseURL, http.MethodGet, route, basicAuth, paramsMap, nil)
+	resBody, _, err := doRequest(ctx, baseURL, http.MethodGet, route, basicAuth, paramsMap, nil)
 	if err != nil {
 		return model.ListCommentResponse{}, fmt.Errorf("list comment error: %w", err)
 	}
@@ -51,7 +51,7 @@ func CreateComment(ctx context.Context, baseURL string, basicAuth model.BasicAut
 
 	route := "comments"
 
-	resBody, err := doRequest(ctx, baseURL, http.MethodPost, route, basicAuth, nil, bytesData)
+	resBody, _, err := doRequest(ctx, baseURL, http.MethodPost, route, basicAuth, nil, bytesData)
 	if err != nil {
 		return model.CreateCommentResponse{}, fmt.Errorf("create comment error: %w", err)
 	}

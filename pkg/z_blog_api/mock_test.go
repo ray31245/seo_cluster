@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 
+	"github.com/ray31245/seo_cluster/pkg/util"
 	zAPI "github.com/ray31245/seo_cluster/pkg/z_blog_api"
 	zBlogErr "github.com/ray31245/seo_cluster/pkg/z_blog_api/error"
 	"github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
@@ -185,7 +186,7 @@ var listArticleHandler = func(w http.ResponseWriter, r *http.Request) {
 
 	articles := []model.Article{}
 	for _, v := range mockArticles {
-		if req.CateID != 0 && v.CateID != strconv.Itoa(int(req.CateID)) {
+		if req.CateID != 0 && v.CateID != util.NumberString(strconv.Itoa(int(req.CateID))) {
 			continue
 		}
 		articles = append(articles, v)

@@ -18,10 +18,12 @@ type WordpressAPI interface {
 type WordpressClient interface {
 	RetrieveUserMe(ctx context.Context) (model.RetrieveUserMeResponse, error)
 	ListTag(ctx context.Context, args model.ListTagArgs) (model.ListTagResponse, error)
+	ListTagAll(ctx context.Context) (model.ListTagResponse, error)
 	CreateTag(ctx context.Context, args model.CreateTagArgs) (model.CreateTagResponse, error)
 	ListCategory(ctx context.Context, args model.ListCategoryArgs) (model.ListCategoryResponse, error)
 	ListArticle(ctx context.Context, args model.ListArticleArgs) (model.ListArticleResponse, error)
 	CreateArticle(ctx context.Context, args model.CreateArticleArgs) (model.CreateArticleResponse, error)
+	UpdateArticle(ctx context.Context, args model.UpdateArticleArgs) (model.UpdateArticleResponse, error)
 	RetrieveArticle(ctx context.Context, args model.RetrieveArticleArgs) (model.RetrieveArticleResponse, error)
 	CreateComment(ctx context.Context, args model.CreateCommentArgs) (model.CreateCommentResponse, error)
 }

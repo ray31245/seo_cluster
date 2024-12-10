@@ -139,6 +139,13 @@ type CreateArticleArgs struct {
 	Status ArticleStatus `json:"status,omitempty"`
 }
 
+type UpdateArticleArgs struct {
+	// Unique identifier for the post.
+	ID int `json:"id,omitempty"`
+	// The terms assigned to the post in the post_tag taxonomy.
+	Tags []int `json:"tags,omitempty"`
+}
+
 type RetrieveArticleArgs struct {
 	// Unique identifier for the post.
 	ID int `json:"id,omitempty"`
@@ -148,9 +155,9 @@ type RetrieveArticleArgs struct {
 	Password string `json:"password,omitempty"`
 }
 
-type CreateArticleResponse struct {
-	ID int `json:"id"`
-}
+type CreateArticleResponse ArticleSchema
+
+type UpdateArticleResponse ArticleSchema
 
 type ListArticleSchema []ArticleSchema
 

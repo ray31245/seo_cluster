@@ -10,23 +10,23 @@ import (
 	"github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
 )
 
-func PostArticle(ctx context.Context, baseURL string, token string, art model.PostArticleRequest) error {
+func PostArticle(ctx context.Context, baseURL string, token string, art model.PostArticleRequest) (model.PostArticleResponse, error) {
 	bytesData, err := util.EscapeHTMLMarshal(art)
 	if err != nil {
-		return fmt.Errorf("marshal error: %w", err)
+		return model.PostArticleResponse{}, fmt.Errorf("marshal error: %w", err)
 	}
 
 	resBody, err := doRequest(ctx, baseURL, http.MethodPost, token, map[string]interface{}{ParamMod: ModPost, ParamAct: ActPost}, bytesData)
 	if err != nil {
-		return fmt.Errorf("post article error: %w", err)
+		return model.PostArticleResponse{}, fmt.Errorf("post article error: %w", err)
 	}
 
 	resData := model.PostArticleResponse{}
 	if err := json.Unmarshal(resBody, &resData); err != nil {
-		return fmt.Errorf("unmarshal error: %w", err)
+		return model.PostArticleResponse{}, fmt.Errorf("unmarshal error: %w", err)
 	}
 
-	return nil
+	return resData, nil
 }
 
 func GetArticle(ctx context.Context, baseURL string, token string, id string) (model.GetArticleResponse, error) {

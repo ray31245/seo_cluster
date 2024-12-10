@@ -167,6 +167,8 @@ func main() {
 	configRoute := r.Group("/config")
 	configRoute.PUT("/set_un_cate_Name", publishHandler.SetConfigUnCategoryNameHandler)
 	configRoute.GET("/get_un_cate_Name", publishHandler.GetConfigUnCateNameHandler)
+	configRoute.PUT("/set_tag_blacklist", publishHandler.SetConfigTagBlackList)
+	configRoute.GET("/get_tag_blacklist", publishHandler.GetConfigTagBlackList)
 
 	articleRoute := r.Group("/article")
 	articleRoute.POST("/publish", publishHandler.AveragePublishHandler)

@@ -105,11 +105,13 @@ func (t *Client) PostMember(ctx context.Context, mem model.PostMemberRequest) er
 	return err
 }
 
-func (t *Client) PostArticle(ctx context.Context, art model.PostArticleRequest) error {
+func (t *Client) PostArticle(ctx context.Context, art model.PostArticleRequest) (model.Article, error) {
+	res := model.PostArticleResponse{}
+
 	var err error
 
 	task := func() error {
-		err = origin.PostArticle(ctx, t.baseURL, t.token, art)
+		res, err = origin.PostArticle(ctx, t.baseURL, t.token, art)
 		if err != nil {
 			return fmt.Errorf("PostArticle: %w", err)
 		}
@@ -118,7 +120,7 @@ func (t *Client) PostArticle(ctx context.Context, art model.PostArticleRequest) 
 	}
 	err = t.retry(ctx, task)
 
-	return err
+	return res.Data.Post, err
 }
 
 func (t *Client) GetArticle(ctx context.Context, id string) (model.Article, error) {
@@ -231,4 +233,77 @@ func (t *Client) ListCategory(ctx context.Context) ([]model.Category, error) {
 	err = t.retry(ctx, task)
 
 	return res.Data.List, err
+}
+
+func (t *Client) ListTag(ctx context.Context, req model.ListTagRequest) ([]model.Tag, error) {
+	res := model.ListTagResponse{}
+
+	var err error
+
+	task := func() error {
+		res, err = origin.ListTag(ctx, t.baseURL, t.token, req)
+		if err != nil {
+			return fmt.Errorf("ListTag: %w", err)
+		}
+
+		return nil
+	}
+	err = t.retry(ctx, task)
+
+	return res.Data.List, err
+}
+
+func (t *Client) ListTagAll(ctx context.Context) ([]model.Tag, error) {
+	res := []model.Tag{}
+	taskRes := model.ListTagResponse{}
+
+	var err error
+
+	taskReq := model.ListTagRequest{
+		PageRequest: model.PageRequest{
+			Page: 1,
+		},
+	}
+	task := func() error {
+		taskRes, err = origin.ListTag(ctx, t.baseURL, t.token, taskReq)
+		if err != nil {
+			return fmt.Errorf("ListTagAll: %w", err)
+		}
+
+		return nil
+	}
+
+	for {
+		err = t.retry(ctx, task)
+		if err != nil {
+			return res, err
+		}
+
+		res = append(res, taskRes.Data.List...)
+
+		if taskRes.Data.PageBar.PageCurrent >= taskRes.Data.PageBar.PageAll {
+			break
+		}
+		taskReq.Page = taskRes.Data.PageBar.PageCurrent + 1
+	}
+
+	return res, err
+}
+
+func (t *Client) PostTag(ctx context.Context, tag model.PostTagRequest) (model.Tag, error) {
+	res := model.PostTagResponse{}
+
+	var err error
+
+	task := func() error {
+		res, err = origin.PostTag(ctx, t.baseURL, t.token, tag)
+		if err != nil {
+			return fmt.Errorf("PostTag: %w", err)
+		}
+
+		return nil
+	}
+	err = t.retry(ctx, task)
+
+	return res.Data.Tag, err
 }

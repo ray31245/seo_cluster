@@ -29,3 +29,8 @@ type ErrorResponse struct {
 		Status int `json:"status"`
 	} `json:"data"`
 }
+
+type PageSchema struct {
+	Total      int `json:"total,omitempty"`
+	TotalPages int `json:"totalPages,omitempty"`
+}

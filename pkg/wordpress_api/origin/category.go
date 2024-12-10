@@ -27,7 +27,7 @@ func ListCategory(ctx context.Context, baseURL string, basicAuth model.BasicAuth
 
 	route := "categories"
 
-	resBody, err := doRequest(ctx, baseURL, http.MethodGet, route, basicAuth, paramsMap, nil)
+	resBody, _, err := doRequest(ctx, baseURL, http.MethodGet, route, basicAuth, paramsMap, nil)
 	if err != nil {
 		return model.ListCategoryResponse{}, fmt.Errorf("list category error: %w", err)
 	}

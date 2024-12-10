@@ -57,3 +57,7 @@ type AddFirstAdminUserRequest struct {
 type SetUnconfigCategoryNameRequest struct {
 	Name string `json:"name"`
 }
+
+type SetConfigTagBlackListRequest struct {
+	Tags []string `json:"tags"`
+}

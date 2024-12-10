@@ -20,7 +20,10 @@ type ZBlogAPIClient interface {
 	ListCategory(ctx context.Context) ([]model.Category, error)
 	GetArticle(ctx context.Context, id string) (model.Article, error)
 	ListArticle(ctx context.Context, req model.ListArticleRequest) ([]model.Article, error)
-	PostArticle(ctx context.Context, art model.PostArticleRequest) error
+	PostArticle(ctx context.Context, art model.PostArticleRequest) (model.Article, error)
 	PostComment(ctx context.Context, comment model.PostCommentRequest) error
 	GetCountOfArticle(ctx context.Context, req model.ListArticleRequest) (int, error)
+	ListTag(ctx context.Context, req model.ListTagRequest) ([]model.Tag, error)
+	ListTagAll(ctx context.Context) ([]model.Tag, error)
+	PostTag(ctx context.Context, tag model.PostTagRequest) (model.Tag, error)
 }

@@ -117,8 +117,10 @@ func (c CommentBot) listArticleForComment(ctx context.Context, site dbModel.Site
 	client := c.zBlogAPI.NewAnonymousClient(ctx, site.URL)
 	// get all articles
 	articles, err := client.ListArticle(ctx, zModel.ListArticleRequest{
-		Sortby: "PostTime",
-		Order:  "desc",
+		PageRequest: zModel.PageRequest{
+			SortBy: "PostTime",
+			Order:  "desc",
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("listArticleForComment: %w", err)
@@ -181,7 +183,7 @@ func (c CommentBot) commentZBlog(ctx context.Context, site dbModel.Site, article
 		return fmt.Errorf("commentZBlog: %w", err)
 	}
 
-	article, err = client.GetArticle(ctx, article.ID)
+	article, err = client.GetArticle(ctx, string(article.ID))
 	if err != nil {
 		return fmt.Errorf("commentZBlog: %w", err)
 	}
@@ -192,7 +194,7 @@ func (c CommentBot) commentZBlog(ctx context.Context, site dbModel.Site, article
 		return fmt.Errorf("commentZBlog: %w", err)
 	}
 
-	err = client.PostComment(ctx, zModel.PostCommentRequest{LogID: article.ID, Content: comment.Comment})
+	err = client.PostComment(ctx, zModel.PostCommentRequest{LogID: string(article.ID), Content: comment.Comment})
 	if err != nil {
 		return fmt.Errorf("commentZBlog: %w", err)
 	}

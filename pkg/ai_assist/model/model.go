@@ -18,6 +18,8 @@ type FindKeyWordsResponse struct {
 	KeyWords []string `json:"KeyWords"`
 }
 
+type MatchKeyWordsResponse []string
+
 type CategoryOption struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`

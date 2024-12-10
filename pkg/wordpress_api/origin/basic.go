@@ -13,14 +13,18 @@ import (
 	"github.com/ray31245/seo_cluster/pkg/wordpress_api/model"
 )
 
+type RespHeader struct {
+	http.Header
+}
+
 const (
 	APIPath = "wp-json/wp/v2"
 )
 
-func doRequest(ctx context.Context, baseURL string, method string, route string, basicAuth model.BasicAuthentication, parameter map[string]interface{}, body []byte) ([]byte, error) {
+func doRequest(ctx context.Context, baseURL string, method string, route string, basicAuth model.BasicAuthentication, parameter map[string]interface{}, body []byte) ([]byte, *RespHeader, error) {
 	reqURL, err := url.Parse(baseURL)
 	if err != nil {
-		return nil, fmt.Errorf("parse url error: %w", err)
+		return nil, nil, fmt.Errorf("parse url error: %w", err)
 	}
 
 	reqURL = reqURL.JoinPath(APIPath)
@@ -35,7 +39,7 @@ func doRequest(ctx context.Context, baseURL string, method string, route string,
 
 	req, err := http.NewRequestWithContext(ctx, method, reqURL.String(), bytes.NewReader(body))
 	if err != nil {
-		return nil, fmt.Errorf("new request error: %w", err)
+		return nil, nil, fmt.Errorf("new request error: %w", err)
 	}
 
 	if !basicAuth.IsAnonymous {
@@ -50,14 +54,14 @@ func doRequest(ctx context.Context, baseURL string, method string, route string,
 
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request error: %w", err)
+		return nil, nil, fmt.Errorf("request error: %w", err)
 	}
 
 	defer res.Body.Close()
 
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read response error: %w", err)
+		return nil, nil, fmt.Errorf("read response error: %w", err)
 	}
 
 	// log.Println(string(resBody))
@@ -66,12 +70,12 @@ func doRequest(ctx context.Context, baseURL string, method string, route string,
 	if statusCodeErr != nil {
 		errRes := model.ErrorResponse{}
 		if err := json.Unmarshal(resBody, &errRes); err != nil {
-			return nil, fmt.Errorf("request error: %w with message: %s", statusCodeErr, resBody)
+			return nil, nil, fmt.Errorf("request error: %w with message: %s", statusCodeErr, resBody)
 		}
 
 		// TODO: decode error message form utf-8 to string
-		return nil, fmt.Errorf("request error: %w with message: %s", statusCodeErr, resBody)
+		return nil, nil, fmt.Errorf("request error: %w with message: %s", statusCodeErr, resBody)
 	}
 
-	return resBody, nil
+	return resBody, &RespHeader{res.Header}, nil
 }

@@ -36,9 +36,9 @@ type Member struct {
 }
 
 type Article struct {
-	ID         string            `json:"ID"`
-	CateID     string            `json:"CateID"`
-	AuthorID   string            `json:"AuthorID"`
+	ID         util.NumberString `json:"ID"`
+	CateID     util.NumberString `json:"CateID"`
+	AuthorID   util.NumberString `json:"AuthorID"`
 	Title      string            `json:"Title"`
 	Content    string            `json:"Content"`
 	CommNums   util.StringNumber `json:"CommNums"`
@@ -51,6 +51,9 @@ type Article struct {
 
 type PostArticleResponse struct {
 	BasicResponse
+	Data struct {
+		Post Article `json:"post"`
+	} `json:"data"`
 }
 
 type GetArticleResponse struct {
@@ -109,24 +112,49 @@ type PostMemberResponse struct {
 	} `json:"data"`
 }
 
+type Tag struct {
+	ID         util.NumberString `json:"ID"`
+	Name       string            `json:"Name"`
+	Count      string            `json:"Count"`
+	CreateTime util.UnixTime     `json:"CreateTime"`
+	UpdateTime util.UnixTime     `json:"UpdateTime"`
+}
+
+type ListTagResponse struct {
+	BasicResponse
+	Data Data[Tag] `json:"data"`
+}
+
+type PostTagResponse struct {
+	BasicResponse
+	Data struct {
+		Tag Tag `json:"tag"`
+	} `json:"data"`
+}
+
 // ----request----
+
+type PageRequest struct {
+	Page    uint32 `json:"page"`
+	Perpage uint32 `json:"perpage"`
+	SortBy  string `json:"sortby"`
+	Order   string `json:"order"`
+}
 
 type PostArticleRequest struct {
 	ID      uint32 `json:"ID"`
-	Title   string `json:"Title"`
-	Content string `json:"Content"`
-	Intro   string `json:"Intro"`
-	CateID  uint32 `json:"CateID"`
-	Type    uint32 `json:"Type"`
+	Title   string `json:"Title,omitempty"`
+	Content string `json:"Content,omitempty"`
+	Intro   string `json:"Intro,omitempty"`
+	CateID  uint32 `json:"CateID,omitempty"`
+	Tag     string `json:"Tag,omitempty"`
+	Type    uint32 `json:"Type,omitempty"`
 }
 
 type ListArticleRequest struct {
-	Page    uint32 `json:"page"`
-	CateID  uint32 `json:"cate_id"`
-	TagID   uint32 `json:"tag_id"`
-	Perpage uint32 `json:"perpage"`
-	Sortby  string `json:"sortby"`
-	Order   string `json:"order"`
+	CateID uint32 `json:"cate_id"`
+	TagID  uint32 `json:"tag_id"`
+	PageRequest
 }
 
 type PostCommentRequest struct {
@@ -138,4 +166,13 @@ type PostMemberRequest struct {
 	Member
 	Password   string `json:"Password"`
 	PasswordRe string `json:"PasswordRe"`
+}
+
+type ListTagRequest struct {
+	PageRequest
+}
+
+type PostTagRequest struct {
+	ID   uint32 `json:"ID"`
+	Name string `json:"Name"`
 }

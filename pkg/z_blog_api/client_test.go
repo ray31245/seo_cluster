@@ -150,7 +150,7 @@ func TestClient_PostArticle(t *testing.T) {
 			tr, err := zAPI.NewClient(context.Background(), tt.fields.baseURL, tt.fields.userName, tt.fields.password)
 			require.NoError(err)
 
-			if err := tr.PostArticle(context.Background(), tt.args.art); (err != nil) != tt.wantErr {
+			if _, err := tr.PostArticle(context.Background(), tt.args.art); (err != nil) != tt.wantErr {
 				t.Errorf("Client.PostArticle() error = %v, wantErr %v", err, tt.wantErr)
 			} else if len(tt.expectErrs) > 0 {
 				for _, expectErr := range tt.expectErrs {
