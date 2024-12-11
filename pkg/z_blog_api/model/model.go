@@ -28,11 +28,11 @@ type ListMemberResponse struct {
 
 type Member struct {
 	ID     util.NumberString `json:"ID"`
-	Level  string            `json:"Level"`
-	Status string            `json:"Status"`
-	Name   string            `json:"Name"`
-	Alias  string            `json:"Alias"`
-	Email  string            `json:"Email"`
+	Level  string            `json:"Level,omitempty"`
+	Status string            `json:"Status,omitempty"`
+	Name   string            `json:"Name,omitempty"`
+	Alias  string            `json:"Alias,omitempty"`
+	Email  string            `json:"Email,omitempty"`
 }
 
 type Article struct {
@@ -164,8 +164,8 @@ type PostCommentRequest struct {
 
 type PostMemberRequest struct {
 	Member
-	Password   string `json:"Password"`
-	PasswordRe string `json:"PasswordRe"`
+	Password   string `json:"Password,omitempty"`
+	PasswordRe string `json:"PasswordRe,omitempty"`
 }
 
 type ListTagRequest struct {
