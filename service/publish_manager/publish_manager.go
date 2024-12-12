@@ -215,6 +215,7 @@ func (p *PublishManager) doPublishZblog(ctx context.Context, article model.Artic
 		Title:   article.Title,
 		Content: article.Content,
 		CateID:  article.CateID,
+		Intro:   article.Content,
 	}
 
 	// get zblog api client
