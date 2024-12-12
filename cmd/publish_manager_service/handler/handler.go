@@ -338,6 +338,10 @@ func (r *RewriteHandler) rewriteUntil(c *gin.Context, req []byte) (art aiAssistM
 		<-time.After(retryDelay)
 	}
 
+	if err != nil {
+		return art, fmt.Errorf("rewriteUntil: retry limit: %w", err)
+	}
+
 	return
 }
 
