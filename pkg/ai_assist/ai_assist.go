@@ -23,6 +23,7 @@ type AIAssist struct {
 	token          string
 	client         *genai.Client
 	rewriter       *genai.GenerativeModel
+	extendRewriter *genai.GenerativeModel
 	commenter      *genai.GenerativeModel
 	evaluator      *genai.GenerativeModel
 	keyWordFinder  *genai.GenerativeModel
@@ -40,6 +41,11 @@ func NewAIAssist(ctx context.Context, token string) (*AIAssist, error) {
 	// The Gemini 1.5 models are versatile and work with both text-only and multimodal prompts
 	rewriter := client.GenerativeModel("gemini-1.5-flash")
 	rewriter.GenerationConfig = genai.GenerationConfig{
+		ResponseMIMEType: "application/json",
+	}
+
+	extendRewriter := client.GenerativeModel("gemini-1.5-flash")
+	extendRewriter.GenerationConfig = genai.GenerationConfig{
 		ResponseMIMEType: "application/json",
 	}
 
@@ -103,6 +109,7 @@ func NewAIAssist(ctx context.Context, token string) (*AIAssist, error) {
 		token:          token,
 		client:         client,
 		rewriter:       rewriter,
+		extendRewriter: extendRewriter,
 		commenter:      commenter,
 		evaluator:      evaluator,
 		keyWordFinder:  keyWordFinder,
@@ -138,6 +145,28 @@ func (a *AIAssist) Rewrite(ctx context.Context, text []byte) (model.RewriteRespo
 	err = json.Unmarshal([]byte(fmt.Sprintf("%s", resp.Candidates[0].Content.Parts[0])), &res)
 	if err != nil {
 		return model.RewriteResponse{}, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return res, nil
+}
+
+func (a *AIAssist) ExtendRewrite(ctx context.Context, text []byte) (model.ExtendRewriteResponse, error) {
+	promt := "你是一位区块链专栏作家，你需要对这篇文章进行扩展。请使用json格式输出：{Title: string,Content: string}"
+
+	resp, err := a.extendRewriter.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", promt, text)))
+	if err != nil {
+		return model.ExtendRewriteResponse{}, fmt.Errorf("failed to extend rewrite content: %w", err)
+	}
+
+	if len(resp.Candidates) == 0 {
+		return model.ExtendRewriteResponse{}, errors.New("no content generated")
+	}
+
+	res := model.ExtendRewriteResponse{}
+
+	err = json.Unmarshal([]byte(fmt.Sprintf("%s", resp.Candidates[0].Content.Parts[0])), &res)
+	if err != nil {
+		return model.ExtendRewriteResponse{}, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
 	return res, nil

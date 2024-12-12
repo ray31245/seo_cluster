@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"unicode/utf8"
 
 	"github.com/ray31245/seo_cluster/cmd/publish_manager_service/model"
 	aiAssistInterface "github.com/ray31245/seo_cluster/pkg/ai_assist/ai_assist_interface"
@@ -306,6 +307,20 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		})
 
 		return
+	}
+
+	if utf8.RuneCountInString(art.Content) < 500 {
+		extArt, err := r.aiAssist.ExtendRewrite(c, []byte(art.Content))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": fmt.Sprintf("error: %v", err),
+			})
+
+			return
+		}
+
+		art.Content = extArt.Content
+		art.Title = extArt.Title
 	}
 
 	art.Content = string(util.MdToHTML([]byte(art.Content)))
