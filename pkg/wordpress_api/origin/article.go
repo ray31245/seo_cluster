@@ -5,41 +5,63 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/ray31245/seo_cluster/pkg/util"
 	"github.com/ray31245/seo_cluster/pkg/wordpress_api/model"
 )
 
-func ListArticle(ctx context.Context, baseURL string, basicAuth model.BasicAuthentication, args model.ListArticleArgs) (model.ListArticleResponse, error) {
+func ListArticle(ctx context.Context, baseURL string, basicAuth model.BasicAuthentication, args model.ListArticleArgs) (model.ListArticleResponse, model.PageSchema, error) {
 	param, err := json.Marshal(args)
 	if err != nil {
-		return model.ListArticleResponse{}, fmt.Errorf("marshal error: %w", err)
+		return model.ListArticleResponse{}, model.PageSchema{}, fmt.Errorf("marshal error: %w", err)
 	}
 
 	paramsMap := map[string]interface{}{}
 
 	err = json.Unmarshal(param, &paramsMap)
 	if err != nil {
-		return model.ListArticleResponse{}, fmt.Errorf("unmarshal error: %w", err)
+		return model.ListArticleResponse{}, model.PageSchema{}, fmt.Errorf("unmarshal error: %w", err)
 	}
 
 	// paramsMap["_fields"] = "id"
 
 	route := "posts"
 
-	resBody, _, err := doRequest(ctx, baseURL, http.MethodGet, route, basicAuth, paramsMap, nil)
+	resBody, header, err := doRequest(ctx, baseURL, http.MethodGet, route, basicAuth, paramsMap, nil)
 	if err != nil {
-		return model.ListArticleResponse{}, fmt.Errorf("list article error: %w", err)
+		return model.ListArticleResponse{}, model.PageSchema{}, fmt.Errorf("list article error: %w", err)
 	}
 
 	// log.Println(string(resBody))
 
 	resData := model.ListArticleResponse{}
 	if err := json.Unmarshal(resBody, &resData); err != nil {
-		return model.ListArticleResponse{}, fmt.Errorf("unmarshal error: %w", err)
+		return model.ListArticleResponse{}, model.PageSchema{}, fmt.Errorf("unmarshal error: %w", err)
 	}
 
-	return resData, nil
+	total := 0
+	if header.Header.Get("X-WP-Total") != "" {
+		total, err = strconv.Atoi(header.Header.Get("X-WP-Total"))
+		if err != nil {
+			return model.ListArticleResponse{}, model.PageSchema{}, fmt.Errorf("strconv error: %w", err)
+		}
+	}
+
+	totalPages := 0
+	if header.Header.Get("X-WP-TotalPages") != "" {
+		totalPages, err = strconv.Atoi(header.Header.Get("X-WP-TotalPages"))
+		if err != nil {
+			return model.ListArticleResponse{}, model.PageSchema{}, fmt.Errorf("strconv error: %w", err)
+		}
+	}
+
+	page := model.PageSchema{
+		Total:      total,
+		TotalPages: totalPages,
+	}
+
+	return resData, page, nil
 }
 
 func CreateArticle(ctx context.Context, baseURL string, basicAuth model.BasicAuthentication, args model.CreateArticleArgs) (model.CreateArticleResponse, error) {

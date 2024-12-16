@@ -108,8 +108,17 @@ func (c *Client) ListCategory(ctx context.Context, args model.ListCategoryArgs) 
 	return res, nil
 }
 
+func (c *Client) GetCountOfArticle(ctx context.Context, req model.ListArticleArgs) (int, error) {
+	_, page, err := origin.ListArticle(ctx, c.baseURL, c.basicAuth, req)
+	if err != nil {
+		return 0, fmt.Errorf("list article error: %w", err)
+	}
+
+	return page.Total, nil
+}
+
 func (c *Client) ListArticle(ctx context.Context, args model.ListArticleArgs) (model.ListArticleResponse, error) {
-	res, err := origin.ListArticle(ctx, c.baseURL, c.basicAuth, args)
+	res, _, err := origin.ListArticle(ctx, c.baseURL, c.basicAuth, args)
 	if err != nil {
 		return model.ListArticleResponse{}, fmt.Errorf("list article error: %w", err)
 	}
