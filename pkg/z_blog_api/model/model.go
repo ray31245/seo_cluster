@@ -115,9 +115,21 @@ type PostMemberResponse struct {
 type Tag struct {
 	ID         util.NumberString `json:"ID"`
 	Name       string            `json:"Name"`
-	Count      string            `json:"Count"`
+	Count      util.NumberString `json:"Count"`
 	CreateTime util.UnixTime     `json:"CreateTime"`
 	UpdateTime util.UnixTime     `json:"UpdateTime"`
+}
+
+func (t Tag) GetID() int {
+	return t.ID.Int()
+}
+
+func (t Tag) GetName() string {
+	return t.Name
+}
+
+func (t Tag) GetCount() int {
+	return t.Count.Int()
 }
 
 type ListTagResponse struct {

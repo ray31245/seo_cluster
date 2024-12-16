@@ -104,6 +104,19 @@ func (i *NumberString) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (i NumberString) String() string {
+	return string(i)
+}
+
+func (i NumberString) Int() int {
+	n, err := strconv.Atoi(i.String())
+	if err != nil {
+		return 0
+	}
+
+	return n
+}
+
 func GenerateRandomString(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 

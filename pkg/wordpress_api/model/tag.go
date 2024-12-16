@@ -13,6 +13,18 @@ type TagSchema struct {
 	Name string `json:"name,omitempty"`
 }
 
+func (t TagSchema) GetID() int {
+	return t.ID
+}
+
+func (t TagSchema) GetName() string {
+	return t.Name
+}
+
+func (t TagSchema) GetCount() int {
+	return t.Count
+}
+
 type ListTagArgs struct {
 	// Scope under which the request is made; determines fields present in response.
 	Context ApiContext `json:"context,omitempty"`

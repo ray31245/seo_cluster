@@ -256,21 +256,12 @@ func (p *PublishManager) updateArticleTagZblog(ctx context.Context, artContent s
 		return fmt.Errorf("updateArticleTagZblog: %w", err)
 	}
 
-	tagBlackListMap := make(map[string]bool)
-
-	for _, tag := range tagBlackList {
-		tagBlackListMap[strings.ToLower(tag)] = true
-	}
-
 	siteTags, err := client.ListTagAll(ctx)
 	if err != nil {
 		return fmt.Errorf("updateArticleTagZblog: %w", err)
 	}
 
-	siteTagsMap := map[string]zModel.Tag{}
-	for _, t := range siteTags {
-		siteTagsMap[strings.ToLower(t.Name)] = t
-	}
+	tagMatcher := NewTagMatcher(tagBlackList, siteTags)
 
 	matchedTags := []string{}
 
@@ -281,20 +272,22 @@ func (p *PublishManager) updateArticleTagZblog(ctx context.Context, artContent s
 	}
 
 	for _, keyword := range keywords.KeyWords {
-		lowerKeyword := strings.ToLower(keyword)
-		if _, ok := tagBlackListMap[lowerKeyword]; ok {
+		if tagMatcher.IsTagBlackList(keyword) {
 			continue
 		}
 
-		if t, ok := siteTagsMap[lowerKeyword]; !ok {
-			_, err := client.PostTag(ctx, zModel.PostTagRequest{Name: keyword})
+		isMatch, matchTag := tagMatcher.IsTagInSite(keyword)
+		if isMatch {
+			keyword = matchTag.GetName()
+		} else {
+			newTag, err := client.PostTag(ctx, zModel.PostTagRequest{Name: keyword})
 			if err != nil {
 				log.Printf("Error in PostTag: %v, Err msg: %v", keyword, err)
 
 				continue
 			}
-		} else {
-			keyword = t.Name
+
+			keyword = newTag.Name
 		}
 
 		matchedTags = append(matchedTags, keyword)
@@ -326,21 +319,12 @@ func (p *PublishManager) updateArticleWordpress(ctx context.Context, artContent 
 		return fmt.Errorf("updateArticleWordpress: %w", err)
 	}
 
-	tagBlackListMap := make(map[string]bool)
-
-	for _, tag := range tagBlackList {
-		tagBlackListMap[strings.ToLower(tag)] = true
-	}
-
 	siteTags, err := client.ListTagAll(ctx)
 	if err != nil {
 		return fmt.Errorf("updateArticleWordpress: %w", err)
 	}
 
-	siteTagsMap := map[string]wordpressModel.TagSchema{}
-	for _, t := range siteTags {
-		siteTagsMap[strings.ToLower(t.Name)] = t
-	}
+	tagMatcher := NewTagMatcher(tagBlackList, siteTags)
 
 	matchedTags := []int{}
 
@@ -351,13 +335,12 @@ func (p *PublishManager) updateArticleWordpress(ctx context.Context, artContent 
 	}
 
 	for _, keyword := range keywords.KeyWords {
-		lowerKeyword := strings.ToLower(keyword)
-		if _, ok := tagBlackListMap[lowerKeyword]; ok {
+		if tagMatcher.IsTagBlackList(keyword) {
 			continue
 		}
 
-		if _, ok := siteTagsMap[lowerKeyword]; ok {
-			matchedTags = append(matchedTags, siteTagsMap[lowerKeyword].ID)
+		if isMatch, matchTag := tagMatcher.IsTagInSite(keyword); isMatch {
+			matchedTags = append(matchedTags, matchTag.GetID())
 		} else {
 			newTag, err := client.CreateTag(ctx, wordpressModel.CreateTagArgs{Name: keyword})
 			if err != nil {
