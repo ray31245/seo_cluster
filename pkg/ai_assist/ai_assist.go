@@ -151,7 +151,7 @@ func (a *AIAssist) Rewrite(ctx context.Context, text []byte) (model.RewriteRespo
 }
 
 func (a *AIAssist) ExtendRewrite(ctx context.Context, text []byte) (model.ExtendRewriteResponse, error) {
-	promt := "你是一位区块链专栏作家，你需要对这篇文章进行扩展。请使用json格式输出：{Title: string,Content: string}"
+	promt := "你是一位收悉区块链的简体中文语系专栏作家，你需要对这篇文章进行扩展。请使用json格式输出：{Title: string,Content: string}"
 
 	resp, err := a.extendRewriter.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", promt, text)))
 	if err != nil {
@@ -174,7 +174,7 @@ func (a *AIAssist) ExtendRewrite(ctx context.Context, text []byte) (model.Extend
 
 func (a *AIAssist) Comment(ctx context.Context, text []byte) (model.CommentResponse, error) {
 	//nolint:gosmopolitan // prompt is a string
-	prompt := "你在网路上看到以下文章，请随性且简洁地在这篇文章下留言。并且以一位看新闻的人的角度记录这个文章能够为你提供的价值。最低0分滿分100分。请使用json格式输出：{Comment: string, Score: int}\n。"
+	prompt := "你是一位简体中文语系读者,你在网路上看到以下文章，请随性且简洁地在这篇文章下留言。并且以一位看新闻的人的角度记录这个文章能够为你提供的价值。最低0分滿分100分。请使用json格式输出：{Comment: string, Score: int}\n。"
 
 	resp, err := a.rewriter.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", prompt, text)))
 	if err != nil {
