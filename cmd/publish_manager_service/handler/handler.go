@@ -310,7 +310,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 	}
 
 	if utf8.RuneCountInString(art.Content) < 500 {
-		extArt, err := r.aiAssist.ExtendRewrite(c, []byte(art.Content))
+		extArt, err := r.extendRewriteUntil(c, req)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": fmt.Sprintf("error: %v", err),
@@ -355,6 +355,29 @@ func (r *RewriteHandler) rewriteUntil(c *gin.Context, req []byte) (art aiAssistM
 
 	if err != nil {
 		return art, fmt.Errorf("rewriteUntil: retry limit: %w", err)
+	}
+
+	return
+}
+
+func (r *RewriteHandler) extendRewriteUntil(c *gin.Context, req []byte) (art aiAssistModel.ExtendRewriteResponse, err error) {
+	log.Println("extending rewriting...")
+
+	r.aiAssist.Lock()
+	defer r.aiAssist.Unlock()
+
+	for range retryLimit {
+		art, err = r.aiAssist.ExtendRewrite(c, req)
+		if err == nil {
+			break
+		}
+
+		log.Println("retrying...")
+		<-time.After(retryDelay)
+	}
+
+	if err != nil {
+		return art, fmt.Errorf("extendRewriteUntil: retry limit: %w", err)
 	}
 
 	return
