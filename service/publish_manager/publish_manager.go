@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -403,6 +404,14 @@ func (p *PublishManager) StartRandomCyclePublishZblog(ctx context.Context) error
 	go func() {
 		for {
 			nextTime := randomTime()
+
+			multi, err := p.multiOfArticleCount()
+			if err != nil {
+				log.Println("Error in multiOfArticleCount:", err)
+			} else if multi > 0 {
+				nextTime = nextTime / time.Duration(multi)
+			}
+
 			log.Printf("next time run cyclePublish is %s in StartRandomCyclePublishZblog", time.Now().Add(nextTime))
 			select {
 			case <-ctx.Done():
@@ -418,6 +427,41 @@ func (p *PublishManager) StartRandomCyclePublishZblog(ctx context.Context) error
 	}()
 
 	return nil
+}
+
+func (p *PublishManager) multiOfArticleCount() (int, error) {
+	count, err := p.CountArticleCache()
+	if err != nil {
+		return 0, fmt.Errorf("multiOfArticleCount: %w", err)
+	}
+
+	sites, err := p.dao.ListSites()
+	if err != nil {
+		return 0, fmt.Errorf("multiOfArticleCount: %w", err)
+	}
+
+	// expected count, preserver 200 articles
+	expectedCount := 200
+	for _, site := range sites {
+		expectedCount += site.LackCount
+		if site.CmsType == dbModel.CMSTypeZBlog {
+			expectedCount += 1
+		} else if site.CmsType == dbModel.CMSTypeWordPress {
+			expectedCount += 5
+		} else {
+			return 0, fmt.Errorf("multiOfArticleCount: %w", errors.New("cms type not support"))
+		}
+	}
+
+	// if count is less than expectedCount, return 0
+	if int(count) <= expectedCount {
+		return 0, nil
+	}
+
+	// if count is more than expectedCount, return multi
+	multi := int(count) / expectedCount
+
+	return multi, nil
 }
 
 func (p *PublishManager) CyclePublishZblog(ctx context.Context) error {
@@ -467,7 +511,25 @@ func (p *PublishManager) cyclePublishZblog(ctx context.Context) error {
 func (p *PublishManager) StartRandomCyclePublishWordPress(ctx context.Context) error {
 	go func() {
 		for {
-			timeArr := computeTimePointArray()
+			multi, err := p.multiOfArticleCount()
+			if err != nil {
+				log.Println("Error in multiOfArticleCount:", err)
+			}
+
+			if multi <= 0 {
+				multi = 1
+			}
+
+			timeArr := []time.Time{}
+
+			for range multi {
+				timeArr = append(timeArr, computeTimePointArray()...)
+			}
+
+			sort.Slice(timeArr, func(i, j int) bool {
+				return timeArr[i].Before(timeArr[j])
+			})
+
 			log.Printf("timeArr is %v in StartRandomCyclePublishWordPress", timeArr)
 			select {
 			case <-ctx.Done():
