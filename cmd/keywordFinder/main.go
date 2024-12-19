@@ -25,7 +25,7 @@ func main() {
 
 	token := os.Getenv("AI_ASSIST_TOKEN")
 
-	aiAssistClient, err := aiAssist.NewAIAssist(ctx, token)
+	aiAssistClient, err := aiAssist.NewAIAssist(ctx, token, false)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -30,9 +30,10 @@ type AIAssist struct {
 	keyWordMatcher *genai.GenerativeModel
 	categorySelect *genai.GenerativeModel
 	lock           sync.Mutex
+	isLimitedUsage bool
 }
 
-func NewAIAssist(ctx context.Context, token string) (*AIAssist, error) {
+func NewAIAssist(ctx context.Context, token string, isLimitedUsuage bool) (*AIAssist, error) {
 	client, err := genai.NewClient(ctx, option.WithAPIKey(token))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new client: %w", err)
@@ -115,6 +116,7 @@ func NewAIAssist(ctx context.Context, token string) (*AIAssist, error) {
 		keyWordFinder:  keyWordFinder,
 		keyWordMatcher: keyWordMatcher,
 		categorySelect: categorySelect,
+		isLimitedUsage: isLimitedUsuage,
 	}, nil
 }
 
@@ -255,15 +257,22 @@ func (a *AIAssist) SelectCategory(ctx context.Context, req model.SelectCategoryR
 }
 
 func (a *AIAssist) Lock() {
-	a.lock.Lock()
+	if a.isLimitedUsage {
+		a.lock.Lock()
+	}
 }
 
 func (a *AIAssist) TryLock() bool {
-	return a.lock.TryLock()
+	if a.isLimitedUsage {
+		return a.lock.TryLock()
+	}
+	return true
 }
 
 func (a *AIAssist) Unlock() {
-	a.lock.Unlock()
+	if a.isLimitedUsage {
+		a.lock.Unlock()
+	}
 }
 
 func (a *AIAssist) FindKeyWords(ctx context.Context, text []byte) (model.FindKeyWordsResponse, error) {

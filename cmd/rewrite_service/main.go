@@ -28,7 +28,7 @@ func main() {
 		log.Fatal("api key is not set")
 	}
 	// Access your API key as an environment variable (see "Set up your API key" above)
-	ai, err := aiassist.NewAIAssist(ctx, APIKey)
+	ai, err := aiassist.NewAIAssist(ctx, APIKey, false)
 	if err != nil {
 		log.Fatal(err)
 	}
