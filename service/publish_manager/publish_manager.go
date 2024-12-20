@@ -125,9 +125,9 @@ func (p *PublishManager) findFirstMatchCategory(ctx context.Context, article mod
 
 				continue
 			}
-
-			cateOpts = append(cateOpts, aiAssistModel.CategoryOption{ID: cate.ID.String(), Name: cate.Name})
 		}
+
+		cateOpts = append(cateOpts, aiAssistModel.CategoryOption{ID: cate.ID.String(), Name: cate.Name})
 	}
 
 	selectResp, err := p.aiAssist.SelectCategory(ctx,
