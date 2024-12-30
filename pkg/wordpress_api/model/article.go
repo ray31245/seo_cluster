@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type (
 	ArticleStatus string
 )
@@ -122,7 +124,7 @@ type ListArticleArgs struct {
 
 type CreateArticleArgs struct {
 	// The date the post was published, in the site's timezone.
-	Date string `json:"date,omitempty"`
+	Date *time.Time `json:"date,omitempty"`
 	// The date the post was published, as GMT.
 	DateGmt string `json:"date_gmt,omitempty"`
 	// The title for the post.

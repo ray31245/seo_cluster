@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	"github.com/ray31245/seo_cluster/pkg/util"
 )
 
@@ -154,13 +156,14 @@ type PageRequest struct {
 }
 
 type PostArticleRequest struct {
-	ID      uint32 `json:"ID"`
-	Title   string `json:"Title,omitempty"`
-	Content string `json:"Content,omitempty"`
-	Intro   string `json:"Intro,omitempty"`
-	CateID  uint32 `json:"CateID,omitempty"`
-	Tag     string `json:"Tag,omitempty"`
-	Type    uint32 `json:"Type,omitempty"`
+	ID       uint32     `json:"ID"`
+	Title    string     `json:"Title,omitempty"`
+	Content  string     `json:"Content,omitempty"`
+	Intro    string     `json:"Intro,omitempty"`
+	CateID   uint32     `json:"CateID,omitempty"`
+	Tag      string     `json:"Tag,omitempty"`
+	Type     uint32     `json:"Type,omitempty"`
+	PostTime *time.Time `json:"PostTime,omitempty"`
 }
 
 type ListArticleRequest struct {

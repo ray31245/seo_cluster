@@ -180,12 +180,14 @@ func (p *PublishManager) doPublish(ctx context.Context, article model.Article, s
 }
 
 func (p *PublishManager) doPublishWordPress(ctx context.Context, article model.Article, site dbModel.Site) (wordpressModel.CreateArticleResponse, error) {
+	now := time.Now()
 	// set post article request
 	postArticle := wordpressModel.CreateArticleArgs{
 		Title:      article.Title,
 		Content:    article.Content,
 		Categories: []uint32{article.CateID},
 		Status:     wordpressModel.StatusPublish,
+		Date:       &now,
 	}
 
 	// get wordpress api client
@@ -211,12 +213,14 @@ func (p *PublishManager) doPublishWordPress(ctx context.Context, article model.A
 }
 
 func (p *PublishManager) doPublishZblog(ctx context.Context, article model.Article, site dbModel.Site) (zModel.Article, error) {
+	now := time.Now()
 	// set post article request
 	postArticle := zModel.PostArticleRequest{
-		Title:   article.Title,
-		Content: article.Content,
-		CateID:  article.CateID,
-		Intro:   article.Content,
+		Title:    article.Title,
+		Content:  article.Content,
+		CateID:   article.CateID,
+		Intro:    article.Content,
+		PostTime: &now,
 	}
 
 	// get zblog api client
