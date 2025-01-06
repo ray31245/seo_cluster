@@ -54,6 +54,26 @@ func (t *UnixTime) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+const TimeFormat = "2006-01-02 15:04:05"
+
+// MarshalJSON implements the json.Marshaler interface.
+// ref: https://github.com/gin-gonic/gin/issues/2479#issuecomment-1502705948
+func (t UnixTime) MarshalJSON() ([]byte, error) {
+	return EncodeFormatedTime(t.Time)
+}
+
+func EncodeFormatedTime(t time.Time) ([]byte, error) {
+	if time.Time.IsZero(t) {
+		return []byte("\"\""), nil
+	}
+	b := make([]byte, 0, len(TimeFormat)+2)
+	b = append(b, '"')
+	b = t.AppendFormat(b, TimeFormat)
+	b = append(b, '"')
+
+	return b, nil
+}
+
 type StringNumber int
 
 func (i *StringNumber) UnmarshalJSON(data []byte) error {

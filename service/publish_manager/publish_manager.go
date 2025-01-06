@@ -17,6 +17,7 @@ import (
 	dbInterface "github.com/ray31245/seo_cluster/pkg/db/db_interface"
 	dbErr "github.com/ray31245/seo_cluster/pkg/db/error"
 	dbModel "github.com/ray31245/seo_cluster/pkg/db/model"
+	"github.com/ray31245/seo_cluster/pkg/util"
 	wordpressModel "github.com/ray31245/seo_cluster/pkg/wordpress_api/model"
 	wordpressInterface "github.com/ray31245/seo_cluster/pkg/wordpress_api/wordpress_interface"
 	zModel "github.com/ray31245/seo_cluster/pkg/z_blog_api/model"
@@ -180,14 +181,16 @@ func (p *PublishManager) doPublish(ctx context.Context, article model.Article, s
 }
 
 func (p *PublishManager) doPublishWordPress(ctx context.Context, article model.Article, site dbModel.Site) (wordpressModel.CreateArticleResponse, error) {
-	now := time.Now()
+	date := wordpressModel.Date{
+		Time: time.Now(),
+	}
 	// set post article request
 	postArticle := wordpressModel.CreateArticleArgs{
 		Title:      article.Title,
 		Content:    article.Content,
 		Categories: []uint32{article.CateID},
 		Status:     wordpressModel.StatusPublish,
-		Date:       &now,
+		Date:       &date,
 	}
 
 	// get wordpress api client
@@ -213,14 +216,13 @@ func (p *PublishManager) doPublishWordPress(ctx context.Context, article model.A
 }
 
 func (p *PublishManager) doPublishZblog(ctx context.Context, article model.Article, site dbModel.Site) (zModel.Article, error) {
-	now := time.Now()
 	// set post article request
 	postArticle := zModel.PostArticleRequest{
 		Title:    article.Title,
 		Content:  article.Content,
 		CateID:   article.CateID,
 		Intro:    article.Content,
-		PostTime: &now,
+		PostTime: &util.UnixTime{Time: time.Now()},
 	}
 
 	// get zblog api client

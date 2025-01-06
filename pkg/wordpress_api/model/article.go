@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/ray31245/seo_cluster/pkg/util"
+)
 
 type (
 	ArticleStatus string
@@ -122,9 +126,17 @@ type ListArticleArgs struct {
 	TagsExclude []int `json:"tags_exclude,omitempty"`
 }
 
+type Date struct {
+	Time time.Time
+}
+
+func (d *Date) MarshalJSON() ([]byte, error) {
+	return util.EncodeFormatedTime(d.Time)
+}
+
 type CreateArticleArgs struct {
 	// The date the post was published, in the site's timezone.
-	Date *time.Time `json:"date,omitempty"`
+	Date *Date `json:"date,omitempty"`
 	// The date the post was published, as GMT.
 	DateGmt string `json:"date_gmt,omitempty"`
 	// The title for the post.
