@@ -26,8 +26,9 @@ import (
 )
 
 const (
-	ConfigUnCateName = "un_cate_name"
-	TagsBlockList    = "tags_block_list"
+	ConfigUnCateName  = "un_cate_name"
+	TagsBlockList     = "tags_block_list"
+	IsStopAutoPublish = "is_stop_auto_publish"
 
 	maxKeyWords = 5
 )
@@ -57,6 +58,8 @@ type PublishManager struct {
 	publishLock  sync.Mutex
 }
 
+var ErrStopAutoPublish = errors.New("system is set to stop auto publish, break the cycle")
+
 func NewPublishManager(zAPI zInterface.ZBlogAPI, wordpressAPI wordpressInterface.WordpressAPI, dao DAO, aiAssist aiAssistInterface.AIAssistInterface) *PublishManager {
 	return &PublishManager{
 		zAPI:         zAPI,
@@ -68,6 +71,15 @@ func NewPublishManager(zAPI zInterface.ZBlogAPI, wordpressAPI wordpressInterface
 
 // AveragePublish average publish article to all site and category
 func (p *PublishManager) AveragePublish(ctx context.Context, article model.Article) error {
+	isStopAutoPublish, err := p.dao.GetBoolByKeyWithDefault(IsStopAutoPublish, false)
+	if err != nil {
+		return fmt.Errorf("AveragePublish: %w", err)
+	}
+
+	if isStopAutoPublish {
+		return fmt.Errorf("AveragePublish: %w", ErrStopAutoPublish)
+	}
+
 	cate, err := p.findFirstMatchCategory(ctx, article)
 	if err != nil {
 		return fmt.Errorf("AveragePublish: %w", err)
@@ -688,4 +700,21 @@ func (p *PublishManager) GetTagsBlockList() ([]string, error) {
 	}
 
 	return strings.Split(res.Value, ","), nil
+}
+
+func (p *PublishManager) StopAutoPublish() error {
+	return p.dao.UpsertByKeyBool(IsStopAutoPublish, true)
+}
+
+func (p *PublishManager) StartAutoPublish() error {
+	return p.dao.UpsertByKeyBool(IsStopAutoPublish, false)
+}
+
+func (p *PublishManager) StopAutoPublishStatus() (bool, error) {
+	res, err := p.dao.GetBoolByKeyWithDefault(IsStopAutoPublish, false)
+	if err != nil {
+		return false, fmt.Errorf("AutoPublishStatus: %w", err)
+	}
+
+	return res, nil
 }

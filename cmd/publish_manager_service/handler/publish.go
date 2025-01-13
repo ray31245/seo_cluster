@@ -304,3 +304,51 @@ func (p *PublishHandler) GetConfigTagBlackList(c *gin.Context) {
 		"tags": tags,
 	})
 }
+
+func (p *PublishHandler) StopAutoPublishHandler(c *gin.Context) {
+	err := p.publisher.StopAutoPublish()
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+func (p *PublishHandler) StartAutoPublishHandler(c *gin.Context) {
+	err := p.publisher.StartAutoPublish()
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+func (p *PublishHandler) GetStopAutoPublishStatusHandler(c *gin.Context) {
+	status, err := p.publisher.StopAutoPublishStatus()
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": status,
+	})
+}

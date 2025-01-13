@@ -174,6 +174,9 @@ func main() {
 	articleRoute.POST("/publish", publishHandler.AveragePublishHandler)
 	articleRoute.POST("/prepublish", publishHandler.PrePublishHandler)
 	articleRoute.POST("/flexiblePublish", publishHandler.FlexiblePublishHandler)
+	articleRoute.PUT("/stopAutoPublish", publishHandler.StopAutoPublishHandler)
+	articleRoute.PUT("/startAutoPublish", publishHandler.StartAutoPublishHandler)
+	articleRoute.GET("/stopAutoPublishStatus", publishHandler.GetStopAutoPublishStatusHandler)
 	articleRoute.POST("/rewrite", rewriteHandler.RewriteHandler)
 	articleRoute.GET("/cacheCount", publishHandler.GetArticleCacheCountHandler)
 
