@@ -7,8 +7,16 @@ import (
 	"gorm.io/gorm"
 )
 
+type Operator string
+
+var (
+	NoneOperator Operator = ""
+	AndOperator  Operator = "AND"
+	OrOperator   Operator = "OR"
+)
+
 type Base struct {
-	ID        uuid.UUID `json:"id"`
+	ID        uuid.UUID `json:"id" gorm:"primary_key"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

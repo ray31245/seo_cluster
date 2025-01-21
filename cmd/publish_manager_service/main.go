@@ -16,6 +16,7 @@ import (
 	util "github.com/ray31245/seo_cluster/pkg/util"
 	wordpressApi "github.com/ray31245/seo_cluster/pkg/wordpress_api"
 	zBlogApi "github.com/ray31245/seo_cluster/pkg/z_blog_api"
+	articleCacheManager "github.com/ray31245/seo_cluster/service/article_cache_manager"
 	commentbot "github.com/ray31245/seo_cluster/service/comment_bot"
 	publishManager "github.com/ray31245/seo_cluster/service/publish_manager"
 	sitemanager "github.com/ray31245/seo_cluster/service/site_manager"
@@ -127,6 +128,7 @@ func main() {
 	publisher := publishManager.NewPublishManager(zAPI, wordpressAPI, publishManager.DAO{ArticleCacheDAOInterface: articleCacheDAO, SiteDAOInterface: siteDAO, KVConfigDAOInterface: configDAO}, ai)
 	siteManager := sitemanager.NewSiteManager(zAPI, wordpressAPI, siteDAO)
 	userManager := usermanager.NewUserManager(userDAO, auth)
+	articleCacheManager := articleCacheManager.NewArticleCacheManager(articleCacheDAO)
 
 	err = publisher.StartRandomCyclePublishZblog(mainCtx)
 	if err != nil {
@@ -160,6 +162,7 @@ func main() {
 
 	publishHandler := handler.NewPublishHandler(publisher)
 	rewriteHandler := handler.NewRewriteHandler(ai)
+	articleCacheHandler := handler.NewArticleCacheHandler(articleCacheManager)
 
 	r.Use(jwtKit.InitMiddleWare())
 	r.Use(jwtKit.MiddlewareFunc())
@@ -179,6 +182,11 @@ func main() {
 	articleRoute.GET("/stopAutoPublishStatus", publishHandler.GetStopAutoPublishStatusHandler)
 	articleRoute.POST("/rewrite", rewriteHandler.RewriteHandler)
 	articleRoute.GET("/cacheCount", publishHandler.GetArticleCacheCountHandler)
+	articleRoute.GET("/listPublishLaterArticleCache", articleCacheHandler.ListPublishLaterArticleCacheHandler)
+	articleRoute.GET("/listEditAbleArticleCache", articleCacheHandler.ListEditAbleArticleCacheHandler)
+	articleRoute.PUT("/updateArticleCacheStatus", articleCacheHandler.UpdateArticleCacheStatusHandler)
+	articleRoute.PUT("/editArticleCache", articleCacheHandler.EditArticleCacheHandler)
+	articleRoute.DELETE("/deleteArticleCache", articleCacheHandler.DeleteArticleCacheHandler)
 
 	siteHandler := handler.NewSiteHandler(siteManager)
 

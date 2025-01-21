@@ -61,3 +61,18 @@ type SetUnconfigCategoryNameRequest struct {
 type SetConfigTagBlackListRequest struct {
 	Tags []string `json:"tags"`
 }
+
+type UpdateArticleCacheStatusRequest struct {
+	IDs    []string `json:"ids"`
+	Status string   `json:"status"`
+}
+
+type EditArticleCacheRequest struct {
+	ID      string `json:"id"`
+	Title   string `json:"title"`
+	Content string `json:"content"`
+}
+
+type DeleteArticleCacheRequest struct {
+	IDs []string `json:"ids"`
+}

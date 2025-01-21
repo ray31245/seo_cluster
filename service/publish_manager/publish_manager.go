@@ -637,7 +637,17 @@ func (p *PublishManager) publishByLack(ctx context.Context) error {
 		return fmt.Errorf("publishByLack: %w", err)
 	}
 
-	articles, err := p.dao.ListArticleCacheByLimit(totalLackCount)
+	articles, err := p.dao.ListReadyToPublishArticleCacheByLimit(totalLackCount)
+	if err != nil {
+		return fmt.Errorf("publishByLack: %w", err)
+	}
+
+	articleIDs := []string{}
+	for _, article := range articles {
+		articleIDs = append(articleIDs, article.ID.String())
+	}
+
+	err = p.dao.UpdateArticleCacheStatusByIDs(articleIDs, dbModel.ArticleCacheStatusInBuffer)
 	if err != nil {
 		return fmt.Errorf("publishByLack: %w", err)
 	}
@@ -663,7 +673,7 @@ func (p *PublishManager) publishByLack(ctx context.Context) error {
 			continue
 		}
 
-		err = p.dao.DeleteArticleCache(article.ID.String())
+		err = p.dao.DeleteArticleCacheByIDs([]string{article.ID.String()})
 		if err != nil {
 			return fmt.Errorf("publishByLack: %w", err)
 		}

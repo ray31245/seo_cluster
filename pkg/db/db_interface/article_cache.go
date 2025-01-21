@@ -6,7 +6,12 @@ import (
 
 type ArticleCacheDAOInterface interface {
 	AddArticleToCache(article model.ArticleCache) error
-	ListArticleCacheByLimit(limit int) ([]model.ArticleCache, error)
-	DeleteArticleCache(id string) error
+	ListReadyToPublishArticleCacheByLimit(limit int) ([]model.ArticleCache, error)
+	ListPublishLaterArticleCachePaginator(titleKeyword, contentKeyword string, op model.Operator, page int, limit int) ([]model.ArticleCache, int, error)
+	ListEditAbleArticleCachePaginator(titleKeyword, contentKeyword string, op model.Operator, page int, limit int) ([]model.ArticleCache, int, error)
+	GetArticleCacheByID(id string) (*model.ArticleCache, error)
+	DeleteArticleCacheByIDs(ids []string) error
 	CountArticleCache() (int64, error)
+	EditArticleCache(id string, title string, content string) error
+	UpdateArticleCacheStatusByIDs(ids []string, status model.ArticleCacheStatus) error
 }
