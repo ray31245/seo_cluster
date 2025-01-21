@@ -540,6 +540,9 @@ func (p *PublishManager) StartRandomCyclePublishWordPress(ctx context.Context) e
 
 			timeArr := []time.Time{}
 
+			// TODO: optimize wordpress, and delete this
+			multi = 1
+
 			for range multi {
 				timeArr = append(timeArr, computeTimePointArray()...)
 			}
