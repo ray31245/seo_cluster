@@ -177,6 +177,8 @@ func main() {
 	articleRoute.POST("/publish", publishHandler.AveragePublishHandler)
 	articleRoute.POST("/prepublish", publishHandler.PrePublishHandler)
 	articleRoute.POST("/flexiblePublish", publishHandler.FlexiblePublishHandler)
+	articleRoute.POST("/directPublish/:cateID", publishHandler.DirectPublishHandler)
+	articleRoute.POST("/broadcastPublish", publishHandler.BroadcastPublishHandler)
 	articleRoute.PUT("/stopAutoPublish", publishHandler.StopAutoPublishHandler)
 	articleRoute.PUT("/startAutoPublish", publishHandler.StartAutoPublishHandler)
 	articleRoute.GET("/stopAutoPublishStatus", publishHandler.GetStopAutoPublishStatusHandler)

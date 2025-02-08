@@ -151,6 +151,8 @@ type CreateArticleArgs struct {
 	Tags []int `json:"tags,omitempty"`
 	// A named status for the post.
 	Status ArticleStatus `json:"status,omitempty"`
+	// Whether or not the post should be treated as sticky.
+	Sticky bool `json:"sticky,omitempty"`
 }
 
 type UpdateArticleArgs struct {

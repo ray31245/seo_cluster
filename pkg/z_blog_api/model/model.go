@@ -156,6 +156,7 @@ type PageRequest struct {
 type PostArticleRequest struct {
 	ID       uint32         `json:"ID"`
 	Title    string         `json:"Title,omitempty"`
+	IsTop    uint8          `json:"IsTop,omitempty"`
 	Content  string         `json:"Content,omitempty"`
 	Intro    string         `json:"Intro,omitempty"`
 	CateID   uint32         `json:"CateID,omitempty"`

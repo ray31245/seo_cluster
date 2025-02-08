@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gomarkdown/markdown"
@@ -146,4 +147,16 @@ func GenerateRandomString(length int) string {
 	}
 
 	return string(b)
+}
+
+func WaitGroupChan(wg *sync.WaitGroup) chan bool {
+	done := make(chan bool)
+
+	go func() {
+		wg.Wait()
+
+		done <- true
+	}()
+
+	return done
 }

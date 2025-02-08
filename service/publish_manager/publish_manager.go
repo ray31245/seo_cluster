@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -111,6 +112,143 @@ func (p *PublishManager) AveragePublish(ctx context.Context, article model.Artic
 	return nil
 }
 
+func (p *PublishManager) DirectPublish(ctx context.Context, cateID string, article model.Article) error {
+	cate, err := p.dao.GetCategory(cateID)
+	if err != nil {
+		return fmt.Errorf("DirectPublish: %w", err)
+	}
+
+	site, err := p.dao.GetSite(cate.SiteID.String())
+	if err != nil {
+		return fmt.Errorf("DirectPublish: %w", err)
+	}
+
+	// set category id
+	if site.CmsType == dbModel.CMSTypeWordPress {
+		article.CateID = cate.WordpressID
+	} else if site.CmsType == dbModel.CMSTypeZBlog {
+		article.CateID = cate.ZBlogID
+	} else {
+		return fmt.Errorf("DirectPublish: %w", errors.New("cms type not support"))
+	}
+
+	err = p.doPublish(ctx, article, cate.Site)
+	if err != nil {
+		return errors.Join(PublishErr{SiteID: cate.SiteID, CateID: cate.ID}, err)
+	}
+
+	return nil
+}
+
+type PublishSignal struct {
+	Site    dbModel.Site
+	Article model.Article
+}
+
+func (p *PublishManager) BroadcastPublish(ctx context.Context, article model.Article) error {
+	sites, err := p.dao.ListSites()
+	if err != nil {
+		return fmt.Errorf("BroadcastPublish: %w", err)
+	}
+
+	sitesCount := len(sites)
+
+	if sitesCount == 0 {
+		return fmt.Errorf("BroadcastPublish: %w", errors.New("no site found"))
+	}
+
+	threads := runtime.NumCPU() * 10
+	threads = min(threads, sitesCount)
+
+	signal := make(chan PublishSignal, sitesCount)
+	defer close(signal)
+
+	errCh := make(chan error, sitesCount)
+	defer close(errCh)
+
+	go func() {
+		for _, site := range sites {
+			signal <- PublishSignal{Site: site, Article: article}
+		}
+	}()
+
+	var wg *sync.WaitGroup = new(sync.WaitGroup)
+
+	wg.Add(threads)
+
+	for range threads {
+		go p.startPublishWorker(ctx, wg, signal, errCh)
+	}
+
+	var errs error
+
+FanInLoop:
+	for {
+		select {
+		case err := <-errCh:
+			errs = errors.Join(errs, err)
+		case <-ctx.Done():
+			return nil
+		case <-util.WaitGroupChan(wg):
+			break FanInLoop
+		}
+	}
+
+	var resErr error
+
+	if errs != nil {
+		resErr = fmt.Errorf("BroadcastPublish: %w", errs)
+	}
+
+	return resErr
+}
+
+func (p *PublishManager) startPublishWorker(ctx context.Context, wg *sync.WaitGroup, signal chan PublishSignal, errCh chan error) {
+	defer wg.Done()
+
+	for {
+		select {
+		case s := <-signal:
+			site, err := p.dao.GetSite(s.Site.ID.String())
+			if err != nil {
+				errCh <- err
+
+				continue
+			}
+
+			cate, err := p.MatchCategory(ctx, site.Categories, s.Article)
+			if err != nil {
+				errCh <- err
+
+				continue
+			}
+
+			// set category id
+			if cate.Site.CmsType == dbModel.CMSTypeWordPress {
+				s.Article.CateID = cate.WordpressID
+			} else if cate.Site.CmsType == dbModel.CMSTypeZBlog {
+				s.Article.CateID = cate.ZBlogID
+			} else {
+				errCh <- errors.New("cms type not support")
+
+				continue
+			}
+
+			err = p.doPublish(ctx, s.Article, cate.Site)
+			if err != nil {
+				errCh <- errors.Join(PublishErr{SiteID: cate.SiteID, CateID: cate.ID}, err)
+
+				continue
+			}
+		case <-ctx.Done():
+			return
+
+		default:
+			return
+		}
+	}
+}
+
 func (p *PublishManager) findFirstMatchCategory(ctx context.Context, article model.Article) (*dbModel.Category, error) {
 	cates, err := p.dao.ListPublishedCategories()
 	if err != nil {
@@ -121,12 +259,21 @@ func (p *PublishManager) findFirstMatchCategory(ctx context.Context, article mod
 		return nil, fmt.Errorf("FindFirstMatchCategory: %w", ErrNoCategoryNeedToBePublished)
 	}
 
+	cate, err := p.MatchCategory(ctx, cates, article)
+	if err != nil {
+		return nil, fmt.Errorf("FindFirstMatchCategory: %w", err)
+	}
+
+	return cate, nil
+}
+
+func (p *PublishManager) MatchCategory(ctx context.Context, cates []dbModel.Category, article model.Article) (*dbModel.Category, error) {
 	notMatchCate := dbModel.Category{}
 	cateOpts := []aiAssistModel.CategoryOption{}
 
 	configUnCateName, err := p.dao.GetByKeyWithDefault(ConfigUnCateName, "ThisIsUnCate")
 	if err != nil {
-		return nil, fmt.Errorf("FindFirstMatchCategory: %w", err)
+		return nil, fmt.Errorf("MatchCategory: %w", err)
 	}
 
 	for _, cate := range cates {
@@ -150,7 +297,7 @@ func (p *PublishManager) findFirstMatchCategory(ctx context.Context, article mod
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("FindFirstMatchCategory: %w", err)
+		return nil, fmt.Errorf("MatchCategory: %w", err)
 	}
 
 	var cate *dbModel.Category
@@ -159,7 +306,7 @@ func (p *PublishManager) findFirstMatchCategory(ctx context.Context, article mod
 	case selectResp.ID != "" && selectResp.IsFind:
 		cate, err = p.dao.GetCategory(selectResp.ID)
 		if err != nil && !dbErr.IsNotfoundErr(err) {
-			return nil, fmt.Errorf("FindFirstMatchCategory: %w", err)
+			return nil, fmt.Errorf("MatchCategory: %w", err)
 		} else if err == nil {
 			break
 		}
@@ -193,17 +340,8 @@ func (p *PublishManager) doPublish(ctx context.Context, article model.Article, s
 }
 
 func (p *PublishManager) doPublishWordPress(ctx context.Context, article model.Article, site dbModel.Site) (wordpressModel.CreateArticleResponse, error) {
-	date := wordpressModel.Date{
-		Time: time.Now(),
-	}
 	// set post article request
-	postArticle := wordpressModel.CreateArticleArgs{
-		Title:      article.Title,
-		Content:    article.Content,
-		Categories: []uint32{article.CateID},
-		Status:     wordpressModel.StatusPublish,
-		Date:       &date,
-	}
+	postArticle := article.ToWordpressCreateArgs(wordpressModel.StatusPublish)
 
 	// get wordpress api client
 	client, err := p.wordpressAPI.GetClient(ctx, site.ID, site.URL, site.UserName, site.Password)
@@ -229,13 +367,7 @@ func (p *PublishManager) doPublishWordPress(ctx context.Context, article model.A
 
 func (p *PublishManager) doPublishZblog(ctx context.Context, article model.Article, site dbModel.Site) (zModel.Article, error) {
 	// set post article request
-	postArticle := zModel.PostArticleRequest{
-		Title:    article.Title,
-		Content:  article.Content,
-		CateID:   article.CateID,
-		Intro:    article.Content,
-		PostTime: &util.UnixTime{Time: time.Now()},
-	}
+	postArticle := article.ToZBlogCreateRequest()
 
 	// get zblog api client
 	client, err := p.zAPI.GetClient(ctx, site.ID, site.URL, site.UserName, site.Password)

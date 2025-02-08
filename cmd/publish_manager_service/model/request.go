@@ -7,6 +7,7 @@ import (
 
 type PublishArticleRequest struct {
 	Title   string `json:"Title"`
+	IsTop   bool   `json:"IsTop"`
 	Content string `json:"Content"`
 	Intro   string `json:"Intro"`
 	CateID  uint32 `json:"CateID"`
@@ -24,6 +25,7 @@ func (p *PublishArticleRequest) ToZBlogAPI() zModel.PostArticleRequest {
 func (p *PublishArticleRequest) ToPublishManager() publishModel.Article {
 	return publishModel.Article{
 		Title:   p.Title,
+		IsTop:   p.IsTop,
 		Content: p.Content,
 		CateID:  p.CateID,
 	}

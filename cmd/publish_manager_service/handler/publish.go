@@ -179,6 +179,106 @@ func (p *PublishHandler) FlexiblePublishHandler(c *gin.Context) {
 	})
 }
 
+func (p *PublishHandler) DirectPublishHandler(c *gin.Context) {
+	// get data body from request
+	req := model.PublishArticleRequest{}
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	// check data
+	if req.Title == "" || req.Content == "" {
+		log.Println("data is not complete")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", "data is not complete"),
+		})
+
+		return
+	}
+
+	req.Content, err = util.DecodeImageListDivFromHTMl([]byte(req.Content))
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	cateID := c.Param("cateID")
+
+	err = p.publisher.DirectPublish(c, cateID, req.ToPublishManager())
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+func (p *PublishHandler) BroadcastPublishHandler(c *gin.Context) {
+	// get data body from request
+	req := model.PublishArticleRequest{}
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	// check data
+	if req.Title == "" || req.Content == "" {
+		log.Println("data is not complete")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", "data is not complete"),
+		})
+
+		return
+	}
+
+	req.Content, err = util.DecodeImageListDivFromHTMl([]byte(req.Content))
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	err = p.publisher.BroadcastPublish(c, req.ToPublishManager())
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
 func (p *PublishHandler) GetArticleCacheCountHandler(c *gin.Context) {
 	count, err := p.publisher.CountArticleCache()
 	if err != nil {
