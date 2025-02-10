@@ -493,6 +493,6 @@ func (b *CommentBotHandler) GetStopAutoCommentStatusHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"data": status,
+		"status": status,
 	})
 }
