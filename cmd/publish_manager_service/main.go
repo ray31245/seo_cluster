@@ -142,7 +142,7 @@ func main() {
 
 	publisher.StartPublishByLack(mainCtx)
 
-	commentBot := commentbot.NewCommentBot(zAPI, siteDAO, commentUserDAO, ai)
+	commentBot := commentbot.NewCommentBot(zAPI, configDAO, siteDAO, commentUserDAO, ai)
 	commentBot.StartCycleComment(mainCtx)
 
 	r := gin.Default()
@@ -201,6 +201,13 @@ func main() {
 	siteRoute.PUT("/syncCateFromSite/:siteID", siteHandler.SyncCategoryFromSiteHandler)
 	siteRoute.PUT("/syncCateFromAllSite", siteHandler.SyncCategoryFromAllSiteHandler)
 	siteRoute.POST("/increase_lack", siteHandler.IncreaseLackCountHandler)
+
+	commentBotHandler := handler.NewCommentBotHandler(commentBot)
+
+	commentBotRoute := r.Group("/comment_bot")
+	commentBotRoute.PUT("/stopAutoComment", commentBotHandler.StopAutoCommentHandler)
+	commentBotRoute.PUT("/startAutoComment", commentBotHandler.StartAutoCommentHandler)
+	commentBotRoute.GET("/getStopAutoCommentStatus", commentBotHandler.GetStopAutoCommentStatusHandler)
 
 	err = r.Run(fmt.Sprintf(":%d", *port))
 	if err != nil {

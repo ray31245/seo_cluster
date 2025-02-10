@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	IsStopAutoCommentConfigKey = "IsStopAutoComment"
 	// coefficientOfGape is the coefficient of gape
 	// if want increase probability of comment, decrease this value
 	coefficientOfGape = 30
@@ -29,14 +30,16 @@ const (
 type CommentBot struct {
 	zBlogAPI       zInterface.ZBlogAPI
 	siteDAO        dbInterface.SiteDAOInterface
+	configDAO      dbInterface.KVConfigDAOInterface
 	commentUserDAO dbInterface.CommentUserDAOInterface
 	aiAssist       aiAssistInterface.AIAssistInterface
 }
 
-func NewCommentBot(zBlogAPI zInterface.ZBlogAPI, siteDAO dbInterface.SiteDAOInterface, commentUserDAO dbInterface.CommentUserDAOInterface, aiAssist aiAssistInterface.AIAssistInterface) *CommentBot {
+func NewCommentBot(zBlogAPI zInterface.ZBlogAPI, configDAO dbInterface.KVConfigDAOInterface, siteDAO dbInterface.SiteDAOInterface, commentUserDAO dbInterface.CommentUserDAOInterface, aiAssist aiAssistInterface.AIAssistInterface) *CommentBot {
 	return &CommentBot{
 		zBlogAPI:       zBlogAPI,
 		siteDAO:        siteDAO,
+		configDAO:      configDAO,
 		commentUserDAO: commentUserDAO,
 		aiAssist:       aiAssist,
 	}
@@ -60,6 +63,18 @@ func (c CommentBot) StartCycleComment(ctx context.Context) {
 }
 
 func (c CommentBot) cycleComment(ctx context.Context) error {
+	// check if auto comment is stopped
+	isStopAutoComment, err := c.configDAO.GetBoolByKeyWithDefault(IsStopAutoCommentConfigKey, false)
+	if err != nil {
+		return fmt.Errorf("cycleComment: %w", err)
+	}
+
+	if isStopAutoComment {
+		log.Println("cycleComment is stopped")
+
+		return nil
+	}
+
 	log.Println("cycleComment running...")
 
 	sites, err := c.siteDAO.ListSitesRandom()
@@ -221,4 +236,31 @@ func (c CommentBot) comment(ctx context.Context, article zModel.Article) (model.
 	}
 
 	return comment, nil
+}
+
+func (c CommentBot) StopAutoComment(ctx context.Context) error {
+	err := c.configDAO.UpsertByKeyBool(IsStopAutoCommentConfigKey, true)
+	if err != nil {
+		return fmt.Errorf("StopAutoComment: %w", err)
+	}
+
+	return nil
+}
+
+func (c CommentBot) StartAutoComment(ctx context.Context) error {
+	err := c.configDAO.UpsertByKeyBool(IsStopAutoCommentConfigKey, false)
+	if err != nil {
+		return fmt.Errorf("StartAutoComment: %w", err)
+	}
+
+	return nil
+}
+
+func (c CommentBot) IsAutoCommentStopped() (bool, error) {
+	isStopAutoComment, err := c.configDAO.GetBoolByKeyWithDefault(IsStopAutoCommentConfigKey, false)
+	if err != nil {
+		return false, fmt.Errorf("IsAutoCommentStopped: %w", err)
+	}
+
+	return isStopAutoComment, nil
 }

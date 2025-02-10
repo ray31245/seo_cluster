@@ -13,6 +13,7 @@ import (
 	aiAssistInterface "github.com/ray31245/seo_cluster/pkg/ai_assist/ai_assist_interface"
 	aiAssistModel "github.com/ray31245/seo_cluster/pkg/ai_assist/model"
 	"github.com/ray31245/seo_cluster/pkg/util"
+	commentbot "github.com/ray31245/seo_cluster/service/comment_bot"
 	sitemanager "github.com/ray31245/seo_cluster/service/site_manager"
 	usermanager "github.com/ray31245/seo_cluster/service/user_manager"
 
@@ -429,5 +430,69 @@ func (u *UserHandler) AddFirstAdminUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ok",
+	})
+}
+
+type CommentBotHandler struct {
+	commentBot *commentbot.CommentBot
+}
+
+func NewCommentBotHandler(commentBot *commentbot.CommentBot) *CommentBotHandler {
+	return &CommentBotHandler{
+		commentBot: commentBot,
+	}
+}
+
+func (b *CommentBotHandler) StartAutoCommentHandler(c *gin.Context) {
+	err := b.commentBot.StartAutoComment(c)
+	if err != nil {
+		log.Println(err)
+
+		errCode := http.StatusInternalServerError
+		c.JSON(errCode, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+func (b *CommentBotHandler) StopAutoCommentHandler(c *gin.Context) {
+	err := b.commentBot.StopAutoComment(c)
+	if err != nil {
+		log.Println(err)
+
+		errCode := http.StatusInternalServerError
+		c.JSON(errCode, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+func (b *CommentBotHandler) GetStopAutoCommentStatusHandler(c *gin.Context) {
+	status, err := b.commentBot.IsAutoCommentStopped()
+	if err != nil {
+		log.Println(err)
+
+		errCode := http.StatusInternalServerError
+		c.JSON(errCode, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": status,
 	})
 }
