@@ -131,7 +131,7 @@ func (a *AIAssist) Close() error {
 
 func (a *AIAssist) Rewrite(ctx context.Context, text []byte) (model.RewriteResponse, error) {
 	//nolint:gosmopolitan // prompt is a string
-	prompt := "你是一位收悉区块链的简体中文语系专栏作家，请你将以下内容用你的话重新阐述文章中的内容，并订一个标题。请使用json格式输出：{Title: string,Content: string}"
+	prompt := "你是一位收悉区块链的简体中文语系专栏作家，请你将以下内容用你的话重新阐述文章中的内容，并且以你认为没有AI痕迹的方式表达，并订一个标题。请使用json格式输出：{Title: string,Content: string}"
 
 	resp, err := a.rewriter.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", prompt, text)))
 	if err != nil {
@@ -153,7 +153,7 @@ func (a *AIAssist) Rewrite(ctx context.Context, text []byte) (model.RewriteRespo
 }
 
 func (a *AIAssist) ExtendRewrite(ctx context.Context, text []byte) (model.ExtendRewriteResponse, error) {
-	promt := "你是一位收悉区块链的简体中文语系专栏作家，你需要对这篇文章进行扩展。请使用json格式输出：{Title: string,Content: string}"
+	promt := "你是一位收悉区块链的简体中文语系专栏作家，你需要对这篇文章进行扩展，并且以你认为没有AI痕迹的方式表达。请使用json格式输出：{Title: string,Content: string}"
 
 	resp, err := a.extendRewriter.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", promt, text)))
 	if err != nil {
