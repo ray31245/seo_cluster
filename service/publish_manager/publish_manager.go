@@ -356,7 +356,7 @@ func (p *PublishManager) doPublishWordPress(ctx context.Context, article model.A
 	}
 
 	go func(ctx context.Context, artContent string, ID int, site dbModel.Site) {
-		err = p.updateArticleWordpress(ctx, artContent, ID, site)
+		err = p.updateArticleTagWordpress(ctx, artContent, ID, site)
 		if err != nil {
 			log.Printf("Error in updateArticleWordpress: %v", err)
 		}
@@ -459,7 +459,7 @@ func (p *PublishManager) updateArticleTagZblog(ctx context.Context, artContent s
 	return nil
 }
 
-func (p *PublishManager) updateArticleWordpress(ctx context.Context, artContent string, artID int, site dbModel.Site) error {
+func (p *PublishManager) updateArticleTagWordpress(ctx context.Context, artContent string, artID int, site dbModel.Site) error {
 	client, err := p.wordpressAPI.GetClient(ctx, site.ID, site.URL, site.UserName, site.Password)
 	if err != nil {
 		return fmt.Errorf("updateArticleWordpress: %w", err)
