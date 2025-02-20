@@ -140,7 +140,10 @@ func main() {
 		panic(err)
 	}
 
-	publisher.StartUpdateArticleTagSignalLoop(mainCtx, 1)
+	err = publisher.StartUpdateArticleTagSignalLoop(mainCtx, 1, 5)
+	if err != nil {
+		panic(err)
+	}
 
 	publisher.StartPublishByLack(mainCtx)
 
