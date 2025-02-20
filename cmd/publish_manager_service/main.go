@@ -140,6 +140,8 @@ func main() {
 		panic(err)
 	}
 
+	publisher.StartUpdateArticleTagSignalLoop(mainCtx, 1)
+
 	publisher.StartPublishByLack(mainCtx)
 
 	commentBot := commentbot.NewCommentBot(zAPI, configDAO, siteDAO, commentUserDAO, ai)

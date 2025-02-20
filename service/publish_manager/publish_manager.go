@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,7 +32,8 @@ const (
 	TagsBlockList     = "tags_block_list"
 	IsStopAutoPublish = "is_stop_auto_publish"
 
-	maxKeyWords = 5
+	maxKeyWords                  = 5
+	updateArticleTagSignalBuffer = 1000
 )
 
 var ErrNoCategoryNeedToBePublished = errors.New("no category need to be published")
@@ -52,21 +54,27 @@ type DAO struct {
 }
 
 type PublishManager struct {
-	zAPI         zInterface.ZBlogAPI
-	wordpressAPI wordpressInterface.WordpressAPI
-	aiAssist     aiAssistInterface.AIAssistInterface
-	dao          DAO
-	publishLock  sync.Mutex
+	zAPI                    zInterface.ZBlogAPI
+	wordpressAPI            wordpressInterface.WordpressAPI
+	aiAssist                aiAssistInterface.AIAssistInterface
+	dao                     DAO
+	publishLock             sync.Mutex
+	updateTagSignal         chan updateArticleTagSignal
+	maxUpdateTagThreads     int
+	updateArticleTagThreads atomic.Int32
 }
 
 var ErrStopAutoPublish = errors.New("system is set to stop auto publish, break the cycle")
 
 func NewPublishManager(zAPI zInterface.ZBlogAPI, wordpressAPI wordpressInterface.WordpressAPI, dao DAO, aiAssist aiAssistInterface.AIAssistInterface) *PublishManager {
+	updateArticleTagSignal := make(chan updateArticleTagSignal, updateArticleTagSignalBuffer)
+
 	return &PublishManager{
-		zAPI:         zAPI,
-		wordpressAPI: wordpressAPI,
-		aiAssist:     aiAssist,
-		dao:          dao,
+		zAPI:            zAPI,
+		wordpressAPI:    wordpressAPI,
+		aiAssist:        aiAssist,
+		dao:             dao,
+		updateTagSignal: updateArticleTagSignal,
 	}
 }
 
@@ -355,12 +363,11 @@ func (p *PublishManager) doPublishWordPress(ctx context.Context, article model.A
 		return wordpressModel.CreateArticleResponse{}, fmt.Errorf("doPublishWordPress: %w", err)
 	}
 
-	go func(ctx context.Context, artContent string, ID int, site dbModel.Site) {
-		err = p.updateArticleTagWordpress(ctx, artContent, ID, site)
-		if err != nil {
-			log.Printf("Error in updateArticleWordpress: %v", err)
-		}
-	}(ctx, article.Content, postArt.ID, site)
+	// update article tag
+	err = p.pushUpdateTagSignal(updateArticleTagSignal{ArtContent: article.Content, ArtID: postArt.ID, Site: site})
+	if err != nil {
+		return wordpressModel.CreateArticleResponse{}, fmt.Errorf("doPublishWordPress: %w", err)
+	}
 
 	return postArt, nil
 }
@@ -386,14 +393,112 @@ func (p *PublishManager) doPublishZblog(ctx context.Context, article model.Artic
 		return zModel.Article{}, fmt.Errorf("doPublishZblog: %w", err)
 	}
 
-	go func(ctx context.Context, artContent string, ID int, site dbModel.Site) {
-		err = p.updateArticleTagZblog(ctx, artContent, ID, site)
-		if err != nil {
-			log.Printf("Error in updateArticleTagZblog: %v", err)
-		}
-	}(ctx, article.Content, artID, site)
+	// update article tag
+	err = p.pushUpdateTagSignal(updateArticleTagSignal{ArtContent: article.Content, ArtID: artID, Site: site})
+	if err != nil {
+		return zModel.Article{}, fmt.Errorf("doPublishZblog: %w", err)
+	}
 
 	return postArt, nil
+}
+
+type updateArticleTagSignal struct {
+	ArtContent string
+	ArtID      int
+	Site       dbModel.Site
+}
+
+func (p *PublishManager) StartUpdateArticleTagSignalLoop(ctx context.Context, threads int, maxThreads int) error {
+	p.maxUpdateTagThreads = maxThreads
+
+	var err error
+	for i := 0; i < threads; i++ {
+		err = p.newUpdateArticleTagSignalLoopThread(ctx, true)
+		if err != nil {
+			return fmt.Errorf("StartUpdateArticleTagSignalLoop: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (p *PublishManager) pushUpdateTagSignal(signal updateArticleTagSignal) (err error) {
+	select {
+	case p.updateTagSignal <- signal:
+	default:
+		log.Println("updateTagSignal is full, open new goroutine to handle")
+
+		err = p.newUpdateArticleTagSignalLoopThread(context.Background(), false)
+		if err != nil {
+			return fmt.Errorf("pushUpdateTagSignal: %w", err)
+		}
+		p.updateTagSignal <- signal
+	}
+
+	return
+}
+
+func (p *PublishManager) newUpdateArticleTagSignalLoopThread(ctx context.Context, isPersistent bool) error {
+	if p.updateArticleTagThreads.Load() >= int32(p.maxUpdateTagThreads) {
+		return fmt.Errorf("newUpdateArticleTagSignalLoopThread: %w", errors.New("max threads reached"))
+	}
+
+	go p.updateArticleTagSignalLoop(ctx, isPersistent)
+
+	return nil
+}
+
+func (p *PublishManager) updateArticleTagSignalLoop(ctx context.Context, isPersistent bool) {
+	p.updateArticleTagThreads.Add(1)
+	defer p.updateArticleTagThreads.Add(-1)
+
+	isIdle := false
+	idleCheck := func() <-chan time.Time {
+		if !isPersistent {
+			return time.Tick(5 * time.Minute)
+		}
+
+		return make(<-chan time.Time)
+	}
+
+	for {
+		select {
+		case signal := <-p.updateTagSignal:
+			isIdle = false
+
+			err := p.updateArticleTag(ctx, signal.ArtContent, signal.ArtID, signal.Site)
+			if err != nil {
+				log.Printf("Error in updateArticleTagSignalLoop: %v", err)
+			}
+		case <-idleCheck():
+			if isIdle {
+				log.Println("updateArticleTagSignalLoop is idle, exit")
+
+				return
+			}
+
+			isIdle = true
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (p *PublishManager) updateArticleTag(ctx context.Context, artContent string, artID int, site dbModel.Site) error {
+	var err error
+	if site.CmsType == dbModel.CMSTypeWordPress {
+		err = p.updateArticleTagWordpress(ctx, artContent, artID, site)
+	} else if site.CmsType == dbModel.CMSTypeZBlog {
+		err = p.updateArticleTagZblog(ctx, artContent, artID, site)
+	} else {
+		err = errors.New("cms type not support")
+	}
+
+	if err != nil {
+		return fmt.Errorf("updateArticleTag: %w", err)
+	}
+
+	return nil
 }
 
 func (p *PublishManager) updateArticleTagZblog(ctx context.Context, artContent string, artID int, site dbModel.Site) error {
