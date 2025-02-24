@@ -301,7 +301,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 	}
 
 	// check data
-	if utf8.RuneCount(req) < 200 {
+	if utf8.RuneCount(req) < 2000 {
 		log.Println("data is not complete")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
