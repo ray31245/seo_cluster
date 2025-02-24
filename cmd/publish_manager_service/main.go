@@ -166,7 +166,7 @@ func main() {
 	r.POST("/first_user", userHandler.AddFirstAdminUser)
 
 	publishHandler := handler.NewPublishHandler(publisher)
-	rewriteHandler := handler.NewRewriteHandler(ai)
+	rewriteHandler := handler.NewRewriteHandler(ai, configDAO)
 	articleCacheHandler := handler.NewArticleCacheHandler(articleCacheManager)
 
 	r.Use(jwtKit.InitMiddleWare())
@@ -177,6 +177,14 @@ func main() {
 	configRoute.GET("/get_un_cate_Name", publishHandler.GetConfigUnCateNameHandler)
 	configRoute.PUT("/set_tag_blacklist", publishHandler.SetConfigTagBlackList)
 	configRoute.GET("/get_tag_blacklist", publishHandler.GetConfigTagBlackList)
+	configRoute.PUT("/set_default_system_prompt", rewriteHandler.SetDefaultSystemPromptHandler)
+	configRoute.GET("/get_default_system_prompt", rewriteHandler.GetDefaultSystemPromptHandler)
+	configRoute.PUT("/set_default_prompt", rewriteHandler.SetDefaultPromptHandler)
+	configRoute.GET("/get_default_prompt", rewriteHandler.GetDefaultPromptHandler)
+	configRoute.PUT("/set_default_extend_system_prompt", rewriteHandler.SetDefaultExtendSystemPromptHandler)
+	configRoute.GET("/get_default_extend_system_prompt", rewriteHandler.GetDefaultExtendSystemPromptHandler)
+	configRoute.PUT("/set_default_extend_prompt", rewriteHandler.SetDefaultExtendPromptHandler)
+	configRoute.GET("/get_default_extend_prompt", rewriteHandler.GetDefaultExtendPromptHandler)
 
 	articleRoute := r.Group("/article")
 	articleRoute.POST("/publish", publishHandler.AveragePublishHandler)
