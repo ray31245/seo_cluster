@@ -33,7 +33,7 @@ const (
 	IsStopAutoPublish = "is_stop_auto_publish"
 
 	maxKeyWords                  = 5
-	updateArticleTagSignalBuffer = 1000
+	updateArticleTagSignalBuffer = 100000
 )
 
 var ErrNoCategoryNeedToBePublished = errors.New("no category need to be published")
