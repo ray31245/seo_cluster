@@ -120,6 +120,44 @@ func NewAIAssist(ctx context.Context, token string, isLimitedUsuage bool) (*AIAs
 	}, nil
 }
 
+func (a *AIAssist) CustomRewrite(ctx context.Context, systemPrompt string, prompt string, content []byte) (model.RewriteResponse, error) {
+	customRewriter := a.client.GenerativeModel("gemini-1.5-flash")
+	customRewriter.GenerationConfig = genai.GenerationConfig{
+		ResponseMIMEType: "application/json",
+		ResponseSchema: &genai.Schema{
+			Type: genai.TypeObject,
+			Properties: map[string]*genai.Schema{
+				"Title": {
+					Type: genai.TypeString,
+				},
+				"Content": {
+					Type: genai.TypeString,
+				},
+			},
+		},
+	}
+
+	customRewriter.SystemInstruction = &genai.Content{Parts: []genai.Part{genai.Text(systemPrompt)}}
+
+	resp, err := customRewriter.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", prompt, content)))
+	if err != nil {
+		return model.RewriteResponse{}, fmt.Errorf("failed to rewrite content: %w", err)
+	}
+
+	if len(resp.Candidates) == 0 {
+		return model.RewriteResponse{}, errors.New("no content generated")
+	}
+
+	res := model.RewriteResponse{}
+
+	err = json.Unmarshal([]byte(fmt.Sprintf("%s", resp.Candidates[0].Content.Parts[0])), &res)
+	if err != nil {
+		return model.RewriteResponse{}, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return res, nil
+}
+
 func (a *AIAssist) Close() error {
 	err := a.client.Close()
 	if err != nil {

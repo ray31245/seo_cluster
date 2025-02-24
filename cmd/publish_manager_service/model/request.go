@@ -78,3 +78,19 @@ type EditArticleCacheRequest struct {
 type DeleteArticleCacheRequest struct {
 	IDs []string `json:"ids"`
 }
+
+type SetDefaultSystemPromptRequest struct {
+	Prompt string `json:"prompt"`
+}
+
+type SetDefaultPromptRequest struct {
+	Prompt string `json:"prompt"`
+}
+
+type SetDefaultExtendSystemPromptRequest struct {
+	Prompt string `json:"prompt"`
+}
+
+type SetDefaultExtendPromptRequest struct {
+	Prompt string `json:"prompt"`
+}

@@ -7,6 +7,7 @@ import (
 )
 
 type AIAssistInterface interface {
+	CustomRewrite(ctx context.Context, systemPrompt string, prompt string, content []byte) (model.RewriteResponse, error)
 	Rewrite(ctx context.Context, text []byte) (model.RewriteResponse, error)
 	ExtendRewrite(ctx context.Context, text []byte) (model.ExtendRewriteResponse, error)
 	Comment(ctx context.Context, text []byte) (model.CommentResponse, error)
