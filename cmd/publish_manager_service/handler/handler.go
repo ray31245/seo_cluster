@@ -459,119 +459,6 @@ func (r *RewriteHandler) extendRewriteUntil(c *gin.Context, req []byte) (art aiA
 	return
 }
 
-type UserHandler struct {
-	usermanager *usermanager.UserManager
-}
-
-func NewUserHandler(usermanager *usermanager.UserManager) *UserHandler {
-	return &UserHandler{
-		usermanager: usermanager,
-	}
-}
-
-func (u *UserHandler) AddFirstAdminUser(c *gin.Context) {
-	// get data body from request
-	req := model.AddFirstAdminUserRequest{}
-
-	err := c.ShouldBind(&req)
-	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Sprintf("error: %v", err),
-		})
-
-		return
-	}
-
-	// check data
-	if req.UserName == "" || req.Password == "" {
-		log.Println("data is not complete")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Sprintf("error: %v", "data is not complete"),
-		})
-
-		return
-	}
-
-	err = u.usermanager.CreateFirstAdminUser(c, req.UserName, req.Password)
-	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": fmt.Sprintf("error: %v", err),
-		})
-
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "ok",
-	})
-}
-
-type CommentBotHandler struct {
-	commentBot *commentbot.CommentBot
-}
-
-func NewCommentBotHandler(commentBot *commentbot.CommentBot) *CommentBotHandler {
-	return &CommentBotHandler{
-		commentBot: commentBot,
-	}
-}
-
-func (b *CommentBotHandler) StartAutoCommentHandler(c *gin.Context) {
-	err := b.commentBot.StartAutoComment(c)
-	if err != nil {
-		log.Println(err)
-
-		errCode := http.StatusInternalServerError
-		c.JSON(errCode, gin.H{
-			"message": fmt.Sprintf("error: %v", err),
-		})
-
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "ok",
-	})
-}
-
-func (b *CommentBotHandler) StopAutoCommentHandler(c *gin.Context) {
-	err := b.commentBot.StopAutoComment(c)
-	if err != nil {
-		log.Println(err)
-
-		errCode := http.StatusInternalServerError
-		c.JSON(errCode, gin.H{
-			"message": fmt.Sprintf("error: %v", err),
-		})
-
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "ok",
-	})
-}
-
-func (b *CommentBotHandler) GetStopAutoCommentStatusHandler(c *gin.Context) {
-	status, err := b.commentBot.IsAutoCommentStopped()
-	if err != nil {
-		log.Println(err)
-
-		errCode := http.StatusInternalServerError
-		c.JSON(errCode, gin.H{
-			"message": fmt.Sprintf("error: %v", err),
-		})
-
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"status": status,
-	})
-}
-
 func (r *RewriteHandler) GetDefaultSystemPromptHandler(c *gin.Context) {
 	systemPrompt, err := r.configDAO.GetByKey(defaultSystemPromptKey)
 	if err != nil {
@@ -787,5 +674,118 @@ func (r *RewriteHandler) SetDefaultExtendPromptHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ok",
+	})
+}
+
+type UserHandler struct {
+	usermanager *usermanager.UserManager
+}
+
+func NewUserHandler(usermanager *usermanager.UserManager) *UserHandler {
+	return &UserHandler{
+		usermanager: usermanager,
+	}
+}
+
+func (u *UserHandler) AddFirstAdminUser(c *gin.Context) {
+	// get data body from request
+	req := model.AddFirstAdminUserRequest{}
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	// check data
+	if req.UserName == "" || req.Password == "" {
+		log.Println("data is not complete")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", "data is not complete"),
+		})
+
+		return
+	}
+
+	err = u.usermanager.CreateFirstAdminUser(c, req.UserName, req.Password)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+type CommentBotHandler struct {
+	commentBot *commentbot.CommentBot
+}
+
+func NewCommentBotHandler(commentBot *commentbot.CommentBot) *CommentBotHandler {
+	return &CommentBotHandler{
+		commentBot: commentBot,
+	}
+}
+
+func (b *CommentBotHandler) StartAutoCommentHandler(c *gin.Context) {
+	err := b.commentBot.StartAutoComment(c)
+	if err != nil {
+		log.Println(err)
+
+		errCode := http.StatusInternalServerError
+		c.JSON(errCode, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+func (b *CommentBotHandler) StopAutoCommentHandler(c *gin.Context) {
+	err := b.commentBot.StopAutoComment(c)
+	if err != nil {
+		log.Println(err)
+
+		errCode := http.StatusInternalServerError
+		c.JSON(errCode, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+func (b *CommentBotHandler) GetStopAutoCommentStatusHandler(c *gin.Context) {
+	status, err := b.commentBot.IsAutoCommentStopped()
+	if err != nil {
+		log.Println(err)
+
+		errCode := http.StatusInternalServerError
+		c.JSON(errCode, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": status,
 	})
 }
