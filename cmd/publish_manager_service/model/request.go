@@ -79,18 +79,26 @@ type DeleteArticleCacheRequest struct {
 	IDs []string `json:"ids"`
 }
 
-type SetDefaultSystemPromptRequest struct {
+type SetPromptRequest struct {
 	Prompt string `json:"prompt"`
+}
+
+func (s SetPromptRequest) GetPrompt() string {
+	return s.Prompt
+}
+
+type SetDefaultSystemPromptRequest struct {
+	SetPromptRequest
 }
 
 type SetDefaultPromptRequest struct {
-	Prompt string `json:"prompt"`
+	SetPromptRequest
 }
 
 type SetDefaultExtendSystemPromptRequest struct {
-	Prompt string `json:"prompt"`
+	SetPromptRequest
 }
 
 type SetDefaultExtendPromptRequest struct {
-	Prompt string `json:"prompt"`
+	SetPromptRequest
 }

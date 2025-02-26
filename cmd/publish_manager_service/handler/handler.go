@@ -6,15 +6,12 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"time"
 	"unicode/utf8"
 
 	"github.com/ray31245/seo_cluster/cmd/publish_manager_service/model"
-	aiAssistInterface "github.com/ray31245/seo_cluster/pkg/ai_assist/ai_assist_interface"
-	aiAssistModel "github.com/ray31245/seo_cluster/pkg/ai_assist/model"
-	dbInterface "github.com/ray31245/seo_cluster/pkg/db/db_interface"
 	"github.com/ray31245/seo_cluster/pkg/util"
 	commentbot "github.com/ray31245/seo_cluster/service/comment_bot"
+	rewritemanager "github.com/ray31245/seo_cluster/service/rewrite_manager"
 	sitemanager "github.com/ray31245/seo_cluster/service/site_manager"
 	usermanager "github.com/ray31245/seo_cluster/service/user_manager"
 
@@ -22,14 +19,8 @@ import (
 )
 
 const (
-	retryLimit = 50
-	retryDelay = 100 * time.Millisecond
-
-	defaultSystemPromptKey = "system_prompt"
-	defaultPromptKey       = "prompt"
-
-	defaultExtendSystemPromptKey = "extend_system_prompt"
-	defaultExtendPromptKey       = "extend_prompt"
+	minSrcLength = 2000
+	minArtLength = 500
 )
 
 // TODO: error handling on middleware
@@ -277,14 +268,12 @@ func (s *SiteHandler) IncreaseLackCountHandler(c *gin.Context) {
 }
 
 type RewriteHandler struct {
-	aiAssist  aiAssistInterface.AIAssistInterface
-	configDAO dbInterface.KVConfigDAOInterface
+	rewritemanager *rewritemanager.RewriteManager
 }
 
-func NewRewriteHandler(aiAssist aiAssistInterface.AIAssistInterface, configDAO dbInterface.KVConfigDAOInterface) *RewriteHandler {
+func NewRewriteHandler(rewritemanager *rewritemanager.RewriteManager) *RewriteHandler {
 	return &RewriteHandler{
-		aiAssist:  aiAssist,
-		configDAO: configDAO,
+		rewritemanager: rewritemanager,
 	}
 }
 
@@ -301,7 +290,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 	}
 
 	// check data
-	if utf8.RuneCount(req) < 2000 {
+	if utf8.RuneCount(req) < minSrcLength {
 		log.Println("data is not complete")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
@@ -310,7 +299,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		return
 	}
 
-	art, err := r.customRewriteUntil(c, req)
+	art, err := r.rewritemanager.DefaultRewriteUntil(c, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
@@ -319,8 +308,8 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		return
 	}
 
-	if utf8.RuneCountInString(art.Content) < 500 {
-		extArt, err := r.customExtendRewriteUntil(c, req)
+	if utf8.RuneCountInString(art.Content) < minArtLength {
+		extArt, err := r.rewritemanager.DefaultExtendRewriteUntil(c, req)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": fmt.Sprintf("error: %v", err),
@@ -347,120 +336,8 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, art)
 }
 
-func (r *RewriteHandler) customRewriteUntil(c *gin.Context, req []byte) (art aiAssistModel.RewriteResponse, err error) {
-	log.Println("rewriting...")
-
-	r.aiAssist.Lock()
-	defer r.aiAssist.Unlock()
-
-	systemPrompt, err := r.configDAO.GetByKey(defaultSystemPromptKey)
-	if err != nil {
-		return art, fmt.Errorf("customRewriteUntil: get system prompt: %w", err)
-	}
-
-	prompt, err := r.configDAO.GetByKey(defaultPromptKey)
-	if err != nil {
-		return art, fmt.Errorf("customRewriteUntil: get prompt: %w", err)
-	}
-
-	for range retryLimit {
-		art, err = r.aiAssist.CustomRewrite(c, systemPrompt.Value, prompt.Value, req)
-		if err == nil {
-			break
-		}
-
-		log.Println("retrying...")
-		<-time.After(retryDelay)
-	}
-
-	if err != nil {
-		return art, fmt.Errorf("customRewriteUntil: retry limit: %w", err)
-	}
-
-	return
-}
-
-func (r *RewriteHandler) customExtendRewriteUntil(c *gin.Context, req []byte) (art aiAssistModel.RewriteResponse, err error) {
-	log.Println("extending rewriting...")
-
-	r.aiAssist.Lock()
-	defer r.aiAssist.Unlock()
-
-	systemPrompt, err := r.configDAO.GetByKey(defaultExtendSystemPromptKey)
-	if err != nil {
-		return art, fmt.Errorf("customExtendRewriteUntil: get system prompt: %w", err)
-	}
-
-	prompt, err := r.configDAO.GetByKey(defaultExtendPromptKey)
-	if err != nil {
-		return art, fmt.Errorf("customExtendRewriteUntil: get prompt: %w", err)
-	}
-
-	for range retryLimit {
-		art, err = r.aiAssist.CustomRewrite(c, systemPrompt.Value, prompt.Value, req)
-		if err == nil {
-			break
-		}
-
-		log.Println("retrying...")
-		<-time.After(retryDelay)
-	}
-
-	if err != nil {
-		return art, fmt.Errorf("customExtendRewriteUntil: retry limit: %w", err)
-	}
-
-	return
-}
-
-func (r *RewriteHandler) rewriteUntil(c *gin.Context, req []byte) (art aiAssistModel.RewriteResponse, err error) {
-	log.Println("rewriting...")
-
-	r.aiAssist.Lock()
-	defer r.aiAssist.Unlock()
-
-	for range retryLimit {
-		art, err = r.aiAssist.Rewrite(c, req)
-		if err == nil {
-			break
-		}
-
-		log.Println("retrying...")
-		<-time.After(retryDelay)
-	}
-
-	if err != nil {
-		return art, fmt.Errorf("rewriteUntil: retry limit: %w", err)
-	}
-
-	return
-}
-
-func (r *RewriteHandler) extendRewriteUntil(c *gin.Context, req []byte) (art aiAssistModel.ExtendRewriteResponse, err error) {
-	log.Println("extending rewriting...")
-
-	r.aiAssist.Lock()
-	defer r.aiAssist.Unlock()
-
-	for range retryLimit {
-		art, err = r.aiAssist.ExtendRewrite(c, req)
-		if err == nil {
-			break
-		}
-
-		log.Println("retrying...")
-		<-time.After(retryDelay)
-	}
-
-	if err != nil {
-		return art, fmt.Errorf("extendRewriteUntil: retry limit: %w", err)
-	}
-
-	return
-}
-
 func (r *RewriteHandler) GetDefaultSystemPromptHandler(c *gin.Context) {
-	systemPrompt, err := r.configDAO.GetByKey(defaultSystemPromptKey)
+	systemPrompt, err := r.rewritemanager.GetDefaultSystemPrompt()
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -472,37 +349,19 @@ func (r *RewriteHandler) GetDefaultSystemPromptHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ok",
-		"data":    systemPrompt.Value,
+		"data":    systemPrompt,
 	})
 }
 
 func (r *RewriteHandler) SetDefaultSystemPromptHandler(c *gin.Context) {
-	req := model.SetDefaultSystemPromptRequest{}
-
-	err := c.ShouldBind(&req)
-	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Sprintf("error: %v", err),
-		})
-
-		return
+	f := func(req model.SetDefaultSystemPromptRequest) error {
+		return r.rewritemanager.SetDefaultSystemPrompt(req.Prompt)
 	}
 
-	if req.Prompt == "" {
-		log.Println("data is not complete")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Sprintf("error: %v", "data is not complete"),
-		})
-
-		return
-
-	}
-
-	err = r.configDAO.UpsertByKey(defaultSystemPromptKey, req.Prompt)
+	code, err := setDefaultRewritePrompt(c, f)
 	if err != nil {
 		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(code, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
 
@@ -515,7 +374,7 @@ func (r *RewriteHandler) SetDefaultSystemPromptHandler(c *gin.Context) {
 }
 
 func (r *RewriteHandler) GetDefaultPromptHandler(c *gin.Context) {
-	prompt, err := r.configDAO.GetByKey(defaultPromptKey)
+	prompt, err := r.rewritemanager.GetDefaultPrompt()
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -527,36 +386,19 @@ func (r *RewriteHandler) GetDefaultPromptHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ok",
-		"data":    prompt.Value,
+		"data":    prompt,
 	})
 }
 
 func (r *RewriteHandler) SetDefaultPromptHandler(c *gin.Context) {
-	req := model.SetDefaultPromptRequest{}
-
-	err := c.ShouldBind(&req)
-	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Sprintf("error: %v", err),
-		})
-
-		return
+	f := func(req model.SetDefaultPromptRequest) error {
+		return r.rewritemanager.SetDefaultPrompt(req.Prompt)
 	}
 
-	if req.Prompt == "" {
-		log.Println("data is not complete")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Sprintf("error: %v", "data is not complete"),
-		})
-
-		return
-	}
-
-	err = r.configDAO.UpsertByKey(defaultPromptKey, req.Prompt)
+	code, err := setDefaultRewritePrompt(c, f)
 	if err != nil {
 		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(code, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
 
@@ -569,7 +411,7 @@ func (r *RewriteHandler) SetDefaultPromptHandler(c *gin.Context) {
 }
 
 func (r *RewriteHandler) GetDefaultExtendSystemPromptHandler(c *gin.Context) {
-	systemPrompt, err := r.configDAO.GetByKey(defaultExtendSystemPromptKey)
+	systemPrompt, err := r.rewritemanager.GetDefaultExtendSystemPrompt()
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -581,37 +423,19 @@ func (r *RewriteHandler) GetDefaultExtendSystemPromptHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ok",
-		"data":    systemPrompt.Value,
+		"data":    systemPrompt,
 	})
 }
 
 func (r *RewriteHandler) SetDefaultExtendSystemPromptHandler(c *gin.Context) {
-	req := model.SetDefaultExtendSystemPromptRequest{}
-
-	err := c.ShouldBind(&req)
-	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Sprintf("error: %v", err),
-		})
-
-		return
+	f := func(req model.SetDefaultExtendSystemPromptRequest) error {
+		return r.rewritemanager.SetDefaultExtendSystemPrompt(req.Prompt)
 	}
 
-	if req.Prompt == "" {
-		log.Println("data is not complete")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Sprintf("error: %v", "data is not complete"),
-		})
-
-		return
-
-	}
-
-	err = r.configDAO.UpsertByKey(defaultExtendSystemPromptKey, req.Prompt)
+	code, err := setDefaultRewritePrompt(c, f)
 	if err != nil {
 		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(code, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
 
@@ -624,7 +448,7 @@ func (r *RewriteHandler) SetDefaultExtendSystemPromptHandler(c *gin.Context) {
 }
 
 func (r *RewriteHandler) GetDefaultExtendPromptHandler(c *gin.Context) {
-	prompt, err := r.configDAO.GetByKey(defaultExtendPromptKey)
+	prompt, err := r.rewritemanager.GetDefaultExtendPrompt()
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -636,36 +460,19 @@ func (r *RewriteHandler) GetDefaultExtendPromptHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ok",
-		"data":    prompt.Value,
+		"data":    prompt,
 	})
 }
 
 func (r *RewriteHandler) SetDefaultExtendPromptHandler(c *gin.Context) {
-	req := model.SetDefaultExtendPromptRequest{}
-
-	err := c.ShouldBind(&req)
-	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Sprintf("error: %v", err),
-		})
-
-		return
+	f := func(req model.SetDefaultExtendPromptRequest) error {
+		return r.rewritemanager.SetDefaultExtendPrompt(req.Prompt)
 	}
 
-	if req.Prompt == "" {
-		log.Println("data is not complete")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Sprintf("error: %v", "data is not complete"),
-		})
-
-		return
-	}
-
-	err = r.configDAO.UpsertByKey(defaultExtendPromptKey, req.Prompt)
+	code, err := setDefaultRewritePrompt(c, f)
 	if err != nil {
 		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(code, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
 
@@ -675,6 +482,39 @@ func (r *RewriteHandler) SetDefaultExtendPromptHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ok",
 	})
+}
+
+type setPromptRequest interface {
+	// model.SetDefaultSystemPromptRequest | model.SetDefaultPromptRequest | model.SetDefaultExtendSystemPromptRequest | model.SetDefaultExtendPromptRequest
+	GetPrompt() string
+}
+
+type setPromptF[T setPromptRequest] func(T) error
+
+func setDefaultRewritePrompt[T setPromptRequest](c *gin.Context, f setPromptF[T]) (int, error) {
+	var req T
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+
+		return http.StatusBadRequest, fmt.Errorf("setPromptRequest: %w", err)
+	}
+
+	if req.GetPrompt() == "" {
+		log.Println("data is not complete")
+
+		return http.StatusBadRequest, fmt.Errorf("setPromptRequest: %w", errors.New("data is not complete"))
+	}
+
+	err = f(req)
+	if err != nil {
+		log.Println(err)
+
+		return http.StatusInternalServerError, fmt.Errorf("setPromptRequest: %w", err)
+	}
+
+	return http.StatusOK, nil
 }
 
 type UserHandler struct {

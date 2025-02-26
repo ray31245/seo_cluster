@@ -19,6 +19,7 @@ import (
 	articleCacheManager "github.com/ray31245/seo_cluster/service/article_cache_manager"
 	commentbot "github.com/ray31245/seo_cluster/service/comment_bot"
 	publishManager "github.com/ray31245/seo_cluster/service/publish_manager"
+	rewritemanager "github.com/ray31245/seo_cluster/service/rewrite_manager"
 	sitemanager "github.com/ray31245/seo_cluster/service/site_manager"
 	usermanager "github.com/ray31245/seo_cluster/service/user_manager"
 
@@ -129,6 +130,7 @@ func main() {
 	siteManager := sitemanager.NewSiteManager(zAPI, wordpressAPI, siteDAO)
 	userManager := usermanager.NewUserManager(userDAO, auth)
 	articleCacheManager := articleCacheManager.NewArticleCacheManager(articleCacheDAO)
+	rewriteManager := rewritemanager.NewRewriteManager(ai, configDAO)
 
 	err = publisher.StartRandomCyclePublishZblog(mainCtx)
 	if err != nil {
@@ -166,7 +168,7 @@ func main() {
 	r.POST("/first_user", userHandler.AddFirstAdminUser)
 
 	publishHandler := handler.NewPublishHandler(publisher)
-	rewriteHandler := handler.NewRewriteHandler(ai, configDAO)
+	rewriteHandler := handler.NewRewriteHandler(rewriteManager)
 	articleCacheHandler := handler.NewArticleCacheHandler(articleCacheManager)
 
 	r.Use(jwtKit.InitMiddleWare())
