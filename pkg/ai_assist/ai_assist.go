@@ -40,17 +40,17 @@ func NewAIAssist(ctx context.Context, token string, isLimitedUsuage bool) (*AIAs
 	}
 
 	// The Gemini 1.5 models are versatile and work with both text-only and multimodal prompts
-	rewriter := client.GenerativeModel("gemini-1.5-flash")
+	rewriter := client.GenerativeModel("gemini-2.0-flash")
 	rewriter.GenerationConfig = genai.GenerationConfig{
 		ResponseMIMEType: "application/json",
 	}
 
-	extendRewriter := client.GenerativeModel("gemini-1.5-flash")
+	extendRewriter := client.GenerativeModel("gemini-2.0-flash")
 	extendRewriter.GenerationConfig = genai.GenerationConfig{
 		ResponseMIMEType: "application/json",
 	}
 
-	commenter := client.GenerativeModel("gemini-1.5-flash")
+	commenter := client.GenerativeModel("gemini-2.0-flash")
 	commenter.GenerationConfig = genai.GenerationConfig{
 		ResponseMIMEType: "application/json",
 		Temperature: func() *float32 {
@@ -60,7 +60,7 @@ func NewAIAssist(ctx context.Context, token string, isLimitedUsuage bool) (*AIAs
 		}(),
 	}
 
-	evaluator := client.GenerativeModel("gemini-1.5-flash")
+	evaluator := client.GenerativeModel("gemini-2.0-flash")
 	evaluator.GenerationConfig = genai.GenerationConfig{
 		ResponseMIMEType: "application/json",
 	}
@@ -81,7 +81,7 @@ func NewAIAssist(ctx context.Context, token string, isLimitedUsuage bool) (*AIAs
 		},
 	}
 
-	keyWordMatcher := client.GenerativeModel("gemini-1.5-flash")
+	keyWordMatcher := client.GenerativeModel("gemini-2.0-flash")
 	keyWordMatcher.GenerationConfig = genai.GenerationConfig{
 		ResponseMIMEType: "application/json",
 		ResponseSchema: &genai.Schema{
@@ -92,7 +92,7 @@ func NewAIAssist(ctx context.Context, token string, isLimitedUsuage bool) (*AIAs
 		},
 	}
 
-	categorySelect := client.GenerativeModel("gemini-1.5-flash")
+	categorySelect := client.GenerativeModel("gemini-2.0-flash")
 	categorySelect.ResponseMIMEType = "application/json"
 	categorySelect.ResponseSchema = &genai.Schema{
 		Type: genai.TypeObject,
@@ -121,7 +121,7 @@ func NewAIAssist(ctx context.Context, token string, isLimitedUsuage bool) (*AIAs
 }
 
 func (a *AIAssist) CustomRewrite(ctx context.Context, systemPrompt string, prompt string, content []byte) (model.RewriteResponse, error) {
-	customRewriter := a.client.GenerativeModel("gemini-1.5-flash")
+	customRewriter := a.client.GenerativeModel("gemini-2.0-flash")
 	customRewriter.GenerationConfig = genai.GenerationConfig{
 		ResponseMIMEType: "application/json",
 		ResponseSchema: &genai.Schema{
