@@ -46,6 +46,11 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		return
 	}
 
+	res := struct {
+		Title   string `json:"Title"`
+		Content string `json:"Content"`
+	}{}
+
 	art, err := r.rewritemanager.DefaultRewriteUntil(c, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -55,7 +60,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		return
 	}
 
-	if utf8.RuneCountInString(art.Content) < minArtLength {
+	if utf8.RuneCountInString(art) < minArtLength {
 		extArt, err := r.rewritemanager.DefaultExtendRewriteUntil(c, req)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -65,20 +70,30 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 			return
 		}
 
-		art.Content = extArt.Content
-		art.Title = extArt.Title
+		art = extArt
 	}
 
-	art.Content = string(util.MdToHTML([]byte(art.Content)))
+	title, err := r.rewritemanager.DefaultMakeTitleUntil(c, art)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+	}
+
+	res.Title = title
+
+	art = string(util.MdToHTML([]byte(art)))
 
 	imgDiv, err := util.GenImageListEncodeDiv(req)
 	if err != nil {
 		log.Printf("error: %v", err)
 	} else {
-		art.Content += imgDiv
+		art += imgDiv
 	}
 
-	c.JSON(http.StatusOK, art)
+	res.Content = art
+
+	c.JSON(http.StatusOK, res)
 }
 
 func (r *RewriteHandler) GetDefaultSystemPromptHandler(c *gin.Context) {

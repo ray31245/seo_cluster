@@ -55,41 +55,55 @@ func (r *RewriteManager) ExtendRewrite(ctx context.Context, text []byte) (aiAssi
 	return res, nil
 }
 
-func (r *RewriteManager) CustomRewrite(ctx context.Context, systemPrompt string, prompt string, content []byte) (aiAssistModel.RewriteResponse, error) {
+func (r *RewriteManager) CustomRewrite(ctx context.Context, systemPrompt string, prompt string, content []byte) (string, error) {
 	res, err := r.aiAssist.CustomRewrite(ctx, systemPrompt, prompt, content)
 	if err != nil {
-		return aiAssistModel.RewriteResponse{}, fmt.Errorf("RewriteManager.CustomRewrite: %w", err)
+		return res, fmt.Errorf("RewriteManager.CustomRewrite: %w", err)
 	}
 
 	return res, nil
 }
 
-func (r *RewriteManager) DefaultRewrite(ctx context.Context, text []byte) (aiAssistModel.RewriteResponse, error) {
+func (r *RewriteManager) DefaultRewrite(ctx context.Context, text []byte) (string, error) {
 	systemPrompt, err := r.GetDefaultSystemPrompt()
 	if err != nil {
-		return aiAssistModel.RewriteResponse{}, fmt.Errorf("RewriteManager.DefaultRewrite: %w", err)
+		return "", fmt.Errorf("RewriteManager.DefaultRewrite: %w", err)
 	}
 
 	prompt, err := r.GetDefaultPrompt()
 	if err != nil {
-		return aiAssistModel.RewriteResponse{}, fmt.Errorf("RewriteManager.DefaultRewrite: %w", err)
+		return "", fmt.Errorf("RewriteManager.DefaultRewrite: %w", err)
 	}
 
 	return r.CustomRewrite(ctx, systemPrompt, prompt, text)
 }
 
-func (r *RewriteManager) DefaultExtendRewrite(ctx context.Context, text []byte) (aiAssistModel.RewriteResponse, error) {
+func (r *RewriteManager) DefaultExtendRewrite(ctx context.Context, text []byte) (string, error) {
 	systemPrompt, err := r.GetDefaultExtendSystemPrompt()
 	if err != nil {
-		return aiAssistModel.RewriteResponse{}, fmt.Errorf("RewriteManager.DefaultExtendRewrite: %w", err)
+		return "", fmt.Errorf("RewriteManager.DefaultExtendRewrite: %w", err)
 	}
 
 	prompt, err := r.GetDefaultPrompt()
 	if err != nil {
-		return aiAssistModel.RewriteResponse{}, fmt.Errorf("RewriteManager.DefaultExtendRewrite: %w", err)
+		return "", fmt.Errorf("RewriteManager.DefaultExtendRewrite: %w", err)
 	}
 
 	return r.aiAssist.CustomRewrite(ctx, systemPrompt, prompt, text)
+}
+
+func (r *RewriteManager) DefaultMakeTitle(ctx context.Context, content string) (string, error) {
+	systemPrompt, err := r.GetDefaultMakeTitleSystemPrompt()
+	if err != nil {
+		return "", fmt.Errorf("RewriteManager.DefaultMakeTitle: %w", err)
+	}
+
+	prompt, err := r.GetDefaultMakeTitlePrompt()
+	if err != nil {
+		return "", fmt.Errorf("RewriteManager.DefaultMakeTitle: %w", err)
+	}
+
+	return r.aiAssist.MakeTitle(ctx, systemPrompt, prompt, []byte(content))
 }
 
 func (r *RewriteManager) RewriteUntil(ctx context.Context, text []byte) (res aiAssistModel.RewriteResponse, err error) {
@@ -130,7 +144,7 @@ func (r *RewriteManager) ExtendRewriteUntil(ctx context.Context, text []byte) (r
 	return aiAssistModel.ExtendRewriteResponse{}, fmt.Errorf("RewriteManager.ExtendRewriteUntil: %w", err)
 }
 
-func (r *RewriteManager) CustomRewriteUntil(ctx context.Context, systemPrompt string, prompt string, content []byte) (res aiAssistModel.RewriteResponse, err error) {
+func (r *RewriteManager) CustomRewriteUntil(ctx context.Context, systemPrompt string, prompt string, content []byte) (res string, err error) {
 	log.Println("custom rewriting...")
 
 	r.aiAssist.Lock()
@@ -146,10 +160,10 @@ func (r *RewriteManager) CustomRewriteUntil(ctx context.Context, systemPrompt st
 		<-time.After(retryDelay)
 	}
 
-	return aiAssistModel.RewriteResponse{}, fmt.Errorf("RewriteManager.CustomRewriteUntil: %w", err)
+	return "", fmt.Errorf("RewriteManager.CustomRewriteUntil: %w", err)
 }
 
-func (r *RewriteManager) DefaultRewriteUntil(ctx context.Context, text []byte) (res aiAssistModel.RewriteResponse, err error) {
+func (r *RewriteManager) DefaultRewriteUntil(ctx context.Context, text []byte) (res string, err error) {
 	log.Println("default rewriting...")
 
 	r.aiAssist.Lock()
@@ -165,10 +179,10 @@ func (r *RewriteManager) DefaultRewriteUntil(ctx context.Context, text []byte) (
 		<-time.After(retryDelay)
 	}
 
-	return aiAssistModel.RewriteResponse{}, fmt.Errorf("RewriteManager.DefaultRewriteUntil: %w", err)
+	return "", fmt.Errorf("RewriteManager.DefaultRewriteUntil: %w", err)
 }
 
-func (r *RewriteManager) DefaultExtendRewriteUntil(ctx context.Context, text []byte) (res aiAssistModel.RewriteResponse, err error) {
+func (r *RewriteManager) DefaultExtendRewriteUntil(ctx context.Context, text []byte) (res string, err error) {
 	log.Println("default extending rewriting...")
 
 	r.aiAssist.Lock()
@@ -184,7 +198,26 @@ func (r *RewriteManager) DefaultExtendRewriteUntil(ctx context.Context, text []b
 		<-time.After(retryDelay)
 	}
 
-	return aiAssistModel.RewriteResponse{}, fmt.Errorf("RewriteManager.DefaultExtendRewriteUntil: %w", err)
+	return "", fmt.Errorf("RewriteManager.DefaultExtendRewriteUntil: %w", err)
+}
+
+func (r *RewriteManager) DefaultMakeTitleUntil(ctx context.Context, content string) (res string, err error) {
+	log.Println("default making title...")
+
+	r.aiAssist.Lock()
+	defer r.aiAssist.Unlock()
+
+	for range retryLimit {
+		res, err = r.DefaultMakeTitle(ctx, content)
+		if err == nil {
+			return res, nil
+		}
+
+		log.Println("retrying...")
+		<-time.After(retryDelay)
+	}
+
+	return "", fmt.Errorf("RewriteManager.DefaultMakeTitleUntil: %w", err)
 }
 
 func (r *RewriteManager) GetDefaultSystemPrompt() (string, error) {
