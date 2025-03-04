@@ -78,6 +78,8 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),
 		})
+
+		return
 	}
 
 	res.Title = title
