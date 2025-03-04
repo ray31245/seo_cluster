@@ -79,3 +79,39 @@ func TestMdToHTML(t *testing.T) {
 		})
 	}
 }
+
+func TestHTMLToMd(t *testing.T) {
+	type args struct {
+		htmlCode string
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "test1",
+			args: args{
+				htmlCode: "<h1 id=\"title\">title</h1>\n",
+			},
+			want: "# title",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := util.HTMLToMd(tt.args.htmlCode)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HTMLToMd() error = %v, wantErr %v", err, tt.wantErr)
+
+				return
+			}
+
+			if got != tt.want {
+				t.Errorf("HTMLToMd() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

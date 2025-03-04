@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	htmltomarkdown "github.com/JohannesKaufmann/html-to-markdown/v2"
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
@@ -37,6 +38,15 @@ func MdToHTML(md []byte) []byte {
 	renderer := html.NewRenderer(opts)
 
 	return markdown.Render(doc, renderer)
+}
+
+func HTMLToMd(htmlCode string) (string, error) {
+	md, err := htmltomarkdown.ConvertString(htmlCode)
+	if err != nil {
+		return "", fmt.Errorf("HTMLToMd: convert error: %w", err)
+	}
+
+	return md, nil
 }
 
 type UnixTime struct {
