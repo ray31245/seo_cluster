@@ -375,3 +375,20 @@ func (a *AIAssist) MatchKeyWords(ctx context.Context, text []byte, keywords []st
 
 	return res, nil
 }
+
+func (a *AIAssist) MakeTitle(ctx context.Context, systemPrompt string, prompt string, content []byte) (string, error) {
+	model := a.client.GenerativeModel("gemini-2.0-flash")
+
+	model.SystemInstruction = &genai.Content{Parts: []genai.Part{genai.Text(systemPrompt)}}
+
+	resp, err := model.GenerateContent(ctx, genai.Text(fmt.Sprintf("%s\n%s", prompt, content)))
+	if err != nil {
+		return "", fmt.Errorf("failed to make title: %w", err)
+	}
+
+	if len(resp.Candidates) == 0 {
+		return "", errors.New("no content generated")
+	}
+
+	return fmt.Sprintf("%s", resp.Candidates[0].Content.Parts[0]), nil
+}

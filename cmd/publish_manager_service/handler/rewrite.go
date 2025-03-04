@@ -229,6 +229,80 @@ func (r *RewriteHandler) SetDefaultExtendPromptHandler(c *gin.Context) {
 	})
 }
 
+func (r *RewriteHandler) GetDefaultMakeTitleSystemPromptHandler(c *gin.Context) {
+	systemPrompt, err := r.rewritemanager.GetDefaultMakeTitleSystemPrompt()
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+		"data":    systemPrompt,
+	})
+}
+
+func (r *RewriteHandler) SetDefaultMakeTitleSystemPromptHandler(c *gin.Context) {
+	f := func(req model.SetDefaultMakeTitleSystemPromptRequest) error {
+		return r.rewritemanager.SetDefaultMakeTitleSystemPrompt(req.Prompt)
+	}
+
+	code, err := setDefaultRewritePrompt(c, f)
+	if err != nil {
+		log.Println(err)
+		c.JSON(code, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+func (r *RewriteHandler) GetDefaultMakeTitlePromptHandler(c *gin.Context) {
+	prompt, err := r.rewritemanager.GetDefaultMakeTitlePrompt()
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+		"data":    prompt,
+	})
+}
+
+func (r *RewriteHandler) SetDefaultMakeTitlePromptHandler(c *gin.Context) {
+	f := func(req model.SetDefaultMakeTitlePromptRequest) error {
+		return r.rewritemanager.SetDefaultMakeTitlePrompt(req.Prompt)
+	}
+
+	code, err := setDefaultRewritePrompt(c, f)
+	if err != nil {
+		log.Println(err)
+		c.JSON(code, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
 type setPromptRequest interface {
 	GetPrompt() string
 }

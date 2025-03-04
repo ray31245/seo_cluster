@@ -102,3 +102,11 @@ type SetDefaultExtendSystemPromptRequest struct {
 type SetDefaultExtendPromptRequest struct {
 	SetPromptRequest
 }
+
+type SetDefaultMakeTitleSystemPromptRequest struct {
+	SetPromptRequest
+}
+
+type SetDefaultMakeTitlePromptRequest struct {
+	SetPromptRequest
+}

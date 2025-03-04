@@ -206,6 +206,10 @@ func main() {
 	articleRewriteRoute.GET("/get_default_extend_system_prompt", rewriteHandler.GetDefaultExtendSystemPromptHandler)
 	articleRewriteRoute.PUT("/set_default_extend_prompt", rewriteHandler.SetDefaultExtendPromptHandler)
 	articleRewriteRoute.GET("/get_default_extend_prompt", rewriteHandler.GetDefaultExtendPromptHandler)
+	articleRewriteRoute.PUT("/set_default_make_title_system_prompt", rewriteHandler.SetDefaultMakeTitleSystemPromptHandler)
+	articleRewriteRoute.GET("/get_default_make_title_system_prompt", rewriteHandler.GetDefaultMakeTitleSystemPromptHandler)
+	articleRewriteRoute.PUT("/set_default_make_title_prompt", rewriteHandler.SetDefaultMakeTitlePromptHandler)
+	articleRewriteRoute.GET("/get_default_make_title_prompt", rewriteHandler.GetDefaultMakeTitlePromptHandler)
 
 	siteHandler := handler.NewSiteHandler(siteManager)
 
