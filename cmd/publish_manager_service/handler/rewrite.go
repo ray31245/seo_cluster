@@ -36,8 +36,16 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		return
 	}
 
+	originalArticle, err := util.HTMLToMd(string(req))
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+	}
+
 	// check data
-	if utf8.RuneCount(req) < minSrcLength {
+	if utf8.RuneCount([]byte(originalArticle)) < minSrcLength {
 		log.Println("data is not complete")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("error: %v", "data is not complete"),
@@ -51,7 +59,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		Content string `json:"Content"`
 	}{}
 
-	art, err := r.rewritemanager.DefaultRewriteUntil(c, req)
+	art, err := r.rewritemanager.DefaultRewriteUntil(c, []byte(originalArticle))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": fmt.Sprintf("error: %v", err),

@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	minSrcLength = 2000
+	minSrcLength = 1000
 	minArtLength = 500
 )
 
