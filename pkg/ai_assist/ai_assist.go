@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/google/generative-ai-go/genai"
@@ -371,5 +372,5 @@ func (a *AIAssist) MakeTitle(ctx context.Context, systemPrompt string, prompt st
 		return "", errors.New("no content generated")
 	}
 
-	return fmt.Sprintf("%s", resp.Candidates[0].Content.Parts[0]), nil
+	return strings.ReplaceAll(fmt.Sprintf("%s", resp.Candidates[0].Content.Parts[0]), "\n", ""), nil
 }
