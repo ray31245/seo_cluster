@@ -93,6 +93,11 @@ func main() {
 		panic(err)
 	}
 
+	rewriteTestCaseDAO, err := publishDB.NewRewriteTestCaseDAO()
+	if err != nil {
+		panic(err)
+	}
+
 	commentUserDAO, err := commentBotDB.NewCommentUserDAO()
 	if err != nil {
 		panic(err)
@@ -130,7 +135,7 @@ func main() {
 	siteManager := sitemanager.NewSiteManager(zAPI, wordpressAPI, siteDAO)
 	userManager := usermanager.NewUserManager(userDAO, auth)
 	articleCacheManager := articleCacheManager.NewArticleCacheManager(articleCacheDAO)
-	rewriteManager := rewritemanager.NewRewriteManager(ai, configDAO)
+	rewriteManager := rewritemanager.NewRewriteManager(ai, configDAO, rewriteTestCaseDAO)
 
 	err = publisher.StartRandomCyclePublishZblog(mainCtx)
 	if err != nil {
@@ -210,6 +215,12 @@ func main() {
 	articleRewriteRoute.GET("/get_default_make_title_system_prompt", rewriteHandler.GetDefaultMakeTitleSystemPromptHandler)
 	articleRewriteRoute.PUT("/set_default_make_title_prompt", rewriteHandler.SetDefaultMakeTitlePromptHandler)
 	articleRewriteRoute.GET("/get_default_make_title_prompt", rewriteHandler.GetDefaultMakeTitlePromptHandler)
+
+	articleRewriteTestCaseRoute := articleRewriteRoute.Group("/test_case")
+	articleRewriteTestCaseRoute.POST("/", rewriteHandler.CreateRewriteTestCaseHandler)
+	articleRewriteTestCaseRoute.GET("/", rewriteHandler.ListRewriteTestCaseHandler)
+	articleRewriteTestCaseRoute.PUT("/:id", rewriteHandler.UpdateRewriteTestCaseHandler)
+	articleRewriteTestCaseRoute.DELETE("/:id", rewriteHandler.DeleteRewriteTestCaseHandler)
 
 	siteHandler := handler.NewSiteHandler(siteManager)
 

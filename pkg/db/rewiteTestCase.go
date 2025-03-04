@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/ray31245/seo_cluster/pkg/db/model"
 
 	"gorm.io/gorm"
@@ -55,7 +56,9 @@ func (d *RewriteTestCaseDAO) ListRewriteTestCases() ([]model.RewriteTestCase, er
 	return rewriteTestCases, err
 }
 
-func (d *RewriteTestCaseDAO) UpdateRewriteTestCase(rewriteTestCase *model.RewriteTestCase) error {
+func (d *RewriteTestCaseDAO) UpdateRewriteTestCase(id string, rewriteTestCase *model.RewriteTestCase) error {
+	rewriteTestCase.ID = uuid.MustParse(id)
+
 	err := d.db.Save(rewriteTestCase).Error
 	if err != nil {
 		return fmt.Errorf("UpdateRewriteTestCase: %w", err)

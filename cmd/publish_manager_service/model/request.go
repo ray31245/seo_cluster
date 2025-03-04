@@ -110,3 +110,15 @@ type SetDefaultMakeTitleSystemPromptRequest struct {
 type SetDefaultMakeTitlePromptRequest struct {
 	SetPromptRequest
 }
+
+type CreateRewriteTestCaseRequest struct {
+	Name    string `json:"name"`
+	Source  string `json:"source"`
+	Content string `json:"content"`
+}
+
+type UpdateRewriteTestCaseRequest struct {
+	Name    string `json:"name"`
+	Source  string `json:"source"`
+	Content string `json:"content"`
+}

@@ -26,14 +26,16 @@ const (
 )
 
 type RewriteManager struct {
-	aiAssist  aiAssistInterface.AIAssistInterface
-	configDAO dbInterface.KVConfigDAOInterface
+	aiAssist        aiAssistInterface.AIAssistInterface
+	configDAO       dbInterface.KVConfigDAOInterface
+	rewriteTestCase dbInterface.RewriteTestCaseDAOInterface
 }
 
-func NewRewriteManager(aiAssist aiAssistInterface.AIAssistInterface, configDAO dbInterface.KVConfigDAOInterface) *RewriteManager {
+func NewRewriteManager(aiAssist aiAssistInterface.AIAssistInterface, configDAO dbInterface.KVConfigDAOInterface, rewriteTestCaseDAO dbInterface.RewriteTestCaseDAOInterface) *RewriteManager {
 	return &RewriteManager{
-		aiAssist:  aiAssist,
-		configDAO: configDAO,
+		aiAssist:        aiAssist,
+		configDAO:       configDAO,
+		rewriteTestCase: rewriteTestCaseDAO,
 	}
 }
 

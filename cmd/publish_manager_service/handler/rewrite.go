@@ -98,6 +98,117 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+func (r *RewriteHandler) CreateRewriteTestCaseHandler(c *gin.Context) {
+	req := model.CreateRewriteTestCaseRequest{}
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	if req.Name == "" || req.Content == "" {
+		log.Println("data is not complete")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", "data is not complete"),
+		})
+
+		return
+	}
+
+	err = r.rewritemanager.CreateRewriteTestCase(req.Name, req.Source, req.Content)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+func (r *RewriteHandler) ListRewriteTestCaseHandler(c *gin.Context) {
+	testCases, err := r.rewritemanager.ListRewriteTestCases()
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+		"data":    testCases,
+	})
+}
+
+func (r *RewriteHandler) UpdateRewriteTestCaseHandler(c *gin.Context) {
+	req := model.UpdateRewriteTestCaseRequest{}
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	if req.Name == "" || req.Content == "" {
+		log.Println("data is not complete")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", "data is not complete"),
+		})
+
+		return
+	}
+
+	ID := c.Param("id")
+
+	err = r.rewritemanager.UpdateRewriteTestCase(ID, req.Name, req.Source, req.Content)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+func (r *RewriteHandler) DeleteRewriteTestCaseHandler(c *gin.Context) {
+	ID := c.Param("id")
+
+	err := r.rewritemanager.DeleteRewriteTestCase(ID)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
 func (r *RewriteHandler) GetDefaultSystemPromptHandler(c *gin.Context) {
 	systemPrompt, err := r.rewritemanager.GetDefaultSystemPrompt()
 	if err != nil {

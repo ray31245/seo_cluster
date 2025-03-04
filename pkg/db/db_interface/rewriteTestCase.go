@@ -8,6 +8,6 @@ type RewriteTestCaseDAOInterface interface {
 	CreateRewriteTestCase(rewriteTestCase *model.RewriteTestCase) (model.RewriteTestCase, error)
 	GetRewriteTestCaseByID(id string) (*model.RewriteTestCase, error)
 	ListRewriteTestCases() ([]model.RewriteTestCase, error)
-	UpdateRewriteTestCase(rewriteTestCase *model.RewriteTestCase) error
+	UpdateRewriteTestCase(id string, rewriteTestCase *model.RewriteTestCase) error
 	DeleteRewriteTestCase(id string) error
 }
