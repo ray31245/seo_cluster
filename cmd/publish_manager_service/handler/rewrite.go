@@ -54,7 +54,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		return
 	}
 
-	rewriteF := func(req string) (string, error) {
+	var rewriteF rewriteF = func(req string) (string, error) {
 		art, err := r.rewritemanager.DefaultRewriteUntil(c, []byte(req))
 		if err != nil {
 			return "", err
@@ -63,7 +63,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		return art, nil
 	}
 
-	extendRewriteF := func(req string) (string, error) {
+	var extendRewriteF extendRewriteF = func(req string) (string, error) {
 		extArt, err := r.rewritemanager.DefaultExtendRewriteUntil(c, []byte(req))
 		if err != nil {
 			return "", err
@@ -72,7 +72,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		return extArt, nil
 	}
 
-	makeTitleF := func(req string) (string, error) {
+	var makeTitleF makeTitleF = func(req string) (string, error) {
 		title, err := r.rewritemanager.DefaultMakeTitleUntil(c, req)
 		if err != nil {
 			return "", err
@@ -93,6 +93,85 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, res)
 }
+
+func (r *RewriteHandler) RewriteTestHandler(c *gin.Context) {
+	req := model.RewriteTestRequest{}
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	steps := []string{}
+
+	var rewriteF rewriteF = func(originArtContext string) (string, error) {
+		steps = append(steps, "rewrite")
+
+		art, err := r.rewritemanager.CustomRewrite(c, req.SystemPrompt, req.Prompt, []byte(originArtContext))
+		if err != nil {
+			return "", err
+		}
+
+		steps = append(steps, "rewrite done")
+
+		return art, nil
+	}
+
+	var extendRewriteF extendRewriteF = func(originArtContext string) (string, error) {
+		steps = append(steps, "extend rewrite")
+
+		art, err := r.rewritemanager.CustomRewrite(c, req.ExtendSystemPrompt, req.ExtendPrompt, []byte(originArtContext))
+		if err != nil {
+			return "", err
+		}
+
+		steps = append(steps, "extend rewrite done")
+
+		return art, nil
+	}
+
+	var makeTitleF makeTitleF = func(originArtContext string) (string, error) {
+		steps = append(steps, "make title")
+
+		title, err := r.rewritemanager.CustomRewrite(c, req.MakeTitleSystemPrompt, req.MakeTitlePrompt, []byte(originArtContext))
+		if err != nil {
+			return "", err
+		}
+
+		steps = append(steps, "make title done")
+
+		return title, nil
+	}
+
+	newArt, err := r.rewriteWorkFlow(req.Content, rewriteF, extendRewriteF, makeTitleF)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+			"steps":   steps,
+		})
+
+		return
+	}
+
+	res := model.RewriteTestResponse{
+		RewriteResponse: newArt,
+		Steps:           steps,
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+type (
+	rewriteF       func(string) (string, error)
+	extendRewriteF func(string) (string, error)
+	makeTitleF     func(string) (string, error)
+)
 
 func (r *RewriteHandler) rewriteWorkFlow(
 	articleContent string,

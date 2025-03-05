@@ -122,3 +122,13 @@ type UpdateRewriteTestCaseRequest struct {
 	Source  string `json:"source"`
 	Content string `json:"content"`
 }
+
+type RewriteTestRequest struct {
+	Content               string `json:"content"`
+	SystemPrompt          string `json:"system_prompt"`
+	Prompt                string `json:"prompt"`
+	ExtendSystemPrompt    string `json:"extend_system_prompt"`
+	ExtendPrompt          string `json:"extend_prompt"`
+	MakeTitleSystemPrompt string `json:"make_title_system_prompt"`
+	MakeTitlePrompt       string `json:"make_title_prompt"`
+}

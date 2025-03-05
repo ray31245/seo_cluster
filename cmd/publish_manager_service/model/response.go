@@ -45,3 +45,8 @@ type RewriteResponse struct {
 	Title   string `json:"Title"`
 	Content string `json:"Content"`
 }
+
+type RewriteTestResponse struct {
+	RewriteResponse
+	Steps []string `json:"steps"`
+}

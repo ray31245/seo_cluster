@@ -215,6 +215,7 @@ func main() {
 	articleRewriteRoute.GET("/get_default_make_title_system_prompt", rewriteHandler.GetDefaultMakeTitleSystemPromptHandler)
 	articleRewriteRoute.PUT("/set_default_make_title_prompt", rewriteHandler.SetDefaultMakeTitlePromptHandler)
 	articleRewriteRoute.GET("/get_default_make_title_prompt", rewriteHandler.GetDefaultMakeTitlePromptHandler)
+	articleRewriteRoute.POST("/rewrite_test", rewriteHandler.RewriteTestHandler)
 
 	articleRewriteTestCaseRoute := articleRewriteRoute.Group("/test_case")
 	articleRewriteTestCaseRoute.POST("/", rewriteHandler.CreateRewriteTestCaseHandler)
