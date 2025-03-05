@@ -40,3 +40,8 @@ func (g *GetSiteResponse) FromDBSite(s model.Site) {
 		g.Categories = append(g.Categories, category{ID: c.ID, Name: c.Name, ZblogID: c.ZBlogID, WordpressID: c.WordpressID})
 	}
 }
+
+type RewriteResponse struct {
+	Title   string `json:"Title"`
+	Content string `json:"Content"`
+}

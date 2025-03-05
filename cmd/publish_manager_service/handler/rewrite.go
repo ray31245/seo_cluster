@@ -54,47 +54,95 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		return
 	}
 
+	rewriteF := func(req string) (string, error) {
+		art, err := r.rewritemanager.DefaultRewriteUntil(c, []byte(req))
+		if err != nil {
+			return "", err
+		}
+
+		return art, nil
+	}
+
+	extendRewriteF := func(req string) (string, error) {
+		extArt, err := r.rewritemanager.DefaultExtendRewriteUntil(c, []byte(req))
+		if err != nil {
+			return "", err
+		}
+
+		return extArt, nil
+	}
+
+	makeTitleF := func(req string) (string, error) {
+		title, err := r.rewritemanager.DefaultMakeTitleUntil(c, req)
+		if err != nil {
+			return "", err
+		}
+
+		return title, nil
+	}
+
+	res, err := r.rewriteWorkFlow(string(req), rewriteF, extendRewriteF, makeTitleF)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+func (r *RewriteHandler) rewriteWorkFlow(
+	articleContent string,
+	rewriteF func(string) (string, error),
+	extendRewriteF func(string) (string, error),
+	makeTitleF func(string) (string, error),
+) (model.RewriteResponse, error) {
+	originalArticle, err := util.HTMLToMd(articleContent)
+	if err != nil {
+		log.Println(err)
+
+		return model.RewriteResponse{}, fmt.Errorf("rewriteWorkFlow: %w", err)
+	}
+
+	// check data
+	if utf8.RuneCount([]byte(originalArticle)) < minSrcLength {
+		log.Println("data is not complete")
+
+		return model.RewriteResponse{}, fmt.Errorf("rewriteWorkFlow: %w", errors.New("data is not complete"))
+	}
+
 	res := struct {
 		Title   string `json:"Title"`
 		Content string `json:"Content"`
 	}{}
 
-	art, err := r.rewritemanager.DefaultRewriteUntil(c, []byte(originalArticle))
+	art, err := rewriteF(originalArticle)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": fmt.Sprintf("error: %v", err),
-		})
-
-		return
+		return model.RewriteResponse{}, fmt.Errorf("rewriteWorkFlow: %w", err)
 	}
 
 	if utf8.RuneCountInString(art) < minArtLength {
-		extArt, err := r.rewritemanager.DefaultExtendRewriteUntil(c, req)
+		extArt, err := extendRewriteF(articleContent)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": fmt.Sprintf("error: %v", err),
-			})
-
-			return
+			return model.RewriteResponse{}, fmt.Errorf("rewriteWorkFlow: %w", err)
 		}
 
 		art = extArt
 	}
 
-	title, err := r.rewritemanager.DefaultMakeTitleUntil(c, art)
+	title, err := makeTitleF(art)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": fmt.Sprintf("error: %v", err),
-		})
-
-		return
+		return model.RewriteResponse{}, fmt.Errorf("rewriteWorkFlow: %w", err)
 	}
 
 	res.Title = title
 
 	art = string(util.MdToHTML([]byte(art)))
 
-	imgDiv, err := util.GenImageListEncodeDiv(req)
+	imgDiv, err := util.GenImageListEncodeDiv([]byte(articleContent))
 	if err != nil {
 		log.Printf("error: %v", err)
 	} else {
@@ -103,7 +151,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 
 	res.Content = art
 
-	c.JSON(http.StatusOK, res)
+	return res, nil
 }
 
 func (r *RewriteHandler) CreateRewriteTestCaseHandler(c *gin.Context) {
