@@ -36,24 +36,6 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		return
 	}
 
-	originalArticle, err := util.HTMLToMd(string(req))
-	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Sprintf("error: %v", err),
-		})
-	}
-
-	// check data
-	if utf8.RuneCount([]byte(originalArticle)) < minSrcLength {
-		log.Println("data is not complete")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Sprintf("error: %v", "data is not complete"),
-		})
-
-		return
-	}
-
 	var rewriteF rewriteF = func(req string) (string, error) {
 		art, err := r.rewritemanager.DefaultRewriteUntil(c, []byte(req))
 		if err != nil {
