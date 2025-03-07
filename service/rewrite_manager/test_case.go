@@ -6,19 +6,19 @@ import (
 	dbModel "github.com/ray31245/seo_cluster/pkg/db/model"
 )
 
-func (r *RewriteManager) CreateRewriteTestCase(name string, source string, content string) error {
+func (r *RewriteManager) CreateRewriteTestCase(name string, source string, content string) (dbModel.RewriteTestCase, error) {
 	testCase := dbModel.RewriteTestCase{
 		Name:    name,
 		Source:  source,
 		Content: content,
 	}
 
-	_, err := r.rewriteTestCase.CreateRewriteTestCase(&testCase)
+	testCase, err := r.rewriteTestCase.CreateRewriteTestCase(&testCase)
 	if err != nil {
-		return fmt.Errorf("RewriteManager.CreateRewriteTestCase: %w", err)
+		return dbModel.RewriteTestCase{}, fmt.Errorf("RewriteManager.CreateRewriteTestCase: %w", err)
 	}
 
-	return nil
+	return testCase, nil
 }
 
 func (r *RewriteManager) GetRewriteTestCaseByID(id string) (*dbModel.RewriteTestCase, error) {

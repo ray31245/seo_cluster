@@ -255,7 +255,7 @@ func (r *RewriteHandler) CreateRewriteTestCaseHandler(c *gin.Context) {
 		return
 	}
 
-	err = r.rewritemanager.CreateRewriteTestCase(req.Name, req.Source, req.Content)
+	testCase, err := r.rewritemanager.CreateRewriteTestCase(req.Name, req.Source, req.Content)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -266,6 +266,7 @@ func (r *RewriteHandler) CreateRewriteTestCaseHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"data":    testCase,
 		"message": "ok",
 	})
 }
