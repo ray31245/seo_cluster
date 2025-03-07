@@ -59,7 +59,7 @@ func (d *RewriteTestCaseDAO) ListRewriteTestCases() ([]model.RewriteTestCase, er
 func (d *RewriteTestCaseDAO) UpdateRewriteTestCase(id string, rewriteTestCase *model.RewriteTestCase) error {
 	rewriteTestCase.ID = uuid.MustParse(id)
 
-	err := d.db.Save(rewriteTestCase).Error
+	err := d.db.Model(&rewriteTestCase).Updates(rewriteTestCase).Error
 	if err != nil {
 		return fmt.Errorf("UpdateRewriteTestCase: %w", err)
 	}
