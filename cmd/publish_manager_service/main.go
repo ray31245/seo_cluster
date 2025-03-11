@@ -159,6 +159,14 @@ func main() {
 
 	r := gin.Default()
 	r.Use(gin.Recovery())
+
+	workingDir := ""
+	if wd, ok := os.LookupEnv("WORKING_DIR"); ok {
+		workingDir = wd + "/"
+	}
+
+	r.LoadHTMLGlob(workingDir + "web/template/*")
+
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",
@@ -200,6 +208,7 @@ func main() {
 	articleRoute.PUT("/updateArticleCacheStatus", articleCacheHandler.UpdateArticleCacheStatusHandler)
 	articleRoute.PUT("/editArticleCache", articleCacheHandler.EditArticleCacheHandler)
 	articleRoute.DELETE("/deleteArticleCache", articleCacheHandler.DeleteArticleCacheHandler)
+	articleRoute.POST("/render", handler.RenderHandler)
 
 	articleRewriteRoute := articleRoute.Group("/rewrite")
 	articleRewriteRoute.POST("/", rewriteHandler.RewriteHandler)

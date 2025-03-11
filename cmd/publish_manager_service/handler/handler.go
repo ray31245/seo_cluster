@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 
@@ -374,4 +375,16 @@ func (b *CommentBotHandler) GetStopAutoCommentStatusHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status": status,
 	})
+}
+
+func RenderHandler(c *gin.Context) {
+	// get data body from post form
+	htmlBody := c.PostForm("html_body")
+	if htmlBody == "" {
+		c.Status(http.StatusBadRequest)
+
+		return
+	}
+
+	c.HTML(http.StatusOK, "render.go.tmpl", gin.H{"htmlBody": template.HTML(htmlBody)})
 }
