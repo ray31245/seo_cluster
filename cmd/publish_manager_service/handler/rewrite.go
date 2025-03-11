@@ -141,6 +141,15 @@ func (r *RewriteHandler) RewriteTestHandler(c *gin.Context) {
 		return
 	}
 
+	newArt.Content, err = util.DecodeImageListDivFromHTMl([]byte(newArt.Content))
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+			"steps":   steps,
+		})
+	}
+
 	res := model.RewriteTestResponse{
 		RewriteResponse: newArt,
 		Steps:           steps,
