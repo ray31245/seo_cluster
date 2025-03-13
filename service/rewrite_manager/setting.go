@@ -4,6 +4,17 @@ import (
 	"fmt"
 )
 
+const (
+	defaultSystemPromptKey = "system_prompt"
+	defaultPromptKey       = "prompt"
+
+	defaultExtendSystemPromptKey = "extend_system_prompt"
+	defaultExtendPromptKey       = "extend_prompt"
+
+	defaultMakeTitleSystemPromptKey = "make_title_system_prompt"
+	defaultMakeTitlePromptKey       = "make_title_prompt"
+)
+
 func (r *RewriteManager) GetDefaultSystemPrompt() (string, error) {
 	systemPrompt, err := r.configDAO.GetByKey(defaultSystemPromptKey)
 	if err != nil {
