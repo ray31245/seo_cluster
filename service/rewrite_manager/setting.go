@@ -13,6 +13,8 @@ const (
 
 	defaultMakeTitleSystemPromptKey = "make_title_system_prompt"
 	defaultMakeTitlePromptKey       = "make_title_prompt"
+
+	defaultMultiSectionsSystemPromptKey = "multi_sections_system_prompt"
 )
 
 func (r *RewriteManager) GetDefaultSystemPrompt() (string, error) {
@@ -118,6 +120,24 @@ func (r *RewriteManager) SetDefaultMakeTitlePrompt(prompt string) error {
 	err := r.configDAO.UpsertByKey(defaultMakeTitlePromptKey, prompt)
 	if err != nil {
 		return fmt.Errorf("RewriteManager.SetDefaultMakeTitlePrompt: %w", err)
+	}
+
+	return nil
+}
+
+func (r *RewriteManager) GetDefaultMultiSectionsSystemPrompt() (string, error) {
+	systemPrompt, err := r.configDAO.GetByKey(defaultMultiSectionsSystemPromptKey)
+	if err != nil {
+		return "", fmt.Errorf("RewriteManager.GetDefaultMultiSectionsSystemPrompt: %w", err)
+	}
+
+	return systemPrompt.Value, nil
+}
+
+func (r *RewriteManager) SetDefaultMultiSectionsSystemPrompt(systemPrompt string) error {
+	err := r.configDAO.UpsertByKey(defaultMultiSectionsSystemPromptKey, systemPrompt)
+	if err != nil {
+		return fmt.Errorf("RewriteManager.SetDefaultMultiSectionsSystemPrompt: %w", err)
 	}
 
 	return nil

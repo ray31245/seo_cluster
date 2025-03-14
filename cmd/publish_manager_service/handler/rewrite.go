@@ -63,7 +63,7 @@ func (r *RewriteHandler) RewriteHandler(c *gin.Context) {
 		return title, nil
 	}
 
-	res, err := r.rewriteWorkFlow(string(req), rewriteF, extendRewriteF, makeTitleF)
+	res, err := r.rewriteWorkFlow(string(req), rewriteF, extendRewriteF, makeTitleF, true)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -130,7 +130,7 @@ func (r *RewriteHandler) RewriteTestHandler(c *gin.Context) {
 		return title, nil
 	}
 
-	newArt, err := r.rewriteWorkFlow(req.Content, rewriteF, extendRewriteF, makeTitleF)
+	newArt, err := r.rewriteWorkFlow(req.Content, rewriteF, extendRewriteF, makeTitleF, true)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -158,6 +158,131 @@ func (r *RewriteHandler) RewriteTestHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+func (r *RewriteHandler) MultiSectionsRewriteHandler(c *gin.Context) {
+	// get data body from request
+	req, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	var rewriteF rewriteF = func(req string) (string, error) {
+		art, err := r.rewritemanager.DefaultMultiSectionsRewrite(c, req)
+		if err != nil {
+			return "", err
+		}
+
+		return art, nil
+	}
+
+	var extendRewriteF extendRewriteF = func(req string) (string, error) {
+		extArt, err := r.rewritemanager.DefaultExtendRewrite(c, []byte(req))
+		if err != nil {
+			return "", err
+		}
+
+		return extArt, nil
+	}
+
+	var makeTitleF makeTitleF = func(req string) (string, error) {
+		title, err := r.rewritemanager.DefaultMakeTitle(c, req)
+		if err != nil {
+			return "", err
+		}
+
+		return title, nil
+	}
+
+	res, err := r.rewriteWorkFlow(string(req), rewriteF, extendRewriteF, makeTitleF, false)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+func (r *RewriteHandler) MultiSectionsRewriteTestHandler(c *gin.Context) {
+	req := model.MultiSectionsRewriteTestRequest{}
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	steps := []string{}
+
+	var rewriteF rewriteF = func(originArtContext string) (string, error) {
+		steps = append(steps, "rewrite")
+
+		art, err := r.rewritemanager.DefaultMultiSectionsRewrite(c, originArtContext)
+		if err != nil {
+			return "", err
+		}
+
+		steps = append(steps, "rewrite done")
+
+		return art, nil
+	}
+
+	var extendRewriteF extendRewriteF = func(originArtContext string) (string, error) {
+		steps = append(steps, "extend rewrite")
+
+		art, err := r.rewritemanager.DefaultExtendRewrite(c, []byte(originArtContext))
+		if err != nil {
+			return "", err
+		}
+
+		steps = append(steps, "extend rewrite done")
+
+		return art, nil
+	}
+
+	var makeTitleF makeTitleF = func(originArtContext string) (string, error) {
+		steps = append(steps, "make title")
+
+		title, err := r.rewritemanager.CustomRewrite(c, req.MakeTitleSystemPrompt, req.MakeTitlePrompt, []byte(originArtContext))
+		if err != nil {
+			return "", err
+		}
+
+		steps = append(steps, "make title done")
+
+		return title, nil
+	}
+
+	newArt, err := r.rewriteWorkFlow(req.Content, rewriteF, extendRewriteF, makeTitleF, false)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+			"steps":   steps,
+		})
+
+		return
+	}
+
+	res := model.RewriteTestResponse{
+		RewriteResponse: newArt,
+		Steps:           steps,
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
 type (
 	rewriteF       func(string) (string, error)
 	extendRewriteF func(string) (string, error)
@@ -169,6 +294,7 @@ func (r *RewriteHandler) rewriteWorkFlow(
 	rewriteF func(string) (string, error),
 	extendRewriteF func(string) (string, error),
 	makeTitleF func(string) (string, error),
+	isGenImageList bool,
 ) (model.RewriteResponse, error) {
 	originalArticle, err := util.HTMLToMd(articleContent)
 	if err != nil {
@@ -212,11 +338,13 @@ func (r *RewriteHandler) rewriteWorkFlow(
 
 	art = string(util.MdToHTML([]byte(art)))
 
-	imgDiv, err := util.GenImageListEncodeDiv([]byte(articleContent))
-	if err != nil {
-		log.Printf("error: %v", err)
-	} else {
-		art += imgDiv
+	if isGenImageList {
+		imgDiv, err := util.GenImageListEncodeDiv([]byte(articleContent))
+		if err != nil {
+			log.Printf("error: %v", err)
+		} else {
+			art += imgDiv
+		}
 	}
 
 	res.Content = art
@@ -541,6 +669,43 @@ func (r *RewriteHandler) GetDefaultMakeTitlePromptHandler(c *gin.Context) {
 func (r *RewriteHandler) SetDefaultMakeTitlePromptHandler(c *gin.Context) {
 	f := func(req model.SetDefaultMakeTitlePromptRequest) error {
 		return r.rewritemanager.SetDefaultMakeTitlePrompt(req.Prompt)
+	}
+
+	code, err := setDefaultRewritePrompt(c, f)
+	if err != nil {
+		log.Println(err)
+		c.JSON(code, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
+func (r *RewriteHandler) GetDefaultMultiSectionsSystemPromptHandler(c *gin.Context) {
+	systemPrompt, err := r.rewritemanager.GetDefaultMultiSectionsSystemPrompt()
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+		"data":    systemPrompt,
+	})
+}
+
+func (r *RewriteHandler) SetDefaultMultiSectionsSystemPromptHandler(c *gin.Context) {
+	f := func(req model.SetDefaultMultiSectionsSystemPromptRequest) error {
+		return r.rewritemanager.SetDefaultMultiSectionsSystemPrompt(req.Prompt)
 	}
 
 	code, err := setDefaultRewritePrompt(c, f)

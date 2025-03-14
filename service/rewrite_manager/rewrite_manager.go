@@ -85,6 +85,24 @@ func (r *RewriteManager) DefaultExtendRewrite(ctx context.Context, text []byte) 
 	return r.aiAssist.CustomRewrite(ctx, systemPrompt, prompt, text)
 }
 
+func (r *RewriteManager) MultiSectionsRewrite(ctx context.Context, systemPrompt string, content string) (string, error) {
+	res, err := r.aiAssist.MultiSectionsRewrite(ctx, systemPrompt, content)
+	if err != nil {
+		return "", fmt.Errorf("RewriteManager.MultiSectionsRewrite: %w", err)
+	}
+
+	return res, nil
+}
+
+func (r *RewriteManager) DefaultMultiSectionsRewrite(ctx context.Context, content string) (string, error) {
+	systemPrompt, err := r.GetDefaultMultiSectionsSystemPrompt()
+	if err != nil {
+		return "", fmt.Errorf("RewriteManager.DefaultMultiSectionsRewrite: %w", err)
+	}
+
+	return r.MultiSectionsRewrite(ctx, systemPrompt, content)
+}
+
 func (r *RewriteManager) DefaultMakeTitle(ctx context.Context, content string) (string, error) {
 	systemPrompt, err := r.GetDefaultMakeTitleSystemPrompt()
 	if err != nil {
@@ -192,6 +210,25 @@ func (r *RewriteManager) DefaultExtendRewriteUntil(ctx context.Context, text []b
 	}
 
 	return "", fmt.Errorf("RewriteManager.DefaultExtendRewriteUntil: %w", err)
+}
+
+func (r *RewriteManager) MultiSectionsRewriteUntil(ctx context.Context, systemPrompt string, content string) (res string, err error) {
+	log.Println("multi sections rewriting...")
+
+	r.aiAssist.Lock()
+	defer r.aiAssist.Unlock()
+
+	for range retryLimit {
+		res, err = r.MultiSectionsRewrite(ctx, systemPrompt, content)
+		if err == nil {
+			return res, nil
+		}
+
+		log.Println("retrying...")
+		<-time.After(retryDelay)
+	}
+
+	return "", fmt.Errorf("RewriteManager.MultiSectionsRewriteUntil: %w", err)
 }
 
 func (r *RewriteManager) DefaultMakeTitleUntil(ctx context.Context, content string) (res string, err error) {

@@ -212,6 +212,7 @@ func main() {
 
 	articleRewriteRoute := articleRoute.Group("/rewrite")
 	articleRewriteRoute.POST("/", rewriteHandler.RewriteHandler)
+	articleRewriteRoute.POST(("/multi_sections_rewrite"), rewriteHandler.MultiSectionsRewriteHandler)
 	articleRewriteRoute.PUT("/set_default_system_prompt", rewriteHandler.SetDefaultSystemPromptHandler)
 	articleRewriteRoute.GET("/get_default_system_prompt", rewriteHandler.GetDefaultSystemPromptHandler)
 	articleRewriteRoute.PUT("/set_default_prompt", rewriteHandler.SetDefaultPromptHandler)
@@ -224,7 +225,10 @@ func main() {
 	articleRewriteRoute.GET("/get_default_make_title_system_prompt", rewriteHandler.GetDefaultMakeTitleSystemPromptHandler)
 	articleRewriteRoute.PUT("/set_default_make_title_prompt", rewriteHandler.SetDefaultMakeTitlePromptHandler)
 	articleRewriteRoute.GET("/get_default_make_title_prompt", rewriteHandler.GetDefaultMakeTitlePromptHandler)
+	articleRewriteRoute.PUT("/set_default_multi_sections_system_prompt", rewriteHandler.SetDefaultMultiSectionsSystemPromptHandler)
+	articleRewriteRoute.GET("/get_default_multi_sections_system_prompt", rewriteHandler.GetDefaultMultiSectionsSystemPromptHandler)
 	articleRewriteRoute.POST("/rewrite_test", rewriteHandler.RewriteTestHandler)
+	articleRewriteRoute.POST("/multi_sections_rewrite_test", rewriteHandler.MultiSectionsRewriteTestHandler)
 
 	articleRewriteTestCaseRoute := articleRewriteRoute.Group("/test_case")
 	articleRewriteTestCaseRoute.POST("/", rewriteHandler.CreateRewriteTestCaseHandler)

@@ -194,6 +194,80 @@ func (a *AIAssist) ExtendRewrite(ctx context.Context, text []byte) (model.Extend
 	return res, nil
 }
 
+func (a *AIAssist) MultiSectionsRewrite(ctx context.Context, systemPrompt string, content string) (string, error) {
+	sectionsModel := a.client.GenerativeModel("gemini-2.0-flash")
+
+	sectionsModel.SystemInstruction = &genai.Content{Parts: []genai.Part{genai.Text(systemPrompt)}}
+	sectionsModel.GenerationConfig = genai.GenerationConfig{
+		ResponseMIMEType: "application/json",
+		ResponseSchema: &genai.Schema{
+			Type:     genai.TypeObject,
+			Required: []string{"sections"},
+			Properties: map[string]*genai.Schema{
+				"sections": {
+					Type: genai.TypeArray,
+					Items: &genai.Schema{
+						Type:     genai.TypeObject,
+						Required: []string{"title"},
+						Properties: map[string]*genai.Schema{
+							"title": {
+								Type: genai.TypeString,
+							},
+							"subsection": {
+								Type: genai.TypeArray,
+								Items: &genai.Schema{
+									Type: genai.TypeObject,
+									Properties: map[string]*genai.Schema{
+										"title": {
+											Type: genai.TypeString,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	session := sectionsModel.StartChat()
+
+	sectionResp, err := session.SendMessage(ctx, genai.Text(fmt.Sprintf("請幫我改寫以下文章，先列出你預計會有的大段落標題\n\n%s", content)))
+	if err != nil {
+		return "", fmt.Errorf("failed to rewrite content: %w", err)
+	}
+
+	sections := struct {
+		Sections []struct {
+			Title      string `json:"title"`
+			Subsection []struct {
+				Title string `json:"title"`
+			} `json:"subsection"`
+		} `json:"sections"`
+	}{}
+
+	err = json.Unmarshal([]byte(fmt.Sprintf("%s", sectionResp.Candidates[0].Content.Parts[0])), &sections)
+	if err != nil {
+		return "", fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	sectionsModel.GenerationConfig = genai.GenerationConfig{}
+
+	result := ""
+
+	for i := range sections.Sections {
+		resMsg, err := session.SendMessage(ctx, genai.Text(fmt.Sprintf("不需要向我說明，不需要詢問我的意見，不需要跟我解釋，不需要問候，直接輸出內容即可。如果有需要顯示圖片處直接用圖片網址輸出成圖片格式即可。請開始撰寫第%d個段落的內容", i+1)))
+		if err != nil {
+			return "", fmt.Errorf("failed to rewrite content: %w", err)
+		}
+
+		result += fmt.Sprint(resMsg.Candidates[0].Content.Parts[0])
+	}
+
+	return result, nil
+}
+
 func (a *AIAssist) Comment(ctx context.Context, text []byte) (model.CommentResponse, error) {
 	//nolint:gosmopolitan // prompt is a string
 	prompt := "你是一位简体中文语系读者,你在网路上看到以下文章，请随性且简洁地在这篇文章下留言。并且以一位看新闻的人的角度记录这个文章能够为你提供的价值。最低0分滿分100分。请使用json格式输出：{Comment: string, Score: int}\n。"

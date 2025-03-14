@@ -111,6 +111,10 @@ type SetDefaultMakeTitlePromptRequest struct {
 	SetPromptRequest
 }
 
+type SetDefaultMultiSectionsSystemPromptRequest struct {
+	SetPromptRequest
+}
+
 type CreateRewriteTestCaseRequest struct {
 	Name    string `json:"name"`
 	Source  string `json:"source"`
@@ -129,6 +133,13 @@ type RewriteTestRequest struct {
 	Prompt                string `json:"prompt"`
 	ExtendSystemPrompt    string `json:"extend_system_prompt"`
 	ExtendPrompt          string `json:"extend_prompt"`
+	MakeTitleSystemPrompt string `json:"make_title_system_prompt"`
+	MakeTitlePrompt       string `json:"make_title_prompt"`
+}
+
+type MultiSectionsRewriteTestRequest struct {
+	Content               string `json:"content"`
+	SystemPrompt          string `json:"system_prompt"`
 	MakeTitleSystemPrompt string `json:"make_title_system_prompt"`
 	MakeTitlePrompt       string `json:"make_title_prompt"`
 }
