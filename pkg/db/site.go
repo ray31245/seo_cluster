@@ -111,9 +111,13 @@ func (d *SiteDAO) GetSite(siteID string) (*model.Site, error) {
 
 func (d *SiteDAO) GetCategory(categoryID string) (*model.Category, error) {
 	var category model.Category
-	err := d.db.Preload("Site").First(&category, fmt.Sprintf("id = '%s'", categoryID)).Error
 
-	return &category, err
+	err := d.db.Preload("Site").First(&category, fmt.Sprintf("id = '%s'", categoryID)).Error
+	if err != nil {
+		return nil, fmt.Errorf("GetCategory: %w", err)
+	}
+
+	return &category, nil
 }
 
 func (d *SiteDAO) queryPublishAbleCateGories() (tx *gorm.DB) {
