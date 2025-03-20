@@ -15,11 +15,11 @@ func NewArticleCacheManager(dao dbInterface.ArticleCacheDAOInterface) *ArticleCa
 	}
 }
 
-func (a *ArticleCacheManager) ListPublishLaterArticleCache(titleKeyword, contentKeyword string, op dbModel.Operator, page, limit int) ([]dbModel.ArticleCache, int, error) {
+func (a *ArticleCacheManager) ListPublishLaterArticleCache(titleKeyword, contentKeyword string, op dbModel.Operator, page, limit int) ([]dbModel.ArticleCache, int, int64, error) {
 	return a.ArticleCacheDAOInterface.ListPublishLaterArticleCachePaginator(titleKeyword, contentKeyword, op, page, limit)
 }
 
-func (a *ArticleCacheManager) ListEditAbleArticleCache(titleKeyword, contentKeyword string, op dbModel.Operator, page, limit int) ([]dbModel.ArticleCache, int, error) {
+func (a *ArticleCacheManager) ListEditAbleArticleCache(titleKeyword, contentKeyword string, op dbModel.Operator, page, limit int) ([]dbModel.ArticleCache, int, int64, error) {
 	return a.ArticleCacheDAOInterface.ListEditAbleArticleCachePaginator(titleKeyword, contentKeyword, op, page, limit)
 }
 

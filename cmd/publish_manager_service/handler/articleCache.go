@@ -57,7 +57,7 @@ func (a *articleCacheHandler) ListPublishLaterArticleCacheHandler(c *gin.Context
 		return
 	}
 
-	articles, totalPage, err := a.articleCacheManager.ListPublishLaterArticleCache(titleKeywords, contentKeywords, dbModel.Operator(operator), page, pageSize)
+	articles, totalPage, totalRows, err := a.articleCacheManager.ListPublishLaterArticleCache(titleKeywords, contentKeywords, dbModel.Operator(operator), page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -69,6 +69,7 @@ func (a *articleCacheHandler) ListPublishLaterArticleCacheHandler(c *gin.Context
 	c.JSON(http.StatusOK, gin.H{
 		"articles":   articles,
 		"total_page": totalPage,
+		"total_rows": totalRows,
 	})
 }
 
@@ -84,7 +85,7 @@ func (a *articleCacheHandler) ListEditAbleArticleCacheHandler(c *gin.Context) {
 		return
 	}
 
-	articles, totalPage, err := a.articleCacheManager.ListEditAbleArticleCache(titleKeywords, contentKeywords, dbModel.Operator(operator), page, pageSize)
+	articles, totalPage, totalRows, err := a.articleCacheManager.ListEditAbleArticleCache(titleKeywords, contentKeywords, dbModel.Operator(operator), page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -96,6 +97,7 @@ func (a *articleCacheHandler) ListEditAbleArticleCacheHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"articles":   articles,
 		"total_page": totalPage,
+		"total_rows": totalRows,
 	})
 }
 

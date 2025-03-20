@@ -47,7 +47,7 @@ func (d *ArticleCacheDAO) ListReadyToPublishArticleCacheByLimit(limit int) ([]mo
 	return articles, err
 }
 
-func (d *ArticleCacheDAO) ListPublishLaterArticleCachePaginator(titleKeyword, contentKeyword string, op model.Operator, page int, limit int) ([]model.ArticleCache, int, error) {
+func (d *ArticleCacheDAO) ListPublishLaterArticleCachePaginator(titleKeyword, contentKeyword string, op model.Operator, page int, limit int) ([]model.ArticleCache, int, int64, error) {
 	var (
 		articles  []model.ArticleCache
 		totalPage int
@@ -57,27 +57,27 @@ func (d *ArticleCacheDAO) ListPublishLaterArticleCachePaginator(titleKeyword, co
 
 	q = articleFuzzySearch(q, titleKeyword, contentKeyword, op)
 
-	articles, totalPage, err := paginator(model.ArticleCache{}, q, page, limit)
+	articles, totalPage, totalRows, err := paginator(model.ArticleCache{}, q, page, limit)
 	if err != nil {
-		return nil, 0, fmt.Errorf("ListPublishLaterArticleCachePaginator: %w", err)
+		return nil, 0, 0, fmt.Errorf("ListPublishLaterArticleCachePaginator: %w", err)
 	}
 
-	return articles, totalPage, err
+	return articles, totalPage, totalRows, err
 }
 
-func (d *ArticleCacheDAO) ListEditAbleArticleCachePaginator(titleKeyword, contentKeyword string, op model.Operator, page int, limit int) ([]model.ArticleCache, int, error) {
+func (d *ArticleCacheDAO) ListEditAbleArticleCachePaginator(titleKeyword, contentKeyword string, op model.Operator, page int, limit int) ([]model.ArticleCache, int, int64, error) {
 	var articles []model.ArticleCache
 
 	q := d.db.Where("status = ?", model.ArticleCacheStatusReserved)
 
 	q = articleFuzzySearch(q, titleKeyword, contentKeyword, op)
 
-	articles, totalPage, err := paginator(model.ArticleCache{}, q, page, limit)
+	articles, totalPage, totalRows, err := paginator(model.ArticleCache{}, q, page, limit)
 	if err != nil {
-		return nil, 0, fmt.Errorf("ListPublishLaterArticleCachePaginator: %w", err)
+		return nil, 0, 0, fmt.Errorf("ListEditAbleArticleCachePaginator: %w", err)
 	}
 
-	return articles, totalPage, err
+	return articles, totalPage, totalRows, err
 }
 
 func (d *ArticleCacheDAO) GetArticleCacheByID(id string) (*model.ArticleCache, error) {

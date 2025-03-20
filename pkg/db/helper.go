@@ -7,15 +7,15 @@ import (
 	"gorm.io/gorm"
 )
 
-func paginator[T any](tableModel T, query *gorm.DB, page int, limit int) ([]T, int, error) {
+func paginator[T any](tableModel T, query *gorm.DB, page int, limit int) ([]T, int, int64, error) {
 	var (
 		result    []T
 		totalPage int
 		count     int64
 	)
 
-	if page < 1 {
-		page = 1
+	if page < 0 {
+		page = 0
 	}
 
 	if limit < 1 {
@@ -24,7 +24,7 @@ func paginator[T any](tableModel T, query *gorm.DB, page int, limit int) ([]T, i
 
 	err := query.Model(tableModel).Count(&count).Error
 	if err != nil {
-		return nil, 0, fmt.Errorf("paginator: %w", err)
+		return nil, 0, 0, fmt.Errorf("paginator: %w", err)
 	}
 
 	totalPage = int(count) / limit
@@ -32,12 +32,12 @@ func paginator[T any](tableModel T, query *gorm.DB, page int, limit int) ([]T, i
 		totalPage++
 	}
 
-	err = query.Model(tableModel).Offset((page - 1) * limit).Limit(limit).Find(&result).Error
+	err = query.Model(tableModel).Offset((page) * limit).Limit(limit).Find(&result).Error
 	if err != nil {
-		return nil, 0, fmt.Errorf("paginator: %w", err)
+		return nil, 0, 0, fmt.Errorf("paginator: %w", err)
 	}
 
-	return result, totalPage, nil
+	return result, totalPage, count, nil
 }
 
 func articleFuzzySearch(query *gorm.DB, titleKeyword, contentKeyword string, op model.Operator) *gorm.DB {
