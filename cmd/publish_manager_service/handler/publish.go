@@ -279,6 +279,44 @@ func (p *PublishHandler) BroadcastPublishHandler(c *gin.Context) {
 	})
 }
 
+func (p *PublishHandler) SpecifyPublishHandler(c *gin.Context) {
+	req := model.SpecifyPublishRequest{}
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	// check data
+	if req.ArticleID == "" || req.CateID == "" {
+		log.Println("data is not complete")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("error: %v", "data is not complete"),
+		})
+
+		return
+	}
+
+	err = p.publisher.SpecifyPublish(c, req.CateID, req.ArticleID)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("error: %v", err),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
+
 func (p *PublishHandler) GetArticleCacheCountHandler(c *gin.Context) {
 	count, err := p.publisher.CountArticleCache()
 	if err != nil {

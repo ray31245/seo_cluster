@@ -143,3 +143,8 @@ type MultiSectionsRewriteTestRequest struct {
 	MakeTitleSystemPrompt string `json:"make_title_system_prompt"`
 	MakeTitlePrompt       string `json:"make_title_prompt"`
 }
+
+type SpecifyPublishRequest struct {
+	ArticleID string `json:"article_id"`
+	CateID    string `json:"cate_id"`
+}

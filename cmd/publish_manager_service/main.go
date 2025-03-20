@@ -207,6 +207,7 @@ func main() {
 	articleRoute.GET("/listEditAbleArticleCache", articleCacheHandler.ListEditAbleArticleCacheHandler)
 	articleRoute.PUT("/updateArticleCacheStatus", articleCacheHandler.UpdateArticleCacheStatusHandler)
 	articleRoute.PUT("/editArticleCache", articleCacheHandler.EditArticleCacheHandler)
+	articleRoute.POST("/specifyPublish", publishHandler.SpecifyPublishHandler)
 	articleRoute.DELETE("/deleteArticleCache", articleCacheHandler.DeleteArticleCacheHandler)
 	articleRoute.POST("/render", handler.RenderHandler)
 

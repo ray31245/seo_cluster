@@ -211,6 +211,45 @@ FanInLoop:
 	return resErr
 }
 
+func (p *PublishManager) SpecifyPublish(ctx context.Context, cateID string, articleCacheID string) error {
+	cate, err := p.dao.GetCategory(cateID)
+	if err != nil {
+		return fmt.Errorf("SpecifyPublish: %w", err)
+	}
+
+	articleCache, err := p.dao.GetArticleCacheByID(articleCacheID)
+	if err != nil {
+		return fmt.Errorf("SpecifyPublish: %w", err)
+	}
+
+	article := model.Article{
+		Title:   articleCache.Title,
+		Content: articleCache.Content,
+	}
+
+	// set category id
+	if cate.Site.CmsType == dbModel.CMSTypeWordPress {
+		article.CateID = cate.WordpressID
+	} else if cate.Site.CmsType == dbModel.CMSTypeZBlog {
+		article.CateID = cate.ZBlogID
+	} else {
+		return fmt.Errorf("SpecifyPublish: %w", errors.New("cms type not support"))
+	}
+
+	err = p.doPublish(ctx, article, cate.Site)
+	if err != nil {
+		return errors.Join(PublishErr{SiteID: cate.SiteID, CateID: cate.ID}, err)
+	}
+
+	// delete article cache
+	err = p.dao.DeleteArticleCacheByIDs([]string{articleCacheID})
+	if err != nil {
+		return fmt.Errorf("SpecifyPublish: %w", err)
+	}
+
+	return nil
+}
+
 func (p *PublishManager) startPublishWorker(ctx context.Context, wg *sync.WaitGroup, signal chan PublishSignal, errCh chan error) {
 	defer wg.Done()
 
