@@ -121,7 +121,7 @@ func (d *SiteDAO) GetCategory(categoryID string) (*model.Category, error) {
 }
 
 func (d *SiteDAO) queryPublishAbleCateGories() (tx *gorm.DB) {
-	return d.db.Where("exists (select 1 from sites where sites.id = categories.site_id and sites.lack_count != 0)").
+	return d.db.Where("exists (select 1 from sites where sites.id = categories.site_id and sites.lack_count > 0)").
 		Order("last_published")
 }
 
