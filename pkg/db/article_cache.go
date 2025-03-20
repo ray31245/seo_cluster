@@ -82,9 +82,13 @@ func (d *ArticleCacheDAO) ListEditAbleArticleCachePaginator(titleKeyword, conten
 
 func (d *ArticleCacheDAO) GetArticleCacheByID(id string) (*model.ArticleCache, error) {
 	article := model.ArticleCache{}
-	err := d.db.Where("id = ?", id).First(&article).Error
 
-	return &article, err
+	err := d.db.Where("id = ?", id).First(&article).Error
+	if err != nil {
+		return nil, fmt.Errorf("GetArticleCacheByID: %w", err)
+	}
+
+	return &article, nil
 }
 
 func (d *ArticleCacheDAO) DeleteArticleCacheByIDs(ids []string) error {
